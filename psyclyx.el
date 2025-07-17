@@ -35,5 +35,6 @@
 (require 'psyclyx-completion)
 (require 'psyclyx-vc)
 (require 'psyclyx-bindings)
+(require 'psyclyx-theme)
 
 (provide 'psyclyx)
