@@ -26,7 +26,7 @@
     (add-to-list 'completion-category-overrides `(lsp-capf (styles ,@completion-styles)))
     (add-hook 'evil-insert-state-exit-hook #'corfu-quit)
 
-    (defun my/corfu--smart-sep-toggle-escape ()
+    (defun psyclyx-corfu--smart-sep-toggle-escape ()
       "Insert `corfu-separator' or toggle escape if it's already there."
       (interactive)
       (cond ((and (char-equal (char-before) corfu-separator)
@@ -37,21 +37,21 @@
                              (insert-char ?\\)))
             (t (call-interactively #'corfu-insert-separator))))
 
-    (add-to-list 'corfu-continue-commands #'my/corfu--smart-sep-toggle-escape)
+    (add-to-list 'corfu-continue-commands #'psyclyx-corfu--smart-sep-toggle-escape)
 
-    (defun my/corfu--other-completion-active-p ()
+    (defun psyclyx-corfu--other-completion-active-p ()
       (or (bound-and-true-p vertico--input)
           (where-is-internal 'minibuffer-complete (list (current-local-map)))))
 
-    (defun my/corfu--enable-in-minibuffer-p ()
+    (defun psyclyx-corfu--enable-in-minibuffer-p ()
       (and (where-is-internal #'completion-at-point
                               (list (current-local-map)))
-           (not (my/corfu--other-completion-active-p))))
+           (not (psyclyx-corfu--other-completion-active-p))))
 
-    (setq global-corfu-minibuffer #'my/corfu--enable-in-minibuffer-p))
+    (setq global-corfu-minibuffer #'psyclyx-corfu--enable-in-minibuffer-p))
 
 
-    (defvar my/corfu-buffer-scanning-size-limit (* 1 1024 1024))
+    (defvar psyclyx-corfu-buffer-scanning-size-limit (* 1 1024 1024))
 
 (use-package cape
   :ensure t
@@ -59,28 +59,28 @@
   :custom
   (cape-dabbrev-check-other-buffers t)
   :init
-  (defun my/corfu-add-cape-file-h ()
+  (defun psyclyx-corfu-add-cape-file-h ()
     (add-hook 'completion-at-point-functions #'cape-file -10 t))
-  (add-hook 'prog-mode-hook #'my/corfu-add-cape-file-h)
+  (add-hook 'prog-mode-hook #'psyclyx-corfu-add-cape-file-h)
 
-  (defun my/corfu-add-cape-elisp-block-h ()
+  (defun psyclyx-corfu-add-cape-elisp-block-h ()
     (add-hook 'completion-at-point-functions #'cape-elisp-block 0 t))
-  (my/add-hooks '(org-mode-hook markdown-mode-hook) #'my/corfu-add-cape-elisp-block-h)
+  (psyclyx-add-hooks '(org-mode-hook markdown-mode-hook) #'psyclyx-corfu-add-cape-elisp-block-h)
 
-  (defun my/corfu-add-cape-dabbrev-h ()
+  (defun psyclyx-corfu-add-cape-dabbrev-h ()
     (add-hook 'completion-at-point-functions #'cape-dabbrev 20 t))
-  (my/add-hooks '(prog-mode-hook
+  (psyclyx-add-hooks '(prog-mode-hook
                   text-mode-hook
                   conf-mode-hook
                   comint-mode-hook
                   minibuffer-setup-hook
                   eshell-mode-hook)
-                #'my/corfu-add-cape-dabbrev-h)
+                #'psyclyx-corfu-add-cape-dabbrev-h)
 
-  (defun my/corfu-dabbrev-friend-buffer-p (other-buffer)
+  (defun psyclyx-corfu-dabbrev-friend-buffer-p (other-buffer)
     (< (buffer-size other-buffer) +corfu-buffer-scanning-size-limit))
 
-  (setq dabbrev-friend-buffer-function #'my/corfu-dabbrev-friend-buffer-p
+  (setq dabbrev-friend-buffer-function #'psyclyx-corfu-dabbrev-friend-buffer-p
         dabbrev-ignored-buffer-regexps
         '("\\` "
           "\\(?:\\(?:[EG]?\\|GR\\)TAGS\\|e?tags\\|GPATH\\)\\(<[0-9]+>\\)?")
@@ -148,7 +148,7 @@
                          #'ignore))
                 (apply args))))
 
-(defun my/vertico--orderless-dispatch (pattern _index _total)
+(defun psyclyx-vertico--orderless-dispatch (pattern _index _total)
   (let ((len (length pattern))
         (alist orderless-affix-dispatch-alist))
     (when (> len 0)

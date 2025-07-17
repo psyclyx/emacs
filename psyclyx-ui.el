@@ -75,25 +75,25 @@
     (add-hook 'after-init-hook #'centaur-tabs-mode))
 
   :config
-  (defun my/tabs-buffer-list ()
+  (defun psyclyx-tabs-buffer-list ()
     (seq-filter (lambda (b)
                   (when (buffer-live-p b)
                     (or (eq (current-buffer) b)
-                        (not (my/temp-buffer-p b)))))
+                        (not (psyclyx-temp-buffer-p b)))))
                 (if (bound-and-true-p persp-mode)
                     (persp-buffer-list)
                   (buffer-list))))
-  (setq centaur-tabs-buffer-list-function #'my/tabs-buffer-list)
+  (setq centaur-tabs-buffer-list-function #'psyclyx-tabs-buffer-list)
 
   (require 'evil)
-  (evil-define-command my/tab-next-or-goto (index)
+  (evil-define-command psyclyx-tab-next-or-goto (index)
     "Switch to the next tab, or to INDEXth tab if a count is given."
     (interactive "<c>")
     (if index
         (centaur-tabs-select-visible-nth-tab index)
       (centaur-tabs-forward)))
 
-  (evil-define-command my/tab-previous-or-goto (index)
+  (evil-define-command psyclyx-tab-previous-or-goto (index)
     "Switch to the previous tab, or to INDEXth tab if a count is given."
     (interactive "<c>")
     (if index

@@ -2,20 +2,20 @@
 ;;; Commentary:
 ;;; Code
 
-(defvar my/leader-map (make-sparse-keymap))
-(defvar my/localleader-map (make-sparse-keymap))
+(defvar psyclyx-leader-map (make-sparse-keymap))
+(defvar psyclyx-localleader-map (make-sparse-keymap))
 
 (general-define-key
  :keymaps 'general-override-mode-map
- :states my/leader-key-states
- my/leader-key my/leader-map
- my/localleader-key my/localleader-map)
+ :states psyclyx-leader-key-states
+ psyclyx-leader-key psyclyx-leader-map
+ psyclyx-localleader-key psyclyx-localleader-map)
 
 (general-define-key
  :keymaps 'general-override-mode-map
- :states my/leader-alt-key-states
- my/leader-alt-key my/leader-map
- my/localleader-alt-key my/localleader-map)
+ :states psyclyx-leader-alt-key-states
+ psyclyx-leader-alt-key psyclyx-leader-map
+ psyclyx-localleader-alt-key psyclyx-localleader-map)
 
 (general-override-mode +1)
 
@@ -25,8 +25,8 @@
  :states '(insert)
  "C-@" 'completion-at-point
  "C-SPC" 'completion-at-point
- "C-n" 'my/corfu--dabbrev-or-next
- "C-p" 'my/corfu--dabbrev-or-last)
+ "C-n" 'psyclyx-corfu--dabbrev-or-next
+ "C-p" 'psyclyx-corfu--dabbrev-or-last)
 (general-define-key
  :keymaps 'corfu-mode-map
  :states '(normal)
@@ -42,7 +42,7 @@
 (general-define-key
  :keymaps 'corfu-map
  :states '(insert)
- "C-SPC" #'my/corfu--smart-sep-toggle-escape
+ "C-SPC" #'psyclyx-corfu--smart-sep-toggle-escape
  "DEL" #'corfu-reset)
 
 (general-define-key
@@ -93,18 +93,18 @@
 
 
   (general-define-key
-   :keymaps my/default-minibuffer-maps
+   :keymaps psyclyx-default-minibuffer-maps
      [escape] #'abort-recursive-edit
      "C-a"    #'move-beginning-of-line
      "C-r"    #'evil-paste-from-register
      "C-u"    #'evil-delete-back-to-indentation
      "C-v"    #'yank
-     "C-w"    #'my/delete-backward-word
+     "C-w"    #'psyclyx-delete-backward-word
      "C-z"    (lambda () (interactive)
                 (ignore-errors (call-interactively #'undo))))
 
    (general-define-key
-    :keymaps my/default-minibuffer-maps
+    :keymaps psyclyx-default-minibuffer-maps
      "C-j"    #'next-line
      "C-k"    #'previous-line
      "C-S-j"  #'scroll-up-command
@@ -118,12 +118,12 @@
 
 (general-define-key
  :states 'normal
- "gt" #'my/tab-next-or-goto
- "gT" #'my/tab-previous-or-goto)
+ "gt" #'psyclyx-tab-next-or-goto
+ "gT" #'psyclyx-tab-previous-or-goto)
 
 
 (general-define-key
- :prefix-map 'my/buffer-prefix-map
+ :prefix-map 'psyclyx-buffer-prefix-map
  "b" (cons "Switch buffer" #'switch-to-buffer)
  "d" (cons "Kill current buffer" #'kill-current-buffer)
  "i" (cons "ibuffer" #'ibuffer)
@@ -134,7 +134,7 @@
 
 
 (general-define-key
- :prefix-map 'my/file-prefix-map
+ :prefix-map 'psyclyx-file-prefix-map
  "f" (cons "Find file" #'find-file)
  "d" (cons "Find directory" #'dired)
  "l" (cons "Locate files" #'locate)
@@ -147,7 +147,7 @@
 
 
 (general-define-key
- :prefix-map 'my/search-prefix-map
+ :prefix-map 'psyclyx-search-prefix-map
  "s" (cons "Search buffer" #'consult-line)
  "L" (cons "Jump to link" #'ffap-menu)
  "p" (cons "Search project" #'consult-ripgrep)
@@ -155,13 +155,13 @@
 
 
   (general-define-key
-   :prefix-map 'my/git-find-prefix-map
+   :prefix-map 'psyclyx-git-find-prefix-map
    "f" (cons "Find file" #'magit-find-file)
    "g" (cons "Find gitconfig file" #'magit-find-git-config-file)
    "c" (cons "Find commit" #'magit-show-commit))
 
   (general-define-key
-   :prefix-map 'my/git-create-prefix-map
+   :prefix-map 'psyclyx-git-create-prefix-map
    "r" (cons "Initialize repo" #'magit-init)
    "R" (cons "Clone repo" #'magit-clone)
    "c" (cons "Commit" #'magit-commit-create)
@@ -169,9 +169,9 @@
    "b" (cons "Branch" #'magit-branch-and-checkout))
 
   (general-define-key
-   :prefix-map 'my/git-prefix-map
-   "c" (cons "create" my/git-create-prefix-map)
-   "f" (cons "find" my/git-find-prefix-map)
+   :prefix-map 'psyclyx-git-prefix-map
+   "c" (cons "create" psyclyx-git-create-prefix-map)
+   "f" (cons "find" psyclyx-git-find-prefix-map)
 
    "R" (cons "Revert file" #'vc-revert)
    "r" (cons "Revert hunk at point" #'git-gutter:revert-hunk)
@@ -194,18 +194,18 @@
 
 (general-define-key
  :states nil
- :keymaps 'my/leader-map
- "b" (cons "buffer" my/buffer-prefix-map)
- "f" (cons "file" my/file-prefix-map)
- "g" (cons "git" my/git-prefix-map)
+ :keymaps 'psyclyx-leader-map
+ "b" (cons "buffer" psyclyx-buffer-prefix-map)
+ "f" (cons "file" psyclyx-file-prefix-map)
+ "g" (cons "git" psyclyx-git-prefix-map)
  "h" (cons "help" help-map)
- "s" (cons "search" my/search-prefix-map)
+ "s" (cons "search" psyclyx-search-prefix-map)
  "w" (cons "window" #'evil-window-map))
 
 
 (general-define-key
  :states nil
- :keymaps 'my/leader-map
+ :keymaps 'psyclyx-leader-map
  "'" (cons "Repeat last search" #'vertico-repeat)
  "u" (cons "Universal argument" #'universal-argument)
  ";" (cons "Eval expression" #'pp-eval-expression)
