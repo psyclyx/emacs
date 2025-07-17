@@ -57,7 +57,6 @@ or file path may exist now."
         trailing lines-tail))
 
 (use-package ws-butler
-  :ensure t
   :hook ((prog-mode text-mode) . ws-butler-mode))
 
 (use-package paren
@@ -103,7 +102,6 @@ or file path may exist now."
   (which-key-idle-secondary-delay 0.1))
 
 (use-package smartparens
-    :ensure t
     :hook (after-init . smartparens-global-mode)
     :commands
     sp-pair sp-local-pair sp-with-modes sp-point-in-comment sp-point-in-string
@@ -150,7 +148,6 @@ or file path may exist now."
 
 
 (use-package general
-  :ensure t
   :demand t
   :after (evil)
   :config
@@ -183,14 +180,12 @@ or file path may exist now."
 
 
 (use-package evil-collection
-  :ensure t
   :after evil
   :config
   (evil-collection-init))
 
 
 (use-package evil-snipe
-  :ensure t
   :after evil
   :defer 0.1
   :config
@@ -203,7 +198,6 @@ or file path may exist now."
   )
 
 (use-package evil-easymotion
-  :ensure t
   :after (evil-snipe)
   :config
   (general-define-key
@@ -221,7 +215,6 @@ or file path may exist now."
            (evil-snipe-enable-incremental-highlight)))))
 
 (use-package evil-surround
-  :ensure t
   :hook ((prog-mode text-mode) . global-evil-surround-mode)
   :commands (global-evil-surround-mode
              evil-surround-edit
@@ -230,7 +223,6 @@ or file path may exist now."
 
 
 (use-package evil-textobj-anyblock
-  :ensure t
   :after evil
   :config
   (setq evil-textobj-anyblock-blocks
@@ -240,12 +232,10 @@ or file path may exist now."
           ("<" . ">"))))
 
 (use-package exato
-  :ensure t
   :after evil
   :commands evil-outer-xml-attr evil-inner-xml-attr)
 
 (use-package better-jumper
-  :ensure t
   :commands my/set-jump-a my/set-jump-maybe-a my/set-jump-h
   :preface
   ;; REVIEW Suppress byte-compiler warning spawning a *Compile-Log* buffer at

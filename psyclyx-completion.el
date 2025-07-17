@@ -3,7 +3,6 @@
 ;;; Code
 
 (use-package corfu
-    :ensure t
     :defer 0.1
     :custom
     (corfu-auto t)
@@ -54,7 +53,6 @@
     (defvar psyclyx-corfu-buffer-scanning-size-limit (* 1 1024 1024))
 
 (use-package cape
-  :ensure t
   :after (dabbrev)
   :custom
   (cape-dabbrev-check-other-buffers t)
@@ -92,7 +90,6 @@
 
 
 (use-package vertico
-  :ensure t
   :custom
   (vertico-cycle t)
   (vertico-count 20)
@@ -165,7 +162,6 @@
           (cons style (substring pattern 0 -1))))))))
 
 (use-package consult
-  :ensure t
   :after (evil vertico)
 
   :preface
@@ -222,7 +218,6 @@
 
 
 (use-package marginalia
-  :ensure t
   :init
   (marginalia-mode)
   :custom
@@ -231,4 +226,4 @@
   (add-to-list 'marginalia-prompt-categories '("\\<face\\>" . face))
   (add-to-list 'marginalia-prompt-categories '("\\<var\\>" . variable)))
 
-(provide 'psyclyx-completion.el)
+(provide 'psyclyx-completion)

@@ -51,7 +51,6 @@
   (tooltip-mode -1))
 
 (use-package mood-line
-  :ensure t
   :custom
   (mood-line-glyph-alist mood-line-glyphs-unicode)
   (mood-line-format mood-line-format-default-extended)

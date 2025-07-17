@@ -1,6 +1,21 @@
 ;;; psyclyx-bindings.el -*- lexical-binding: t -*-
 ;;; Commentary:
 ;;; Code
+(defvar psyclyx-leader-key "SPC")
+(defvar psyclyx-leader-alt-key "M-SPC")
+(defvar psyclyx-leader-key-states '(normal visual motion))
+(defvar psyclyx-leader-alt-key-states '(emacs insert))
+(defvar psyclyx-localleader-key "SPC m")
+(defvar psyclyx-localleader-alt-key "M-SPC m")
+
+(defvar psyclyx-default-minibuffer-maps
+  '(minibuffer-local-map
+    minibuffer-local-ns-map
+    minibuffer-local-completion-map
+    minibuffer-local-must-match-map
+    minibuffer-local-isearch-map
+    read-expression-map))
+
 
 (defvar psyclyx-leader-map (make-sparse-keymap))
 (defvar psyclyx-localleader-map (make-sparse-keymap))
@@ -92,28 +107,28 @@
  "[d" #'git-gutter:previous-hunk)
 
 
-  (general-define-key
-   :keymaps psyclyx-default-minibuffer-maps
-     [escape] #'abort-recursive-edit
-     "C-a"    #'move-beginning-of-line
-     "C-r"    #'evil-paste-from-register
-     "C-u"    #'evil-delete-back-to-indentation
-     "C-v"    #'yank
-     "C-w"    #'psyclyx-delete-backward-word
-     "C-z"    (lambda () (interactive)
-                (ignore-errors (call-interactively #'undo))))
+(general-define-key
+ :keymaps psyclyx-default-minibuffer-maps
+ [escape] #'abort-recursive-edit
+ "C-a"    #'move-beginning-of-line
+ "C-r"    #'evil-paste-from-register
+ "C-u"    #'evil-delete-back-to-indentation
+ "C-v"    #'yank
+ "C-w"    #'psyclyx-delete-backward-word
+ "C-z"    (lambda () (interactive)
+            (ignore-errors (call-interactively #'undo))))
 
-   (general-define-key
-    :keymaps psyclyx-default-minibuffer-maps
-     "C-j"    #'next-line
-     "C-k"    #'previous-line
-     "C-S-j"  #'scroll-up-command
-     "C-S-k"  #'scroll-down-command)
+(general-define-key
+ :keymaps psyclyx-default-minibuffer-maps
+ "C-j"    #'next-line
+ "C-k"    #'previous-line
+ "C-S-j"  #'scroll-up-command
+ "C-S-k"  #'scroll-down-command)
 
-   (general-define-key
-    :keymaps 'read-expression-map
-     "C-j" #'next-line-or-history-element
-     "C-k" #'previous-line-or-history-element)
+(general-define-key
+ :keymaps 'read-expression-map
+ "C-j" #'next-line-or-history-element
+ "C-k" #'previous-line-or-history-element)
 
 
 (general-define-key
@@ -141,9 +156,9 @@
  "r" (cons "Recent files" #'recentf-open-files))
 
 
- (general-define-key
-   :keymaps 'help-map
-   "C-h" "")
+(general-define-key
+ :keymaps 'help-map
+ "C-h" "")
 
 
 (general-define-key
@@ -154,42 +169,42 @@
  "i" (cons "imenu" #'imenu))
 
 
-  (general-define-key
-   :prefix-map 'psyclyx-git-find-prefix-map
-   "f" (cons "Find file" #'magit-find-file)
-   "g" (cons "Find gitconfig file" #'magit-find-git-config-file)
-   "c" (cons "Find commit" #'magit-show-commit))
+(general-define-key
+ :prefix-map 'psyclyx-git-find-prefix-map
+ "f" (cons "Find file" #'magit-find-file)
+ "g" (cons "Find gitconfig file" #'magit-find-git-config-file)
+ "c" (cons "Find commit" #'magit-show-commit))
 
-  (general-define-key
-   :prefix-map 'psyclyx-git-create-prefix-map
-   "r" (cons "Initialize repo" #'magit-init)
-   "R" (cons "Clone repo" #'magit-clone)
-   "c" (cons "Commit" #'magit-commit-create)
-   "f" (cons "Fixup" #'magit-commit-fixup)
-   "b" (cons "Branch" #'magit-branch-and-checkout))
+(general-define-key
+ :prefix-map 'psyclyx-git-create-prefix-map
+ "r" (cons "Initialize repo" #'magit-init)
+ "R" (cons "Clone repo" #'magit-clone)
+ "c" (cons "Commit" #'magit-commit-create)
+ "f" (cons "Fixup" #'magit-commit-fixup)
+ "b" (cons "Branch" #'magit-branch-and-checkout))
 
-  (general-define-key
-   :prefix-map 'psyclyx-git-prefix-map
-   "c" (cons "create" psyclyx-git-create-prefix-map)
-   "f" (cons "find" psyclyx-git-find-prefix-map)
+(general-define-key
+ :prefix-map 'psyclyx-git-prefix-map
+ "c" (cons "create" psyclyx-git-create-prefix-map)
+ "f" (cons "find" psyclyx-git-find-prefix-map)
 
-   "R" (cons "Revert file" #'vc-revert)
-   "r" (cons "Revert hunk at point" #'git-gutter:revert-hunk)
-   "s" (cons "Stage hunk at point" #'git-gutter:stage-hunk)
-   "]" (cons "Jump to next hunk" #'git-gutter:next-hunk)
-   "[" (cons "Jump to previous hunk" #'git-gutter:previous-hunk)
-   "/" (cons "Magit dispatch" #'magit-dispatch)
-   "." (cons "Magit file dispatch" #'magit-dispatch)
-   "b" (cons "Magit switch branch" #'magit-branch-checkout)
-   "g" (cons "Magit status" #'magit-status)
-   "G" (cons "Magit status here" #'magit-status)
-   "D" (cons "Magit file delete" #'magit-file-delete)
-   "B" (cons "Magit blame" #'magit-blame-addition)
-   "C" (cons "Magit clone" #'magit-clone)
-   "F" (cons "Magit fetch" #'magit-fetch)
-   "L" (cons "Magit buffer log" #'magit-log-buffer-file)
-   "S" (cons "Git stage file"  #'magit-stage-file)
-   "U" (cons "Git unstage file" #'magit-unstage-file))
+ "R" (cons "Revert file" #'vc-revert)
+ "r" (cons "Revert hunk at point" #'git-gutter:revert-hunk)
+ "s" (cons "Stage hunk at point" #'git-gutter:stage-hunk)
+ "]" (cons "Jump to next hunk" #'git-gutter:next-hunk)
+ "[" (cons "Jump to previous hunk" #'git-gutter:previous-hunk)
+ "/" (cons "Magit dispatch" #'magit-dispatch)
+ "." (cons "Magit file dispatch" #'magit-dispatch)
+ "b" (cons "Magit switch branch" #'magit-branch-checkout)
+ "g" (cons "Magit status" #'magit-status)
+ "G" (cons "Magit status here" #'magit-status)
+ "D" (cons "Magit file delete" #'magit-file-delete)
+ "B" (cons "Magit blame" #'magit-blame-addition)
+ "C" (cons "Magit clone" #'magit-clone)
+ "F" (cons "Magit fetch" #'magit-fetch)
+ "L" (cons "Magit buffer log" #'magit-log-buffer-file)
+ "S" (cons "Git stage file"  #'magit-stage-file)
+ "U" (cons "Git unstage file" #'magit-unstage-file))
 
 
 (general-define-key

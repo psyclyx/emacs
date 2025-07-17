@@ -3,7 +3,6 @@
 ;;; Code
 
 (use-package magit
-  :ensure t
   :custom
   (magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1)
   (magit-bury-buffer-function #'magit-restore-window-configuration)
@@ -11,7 +10,6 @@
   (magit-no-confirm '(stage-all-changes unstage-all-changes)))
 
 (use-package git-gutter-fringe
-  :ensure t
   :config
   (define-fringe-bitmap 'git-gutter-fr:added [224] nil nil '(center repeated))
   (define-fringe-bitmap 'git-gutter-fr:modified [224] nil nil '(center repeated))
