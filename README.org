@@ -2,3 +2,6 @@
 In-progress rewrite of my emacs configuration.
 
 Makes heavy use of code adapted from https://github.com/doomemacs/doomemacs.
+
+** Project status
+it's a mess, come back soon
