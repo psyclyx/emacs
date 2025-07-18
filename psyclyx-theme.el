@@ -28,6 +28,7 @@
 (modus-themes-load-theme 'modus-vivendi-tinted)
 
 (use-package faces
+  :ensure nil
   :demand t
   :custom
   (face-font-family-alternatives

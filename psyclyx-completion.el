@@ -3,7 +3,6 @@
 ;;; Code
 
 (use-package corfu
-    :defer 0.1
     :custom
     (corfu-auto t)
     (corfu-auto-delay 0.24)

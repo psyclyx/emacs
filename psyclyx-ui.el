@@ -42,7 +42,7 @@
       window-divider-default-right-width 1)
 
 (when (display-graphic-p)
-  (add-hook 'after-init #'window-divider-mode))
+  'window-divider-mode)
 
 (setq split-width-threshold 160
       split-height-threshold nil)
@@ -59,7 +59,7 @@
 
 
 (use-package centaur-tabs
-  :defer t
+  :after evil
   :init
   (setq centaur-tabs-set-icons t
         centaur-tabs-gray-out-icons 'buffer
@@ -71,7 +71,7 @@
         centaur-tabs-cycle-scope 'tabs)
   (if (daemonp)
       (add-hook 'server-after-make-frame-hook #'centaur-tabs-mode)
-    (add-hook 'after-init-hook #'centaur-tabs-mode))
+    #'centaur-tabs-mode)
 
   :config
   (defun psyclyx-tabs-buffer-list ()
@@ -84,19 +84,19 @@
                   (buffer-list))))
   (setq centaur-tabs-buffer-list-function #'psyclyx-tabs-buffer-list)
 
-  (require 'evil)
-  (evil-define-command psyclyx-tab-next-or-goto (index)
-    "Switch to the next tab, or to INDEXth tab if a count is given."
-    (interactive "<c>")
-    (if index
-        (centaur-tabs-select-visible-nth-tab index)
-      (centaur-tabs-forward)))
+  (with-eval-after-load 'evil
+    (evil-define-command psyclyx-tab-next-or-goto (index)
+      "Switch to the next tab, or to INDEXth tab if a count is given."
+      (interactive "<c>")
+      (if index
+          (centaur-tabs-select-visible-nth-tab index)
+        (centaur-tabs-forward)))
 
-  (evil-define-command psyclyx-tab-previous-or-goto (index)
-    "Switch to the previous tab, or to INDEXth tab if a count is given."
-    (interactive "<c>")
-    (if index
-        (centaur-tabs-select-visible-nth-tab index)
-      (centaur-tabs-backward))))
+    (evil-define-command psyclyx-tab-previous-or-goto (index)
+      "Switch to the previous tab, or to INDEXth tab if a count is given."
+      (interactive "<c>")
+      (if index
+          (centaur-tabs-select-visible-nth-tab index)
+        (centaur-tabs-backward)))))
 
 (provide 'psyclyx-ui)

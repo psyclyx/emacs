@@ -54,12 +54,13 @@ or file path may exist now."
 (setq whitespace-line-column nil
       whitespace-style
       '(face indentation tabs tab-mark spaces space-mark newline newline-mark
-        trailing lines-tail))
+             trailing lines-tail))
 
 (use-package ws-butler
   :hook ((prog-mode text-mode) . ws-butler-mode))
 
 (use-package paren
+  :ensure nil
   :hook ((text-mode prog-mode) . show-paren-mode)
   :config
   (setq show-paren-delay 0.1
@@ -76,12 +77,14 @@ or file path may exist now."
 (add-hook 'conf-mode-hook #'display-line-numbers-mode)
 
 (use-package recentf
+  :ensure nil
   :custom
   (recentf-max-saved-items 512)
   :init
   (recentf-mode))
 
-(use-package savehist)
+(use-package savehist
+  :ensure nil)
 
 (setq enable-recursive-minibuffers t)
 (setq echo-keystrokes 0.02)
@@ -90,7 +93,7 @@ or file path may exist now."
 (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
 
 (use-package which-key
-  :hook (after-init . which-key-mode)
+  :ensure nil
   :custom
   (which-key-sort-order #'which-key-key-order-alpha)
   (which-key-sort-uppercase-first nil)
@@ -101,93 +104,42 @@ or file path may exist now."
   (which-key-idle-delay 0.3)
   (which-key-idle-secondary-delay 0.1))
 
-(use-package smartparens
-    :hook (after-init . smartparens-global-mode)
-    :commands
-    sp-pair sp-local-pair sp-with-modes sp-point-in-comment sp-point-in-string
-
-    :custom
-    (sp-highlight-pair-overlay nil)
-    (sp-highlight-wrap-overlay nil)
-    (sp-highlight-wrap-tag-overlay nil)
-    (sp-show-pair-from-inside t)
-    (sp-cancel-autoskip-on-backward-movement nil)
-    (sp-max-prefix-length 25)
-    (sp-max-pair-length 4)
-
-    :config
-    (add-to-list 'sp-lisp-modes 'sly-mrepl-mode)
-    (require 'smartparens-config)
-    (setq sp-pair-overlay-keymap (make-sparse-keymap))
-
-    ;; Silence some harmless but annoying echo-area spam
-    (dolist (key '(:unmatched-expression :no-matching-tag))
-      (setf (alist-get key sp-message-alist) nil))
-
-
-
-    (add-hook 'eval-expression-minibuffer-setup-hook
-              (defun my/init-smartparens-in-eval-expression-h ()
-                (when smartparens-global-mode (smartparens-mode +1))))
-
-
-    (add-hook 'minibuffer-setup-hook
-              (defun my/init-smartparens-in-minibuffer-maybe-h ()
-                (when (and smartparens-global-mode (memq this-command '(evil-ex)))
-                  (smartparens-mode +1))))
-
-    (sp-local-pair '(minibuffer-mode minibuffer-inactive-mode) "'" nil :actions nil)
-    (sp-local-pair '(minibuffer-mode minibuffer-inactive-mode) "`" nil :actions nil))
-
-
 (setq use-short-answers t)
 (define-key y-or-n-p-map " " nil)
 
-
 (setq kill-do-not-save-duplicates t)
 
-
-(use-package general
-  :demand t
-  :after (evil)
-  :config
-  (general-evil-setup))
-
-(defvar evil-want-keybinding nil)
-(defvar evil-want-C-g-bindings t)
-(defvar evil-want-C-i-jump t)
-(defvar evil-want-C-u-scroll t)  ; moved the universal arg to <leader> u
-(defvar evil-want-C-u-delete t)
-(defvar evil-want-C-w-delete t)
-(defvar evil-want-Y-yank-to-eol t)
-(defvar evil-want-abbrev-expand-on-insert-exit nil)
-(defvar evil-respect-visual-line-mode nil)
 (use-package evil
   :preface
-  (setq evil-ex-search-vim-style-regexp t
-        evil-ex-visual-char-range t
-        evil-symbol-word-search t
-        evil-normal-state-cursor 'box
-        evil-emacs-state-cursor  'box
-        evil-insert-state-cursor 'bar
-        evil-visual-state-cursor 'hollow
-        evil-ex-interactive-search-highlight 'selected-window
-        evil-kbd-macro-suppress-motion-error t)
-
+  (setq
+   evil-want-keybinding nil
+   evil-want-C-g-bindings t
+   evil-want-C-i-jump t
+   evil-want-C-u-scroll  t
+   evil-want-C-u-delete  t
+   evil-want-C-w-delete t
+   evil-want-Y-yank-to-eol t
+   evil-ex-search-vim-style-regexp t
+   evil-want-abbrev-expand-on-insert-exit  nil
+   evil-respect-visual-line-mode nil
+   evil-ex-visual-char-range t
+   evil-symbol-word-search t
+   evil-normal-state-cursor 'box
+   evil-emacs-state-cursor  'box
+   evil-insert-state-cursor 'bar
+   evil-visual-state-cursor 'hollow)
   :config
   (evil-mode 1)
   (evil-select-search-module 'evil-search-module 'evil-search))
 
+(use-package general)
 
 (use-package evil-collection
-  :after evil
   :config
   (evil-collection-init))
 
-
 (use-package evil-snipe
   :after evil
-  :defer 0.1
   :config
   (evil-snipe-mode +1)
   (evil-snipe-override-mode +1)
@@ -284,6 +236,41 @@ or file path may exist now."
 
   (add-hook 'kill-buffer-hook #'my/set-jump-h)
   (advice-add #'imenu :around #'my/set-jump-a))
+(use-package smartparens
+  :commands
+  sp-pair sp-local-pair sp-with-modes sp-point-in-comment sp-point-in-string
 
+  :custom
+  (sp-highlight-pair-overlay nil)
+  (sp-highlight-wrap-overlay nil)
+  (sp-highlight-wrap-tag-overlay nil)
+  (sp-show-pair-from-inside t)
+  (sp-cancel-autoskip-on-backward-movement nil)
+  (sp-max-prefix-length 25)
+  (sp-max-pair-length 4)
+
+  :config
+  (smartparens-global-mode)
+  (add-to-list 'sp-lisp-modes 'sly-mrepl-mode)
+  (require 'smartparens-config)
+  (setq sp-pair-overlay-keymap (make-sparse-keymap))
+
+  ;; Silence some harmless but annoying echo-area spam
+  (dolist (key '(:unmatched-expression :no-matching-tag))
+    (setf (alist-get key sp-message-alist) nil))
+
+
+
+  (add-hook 'eval-expression-minibuffer-setup-hook
+            (defun my/init-smartparens-in-eval-expression-h ()
+              (when smartparens-global-mode (smartparens-mode +1))))
+
+  (add-hook 'minibuffer-setup-hook
+            (defun my/init-smartparens-in-minibuffer-maybe-h ()
+              (when (and smartparens-global-mode (memq this-command '(evil-ex)))
+                (smartparens-mode +1))))
+
+  (sp-local-pair '(minibuffer-mode minibuffer-inactive-mode) "'" nil :actions nil)
+  (sp-local-pair '(minibuffer-mode minibuffer-inactive-mode) "`" nil :actions nil))
 
 (provide 'psyclyx-editor)
