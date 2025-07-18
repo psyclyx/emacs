@@ -1,33 +1,33 @@
 ;;; psyclyx.el -*- lexical-binding: t -*-
 ;; Version: 0.1
-;; Package-Requires: (emacs
-;;                    better-jumper
-;;                    cape
-;;                    centaur-tabs
-;;                    consult
-;;                    corfu
-;;                    direnv
-;;                    envrc
-;;                    evil
-;;                    evil-collection
-;;                    evil-easymotion
-;;                    evil-nerd-commenter
-;;                    evil-snipe
-;;                    evil-surround
-;;                    evil-textobj-anyblock
-;;                    exato
-;;                    general
-;;                    git-gutter-fringe
-;;                    magit
-;;                    marginalia
-;;                    mood-line
-;;                    nerd-icons
-;;                    nerd-icons-completion
-;;                    nerd-icons-corfu
-;;                    orderless
-;;                    smartparens
-;;                    vertico
-;;                    ws-butler)
+;; Package-Requires: ((emacs "30.1")
+;;                    (better-jumper "0")
+;;                    (cape "0")
+;;                    (centaur-tabs "0")
+;;                    (consult "0")
+;;                    (corfu "0")
+;;                    (direnv "0")
+;;                    (envrc "0")
+;;                    (evil "0")
+;;                    (evil-collection "0")
+;;                    (evil-easymotion "0")
+;;                    (evil-nerd-commenter "0")
+;;                    (evil-snipe "0")
+;;                    (evil-surround "0")
+;;                    (evil-textobj-anyblock "0")
+;;                    (exato "0")
+;;                    (general "0")
+;;                    (git-gutter-fringe "0")
+;;                    (magit "0")
+;;                    (marginalia "0")
+;;                    (mood-line "0")
+;;                    (nerd-icons "0")
+;;                    (nerd-icons-completion "0")
+;;                    (nerd-icons-corfu "0")
+;;                    (orderless "0")
+;;                    (smartparens "0")
+;;                    (vertico "0")
+;;                    (ws-butler "0"))
 
 (require 'psyclyx-lib)
 (require 'psyclyx-ui)
