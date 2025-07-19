@@ -94,6 +94,7 @@ or file path may exist now."
 
 (use-package which-key
   :ensure nil
+  :demand t
   :custom
   (which-key-sort-order #'which-key-key-order-alpha)
   (which-key-sort-uppercase-first nil)
