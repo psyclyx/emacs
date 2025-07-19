@@ -51,6 +51,7 @@
 
     (defvar psyclyx-corfu-buffer-scanning-size-limit (* 1 1024 1024))
 
+
 (use-package cape
   :after (dabbrev)
   :custom
@@ -196,9 +197,13 @@
   ;; ...otherwise find-file gets different highlighting than other commands
   (set-face-attribute 'completions-first-difference nil :inherit nil))
 
-
 (use-package consult
   :preface
+  :init
+  (advice-add #'register-preview :override #'consult-register-window)
+  (setq register-preview-delay 0.5)
+
+  :config
   (general-def
     [remap bookmark-jump]                 #'consult-bookmark
     [remap evil-show-marks]               #'consult-mark
@@ -214,14 +219,10 @@
     [remap switch-to-buffer-other-window] #'consult-buffer-other-window
     [remap switch-to-buffer-other-frame]  #'consult-buffer-other-frame
     [remap yank-pop]                      #'consult-yank-pop)
-  :init
-  (advice-add #'register-preview :override #'consult-register-window)
-  (setq register-preview-delay 0.5)
 
   (setq xref-show-xrefs-function #'consult-xref
         xref-show-definitions-function #'consult-xref)
 
-  :config
   (consult-customize
    consult-theme :preview-key '(:debounce 0.1 any)
    consult-ripgrep consult-git-grep consult-grep consult-man

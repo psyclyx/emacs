@@ -23,11 +23,12 @@
         let
           pkgs = pkgsFor "x86_64-linux";
         in
-        {
-          default = {
+        rec {
             emacs = pkgs.callPackage ./package.nix { emacs = pkgs.emacs-unstable-pgtk; };
-            config = ./config;
-          };
+            emacsConfig = ./config;
+            emacsWrapped = pkgs.writeShellScriptBin "emacs-wrapped" ''
+              ${emacs}/bin/emacs --init-directory=${emacsConfig}
+            '';
         };
     };
 }

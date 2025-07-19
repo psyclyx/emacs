@@ -77,14 +77,18 @@ or file path may exist now."
 (add-hook 'conf-mode-hook #'display-line-numbers-mode)
 
 (use-package recentf
-  :ensure nil
   :custom
+  (recentf-save-file (concat psyclyx-cache-dir "recentf"))
   (recentf-max-saved-items 512)
-  :init
-  (recentf-mode))
+  :config
+  (recentf-mode 1)
+  (add-to-list 'recentf-exclude
+               (concat "^" (regexp-quote (or (getenv "XDG_RUNTIME_DIR")
+                                             "/run"))))
+  (add-to-list 'recentf-exclude (concat "^/nix/store" ))
+  (add-to-list 'recentf-filename-handlers #'substring-no-properties))
 
-(use-package savehist
-  :ensure nil)
+(use-package savehist)
 
 (setq enable-recursive-minibuffers t)
 (setq echo-keystrokes 0.02)
@@ -93,8 +97,7 @@ or file path may exist now."
 (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
 
 (use-package which-key
-  :ensure nil
-  :demand t
+  :hook (after-init)
   :custom
   (which-key-sort-order #'which-key-key-order-alpha)
   (which-key-sort-uppercase-first nil)
@@ -238,8 +241,7 @@ or file path may exist now."
   (add-hook 'kill-buffer-hook #'my/set-jump-h)
   (advice-add #'imenu :around #'my/set-jump-a))
 (use-package smartparens
-  :commands
-  sp-pair sp-local-pair sp-with-modes sp-point-in-comment sp-point-in-string
+  :hook (after-init . smartparens-global-mode)
 
   :custom
   (sp-highlight-pair-overlay nil)

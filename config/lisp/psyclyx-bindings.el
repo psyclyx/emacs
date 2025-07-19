@@ -1,12 +1,8 @@
 ;;; psyclyx-bindings.el -*- lexical-binding: t -*-
 ;;; Commentary:
 ;;; Code
-(defvar psyclyx-leader-key "SPC")
-(defvar psyclyx-leader-alt-key "M-SPC")
 (defvar psyclyx-leader-key-states '(normal visual motion))
 (defvar psyclyx-leader-alt-key-states '(emacs insert))
-(defvar psyclyx-localleader-key "SPC m")
-(defvar psyclyx-localleader-alt-key "M-SPC m")
 
 (defvar psyclyx-default-minibuffer-maps
   '(minibuffer-local-map
@@ -17,23 +13,19 @@
     read-expression-map))
 
 
-(defvar psyclyx-leader-map (make-sparse-keymap))
-(defvar psyclyx-localleader-map (make-sparse-keymap))
+(general-create-definer psyclyx-leader-def
+   :keymaps 'override
+   :states psyclyx-leader-key-states
+   :prefix psyclyx-leader-key
+   :non-normal-prefix psyclyx-leader-alt-key)
 
-(general-define-key
- :keymaps 'general-override-mode-map
- :states psyclyx-leader-key-states
- psyclyx-leader-key psyclyx-leader-map
- psyclyx-localleader-key psyclyx-localleader-map)
-
-(general-define-key
- :keymaps 'general-override-mode-map
- :states psyclyx-leader-alt-key-states
- psyclyx-leader-alt-key psyclyx-leader-map
- psyclyx-localleader-alt-key psyclyx-localleader-map)
+(general-create-definer psyclyx-localleader-def
+  :keymaps 'override
+  :states psyclyx-leader-key-states
+  :prefix psyclyx-localleader-key
+  :non-normal-prefix psyclyx-localleader-key)
 
 (general-override-mode +1)
-
 
 (general-define-key
  :keymaps 'corfu-mode-map
@@ -207,9 +199,7 @@
  "U" (cons "Git unstage file" #'magit-unstage-file))
 
 
-(general-define-key
- :states nil
- :keymaps 'psyclyx-leader-map
+(psyclyx-leader-def
  "b" (cons "buffer" psyclyx-buffer-prefix-map)
  "f" (cons "file" psyclyx-file-prefix-map)
  "g" (cons "git" psyclyx-git-prefix-map)
@@ -218,9 +208,7 @@
  "w" (cons "window" #'evil-window-map))
 
 
-(general-define-key
- :states nil
- :keymaps 'psyclyx-leader-map
+(psyclyx-leader-def
  "'" (cons "Repeat last search" #'vertico-repeat)
  "u" (cons "Universal argument" #'universal-argument)
  ";" (cons "Eval expression" #'pp-eval-expression)

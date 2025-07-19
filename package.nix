@@ -25,6 +25,7 @@ let
       nerd-icons
       nerd-icons-completion
       nerd-icons-corfu
+      nix-mode
       orderless
       smartparens
       vertico

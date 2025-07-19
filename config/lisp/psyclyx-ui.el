@@ -6,7 +6,8 @@
 (tool-bar-mode -1)
 (scroll-bar-mode -1)
 (tooltip-mode -1)
-(setq initial-buffer-choice t)
+
+(setq inhibit-splash-screen t)
 
 (defun psyclyx-flash-modeline ()
   (invert-face 'mode-line)
@@ -42,61 +43,12 @@
       window-divider-default-right-width 1)
 
 (when (display-graphic-p)
-  'window-divider-mode)
+  (window-divider-mode 0))
 
 (setq split-width-threshold 160
       split-height-threshold nil)
 
 (when (bound-and-true-p tooltip-mode)
   (tooltip-mode -1))
-
-(use-package mood-line
-  :custom
-  (mood-line-glyph-alist mood-line-glyphs-unicode)
-  (mood-line-format mood-line-format-default-extended)
-  :config
-  (mood-line-mode))
-
-
-(use-package centaur-tabs
-  :after evil
-  :init
-  (setq centaur-tabs-set-icons t
-        centaur-tabs-gray-out-icons 'buffer
-        centaur-tabs-set-bar 'left
-        centaur-tabs-set-modified-marker t
-        centaur-tabs-close-button "✕"
-        centaur-tabs-modified-marker "•"
-        centaur-tabs-icon-type 'nerd-icons
-        centaur-tabs-cycle-scope 'tabs)
-  (if (daemonp)
-      (add-hook 'server-after-make-frame-hook #'centaur-tabs-mode)
-    #'centaur-tabs-mode)
-
-  :config
-  (defun psyclyx-tabs-buffer-list ()
-    (seq-filter (lambda (b)
-                  (when (buffer-live-p b)
-                    (or (eq (current-buffer) b)
-                        (not (psyclyx-temp-buffer-p b)))))
-                (if (bound-and-true-p persp-mode)
-                    (persp-buffer-list)
-                  (buffer-list))))
-  (setq centaur-tabs-buffer-list-function #'psyclyx-tabs-buffer-list)
-
-  (with-eval-after-load 'evil
-    (evil-define-command psyclyx-tab-next-or-goto (index)
-      "Switch to the next tab, or to INDEXth tab if a count is given."
-      (interactive "<c>")
-      (if index
-          (centaur-tabs-select-visible-nth-tab index)
-        (centaur-tabs-forward)))
-
-    (evil-define-command psyclyx-tab-previous-or-goto (index)
-      "Switch to the previous tab, or to INDEXth tab if a count is given."
-      (interactive "<c>")
-      (if index
-          (centaur-tabs-select-visible-nth-tab index)
-        (centaur-tabs-backward)))))
 
 (provide 'psyclyx-ui)
