@@ -30,10 +30,10 @@
 (general-define-key
  :keymaps 'corfu-mode-map
  :states '(insert)
- "C-@" 'completion-at-point
- "C-SPC" 'completion-at-point
- "C-n" 'psyclyx-corfu--dabbrev-or-next
- "C-p" 'psyclyx-corfu--dabbrev-or-last)
+ "C-@" #'completion-at-point
+ "C-SPC" #'completion-at-point
+ "C-n" #'psyclyx-corfu--dabbrev-or-next
+ "C-p" #'psyclyx-corfu--dabbrev-or-last)
 (general-define-key
  :keymaps 'corfu-mode-map
  :states '(normal)
@@ -50,6 +50,7 @@
  :keymaps 'corfu-map
  :states '(insert)
  "C-SPC" #'psyclyx-corfu--smart-sep-toggle-escape
+ "C-S-s" #'psyclyx-corfu--move-to-minibuffer
  "DEL" #'corfu-reset)
 (general-define-key
  :keymaps 'corfu-map
