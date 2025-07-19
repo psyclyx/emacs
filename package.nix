@@ -6,6 +6,7 @@ let
       cape
       centaur-tabs
       consult
+      consult-eglot
       corfu
       direnv
       envrc

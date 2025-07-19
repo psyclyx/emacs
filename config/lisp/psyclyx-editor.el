@@ -240,6 +240,7 @@ or file path may exist now."
 
   (add-hook 'kill-buffer-hook #'my/set-jump-h)
   (advice-add #'imenu :around #'my/set-jump-a))
+
 (use-package smartparens
   :hook (after-init . smartparens-global-mode)
 

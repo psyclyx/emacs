@@ -124,9 +124,11 @@
 
 
 (general-define-key
- :states 'normal
+ :states '(normal visual)
  "gt" #'psyclyx-tab-next-or-goto
- "gT" #'psyclyx-tab-previous-or-goto)
+ "gT" #'psyclyx-tab-previous-or-goto
+ "gd" #'xref-find-definitions
+ "gD" #'xref-find-references)
 
 
 (general-define-key
@@ -138,6 +140,16 @@
  "m" (cons "Set bookmark" #'bookmark-set)
  "M" (cons "Delete bookmark" #'bookmark-delete)
  "r" (cons "Revert buffer" #'revert-buffer))
+
+(general-define-key
+ :prefix-map 'psyclyx-code-prefix-map
+ "a" (cons "LSP Execute code action" #'eglot-code-actions)
+ "r" (cons "LSP Rename" #'eglot-rename)
+ "j" (cons "LSP Find declaration" #'eglot-find-declaration)
+ "c" (cons "Compile" #'compile)
+ "C" (cons "Compile" #'recompile)
+ "d" (cons "Jump to definition" #'xref-find-definitions)
+ "D" (cons "Jump to references" #'xref-find-references))
 
 
 (general-define-key
@@ -200,7 +212,8 @@
 
 
 (psyclyx-leader-def
- "b" (cons "buffer" psyclyx-buffer-prefix-map)
+  "b" (cons "buffer" psyclyx-buffer-prefix-map)
+  "c" (cons "code" psyclyx-code-prefix-map)
  "f" (cons "file" psyclyx-file-prefix-map)
  "g" (cons "git" psyclyx-git-prefix-map)
  "h" (cons "help" help-map)

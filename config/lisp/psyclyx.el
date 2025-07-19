@@ -8,6 +8,7 @@
 (require 'psyclyx-completion)
 (require 'psyclyx-vc)
 (require 'psyclyx-theme)
+(require 'psyclyx-lsp)
 (require 'psyclyx-lang-nix)
 
 (provide 'psyclyx)
