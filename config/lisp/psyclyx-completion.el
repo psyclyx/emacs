@@ -161,7 +161,7 @@
           (cons style (substring pattern 0 -1))))))))
 
 
-(defun my/vertico--orderless-disambiguation-dispatch (pattern _index _total)
+(defun psyclyx-vertico--orderless-disambiguation-dispatch (pattern _index _total)
   (when (char-equal (aref pattern (1- (length pattern))) ?$)
     `(orderless-regexp . ,(concat (substring pattern 0 -1) "[\x200000-\x300000]*$"))))
 
@@ -169,11 +169,11 @@
 (use-package orderless
   :ensure t
   :config
-  (defun my/vertico--company-capf--candidates-a (fn &rest args)
+  (defun psyclyx-vertico--company-capf--candidates-a (fn &rest args)
     (let ((orderless-match-faces [completions-common-part])
           (completion-styles '(basic partial-completion orderless)))
       (apply fn args)))
-  (advice-add 'company-capf--candidates :around #'my/vertico--company-capf--candidates-a)
+  (advice-add 'company-capf--candidates :around #'psyclyx-vertico--company-capf--candidates-a)
 
   (setq orderless-affix-dispatch-alist
         '((?! . orderless-without-literal)
@@ -184,8 +184,8 @@
           (?^ . orderless-literal-prefix)
           (?~ . orderless-flex))
           orderless-style-dispatchers
-          '(my/vertico--orderless-dispatch
-            my/vertico--orderless-disambiguation-dispatch))
+          '(psyclyx-vertico--orderless-dispatch
+            psyclyx-vertico--orderless-disambiguation-dispatch))
 
   (setq completion-styles '(orderless basic)
         completion-category-defaults nil
@@ -198,8 +198,6 @@
 
 
 (use-package consult
-  :after (evil vertico)
-
   :preface
   (general-def
     [remap bookmark-jump]                 #'consult-bookmark
@@ -260,5 +258,6 @@
   (marginalia-mode)
   (add-to-list 'marginalia-prompt-categories '("\\<face\\>" . face))
   (add-to-list 'marginalia-prompt-categories '("\\<var\\>" . variable)))
+
 
 (provide 'psyclyx-completion)
