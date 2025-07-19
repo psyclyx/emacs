@@ -2,54 +2,113 @@
 ;;; Commentary:
 ;;; Code
 
+(defun psyclyx-corfu--move-to-minibuffer ()
+  (interactive)
+  (pcase completion-in-region--data
+    (`(,beg ,end ,table ,pred ,extras)
+     (let ((completion-extra-properties extras)
+           completion-cycle-threshold completion-cycling)
+       (consult-completion-in-region beg end table pred)))))
+
+(defun psyclyx-corfu--smart-sep-toggle-escape ()
+  "Insert `corfu-separator' or toggle escape if it's already there."
+  (interactive)
+  (cond ((and (char-equal (char-before) corfu-separator)
+              (char-equal (char-before (1- (point))) ?\\))
+         (save-excursion (delete-char -2)))
+        ((char-equal (char-before) corfu-separator)
+         (save-excursion (backward-char 1)
+                         (insert-char ?\\)))
+        (t (call-interactively #'corfu-insert-separator))))
+
+(defun psyclyx-corfu--dabbrev-this-buffer ()
+  "Like `cape-dabbrev', but only scans current buffer."
+  (interactive)
+  (require 'cape)
+  (let ((cape-dabbrev-check-other-buffers nil))
+    (cape-dabbrev t)))
+
+(defun psyclyx-corfu--dabbrev-or-next (&optional arg)
+  "Trigger corfu popup and select the first candidate.
+
+Intended to mimic `evil-complete-next', unless the popup is already open."
+  (interactive "p")
+  (if corfu--candidates
+      (corfu-next arg)
+    (require 'cape)
+    (let ((cape-dabbrev-check-other-buffers
+           (bound-and-true-p evil-complete-all-buffers)))
+      (cape-dabbrev t)
+      (when (> corfu--total 0)
+        (corfu--goto (or arg 0))))))
+
+(defun psyclyx-corfu--dabbrev-or-last (&optional arg)
+  "Trigger corfu popup and select the first candidate.
+
+Intended to mimic `evil-complete-previous', unless the popup is already open."
+  (interactive "p")
+  (if corfu--candidates
+      (corfu-previous arg)
+    (require 'cape)
+    (let ((cape-dabbrev-check-other-buffers
+           (bound-and-true-p evil-complete-all-buffers)))
+      (cape-dabbrev t)
+      (when (> corfu--total 0)
+        (corfu--goto (- corfu--total (or arg 1)))))))
+
 (use-package corfu
-    :custom
-    (corfu-auto t)
-    (corfu-auto-delay 0.24)
-    (corfu-auto-prefix 2)
-    (global-corfu-modes '((not erc-mode
-                               help-mode
-                               vterm-mode)
-                          t))
-    (corfu-cycle t)
-    (corfu-preselect 'prompt)
-    (corfu-count 16)
-    (corfu-max-width 120)
-    (corfu-on-exact-match nil)
-    (corfu-quit-at-boundary 'separator)
-    (corfu-quit-no-match corfu-quit-at-boundary)
-    (tab-always-indent 'complete)
-    :config
-    (global-corfu-mode)
-    (add-to-list 'completion-category-overrides `(lsp-capf (styles ,@completion-styles)))
-    (add-hook 'evil-insert-state-exit-hook #'corfu-quit)
+  :custom
+  (corfu-auto t)
+  (corfu-auto-delay 0.24)
+  (corfu-auto-prefix 2)
+  (global-corfu-modes '((not erc-mode
+                             help-mode
+                             vterm-mode)
+                        t))
+  (corfu-cycle t)
+  (corfu-preselect 'prompt)
+  (corfu-count 16)
+  (corfu-max-width 120)
+  (corfu-on-exact-match nil)
+  (corfu-quit-at-boundary 'separator)
+  (corfu-quit-no-match corfu-quit-at-boundary)
+  (tab-always-indent 'complete)
+  :config
+  (global-corfu-mode)
 
-    (defun psyclyx-corfu--smart-sep-toggle-escape ()
-      "Insert `corfu-separator' or toggle escape if it's already there."
-      (interactive)
-      (cond ((and (char-equal (char-before) corfu-separator)
-                  (char-equal (char-before (1- (point))) ?\\))
-             (save-excursion (delete-char -2)))
-            ((char-equal (char-before) corfu-separator)
-             (save-excursion (backward-char 1)
-                             (insert-char ?\\)))
-            (t (call-interactively #'corfu-insert-separator))))
-
-    (add-to-list 'corfu-continue-commands #'psyclyx-corfu--smart-sep-toggle-escape)
-
-    (defun psyclyx-corfu--other-completion-active-p ()
-      (or (bound-and-true-p vertico--input)
-          (where-is-internal 'minibuffer-complete (list (current-local-map)))))
-
-    (defun psyclyx-corfu--enable-in-minibuffer-p ()
-      (and (where-is-internal #'completion-at-point
-                              (list (current-local-map)))
-           (not (psyclyx-corfu--other-completion-active-p))))
-
-    (setq global-corfu-minibuffer #'psyclyx-corfu--enable-in-minibuffer-p))
+  (add-to-list 'corfu-auto-commands #'lispy-colon)
+  (add-to-list 'corfu-continue-commands #'psyclyx-corfu--move-to-minibuffer)
+  (add-to-list 'corfu-continue-commands #'psyclyx-corfu--smart-sep-toggle-escape)
+  (add-to-list 'completion-category-overrides `(lsp-capf (styles ,@completion-styles)))
+  (add-hook 'evil-insert-state-exit-hook #'corfu-quit)
 
 
-    (defvar psyclyx-corfu-buffer-scanning-size-limit (* 1 1024 1024))
+  (add-to-list 'corfu-continue-commands #'psyclyx-corfu--smart-sep-toggle-escape)
+
+  (defun psyclyx-corfu--other-completion-active-p ()
+    (or (bound-and-true-p vertico--input)
+        (where-is-internal 'minibuffer-complete (list (current-local-map)))))
+
+  (defun psyclyx-corfu--enable-in-minibuffer-p ()
+    (and (where-is-internal #'completion-at-point
+                            (list (current-local-map)))
+         (not (psyclyx-corfu--other-completion-active-p))))
+
+  (setq global-corfu-minibuffer #'psyclyx-corfu--enable-in-minibuffer-p))
+
+
+(defvar psyclyx-corfu-buffer-scanning-size-limit (* 1 1024 1024))
+
+(use-package corfu-history
+  :hook corfu-mode
+  :config
+  (with-eval-after-load 'savehist
+    (add-to-list 'savehist-additional-variables 'corfu-history)))
+
+(use-package corfu-popupinfo
+  :hook corfu-mode
+  :config
+  (setq corfu-popupinfo-delay '(0.24 . 0.6)))
 
 
 (use-package cape
@@ -68,12 +127,12 @@
   (defun psyclyx-corfu-add-cape-dabbrev-h ()
     (add-hook 'completion-at-point-functions #'cape-dabbrev 20 t))
   (psyclyx-add-hooks '(prog-mode-hook
-                  text-mode-hook
-                  conf-mode-hook
-                  comint-mode-hook
-                  minibuffer-setup-hook
-                  eshell-mode-hook)
-                #'psyclyx-corfu-add-cape-dabbrev-h)
+                       text-mode-hook
+                       conf-mode-hook
+                       comint-mode-hook
+                       minibuffer-setup-hook
+                       eshell-mode-hook)
+                     #'psyclyx-corfu-add-cape-dabbrev-h)
 
   (defun psyclyx-corfu-dabbrev-friend-buffer-p (other-buffer)
     (< (buffer-size other-buffer) +corfu-buffer-scanning-size-limit))
@@ -184,9 +243,9 @@
           (?= . orderless-literal)
           (?^ . orderless-literal-prefix)
           (?~ . orderless-flex))
-          orderless-style-dispatchers
-          '(psyclyx-vertico--orderless-dispatch
-            psyclyx-vertico--orderless-disambiguation-dispatch))
+        orderless-style-dispatchers
+        '(psyclyx-vertico--orderless-dispatch
+          psyclyx-vertico--orderless-disambiguation-dispatch))
 
   (setq completion-styles '(orderless basic)
         completion-category-defaults nil

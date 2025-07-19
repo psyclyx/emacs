@@ -51,7 +51,6 @@
  :states '(insert)
  "C-SPC" #'psyclyx-corfu--smart-sep-toggle-escape
  "DEL" #'corfu-reset)
-
 (general-define-key
  :keymaps 'corfu-map
  "TAB" #'corfu-next
