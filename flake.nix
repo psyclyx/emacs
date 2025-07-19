@@ -24,7 +24,10 @@
           pkgs = pkgsFor "x86_64-linux";
         in
         {
-          default = pkgs.callPackage ./package.nix { emacs = pkgs.emacs-unstable-pgtk; };
+          default = {
+            emacs = pkgs.callPackage ./package.nix { emacs = pkgs.emacs-unstable-pgtk; };
+            config = ./config;
+          };
         };
     };
 }
