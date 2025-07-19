@@ -160,6 +160,43 @@
                    ((not (char-equal (aref pattern (max 0 (- len 2))) ?\\))))
           (cons style (substring pattern 0 -1))))))))
 
+
+(defun my/vertico--orderless-disambiguation-dispatch (pattern _index _total)
+  (when (char-equal (aref pattern (1- (length pattern))) ?$)
+    `(orderless-regexp . ,(concat (substring pattern 0 -1) "[\x200000-\x300000]*$"))))
+
+
+(use-package orderless
+  :ensure t
+  :config
+  (defun my/vertico--company-capf--candidates-a (fn &rest args)
+    (let ((orderless-match-faces [completions-common-part])
+          (completion-styles '(basic partial-completion orderless)))
+      (apply fn args)))
+  (advice-add 'company-capf--candidates :around #'my/vertico--company-capf--candidates-a)
+
+  (setq orderless-affix-dispatch-alist
+        '((?! . orderless-without-literal)
+          (?& . orderless-annotation)
+          (?% . char-fold-to-regexp)
+          (?` . orderless-initialism)
+          (?= . orderless-literal)
+          (?^ . orderless-literal-prefix)
+          (?~ . orderless-flex))
+          orderless-style-dispatchers
+          '(my/vertico--orderless-dispatch
+            my/vertico--orderless-disambiguation-dispatch))
+
+  (setq completion-styles '(orderless basic)
+        completion-category-defaults nil
+        ;; note that despite override in the name orderless can still be used in
+        ;; find-file etc.
+        completion-category-overrides '((file (styles orderless partial-completion)))
+        orderless-component-separator #'orderless-escapable-split-on-space)
+  ;; ...otherwise find-file gets different highlighting than other commands
+  (set-face-attribute 'completions-first-difference nil :inherit nil))
+
+
 (use-package consult
   :after (evil vertico)
 
@@ -217,11 +254,10 @@
 
 
 (use-package marginalia
-  :init
-  (marginalia-mode)
   :custom
   (marginalia-max-relative-age 0)
   :config
+  (marginalia-mode)
   (add-to-list 'marginalia-prompt-categories '("\\<face\\>" . face))
   (add-to-list 'marginalia-prompt-categories '("\\<var\\>" . variable)))
 
