@@ -2,6 +2,7 @@
 
 (require 'psyclyx-config)
 (require 'psyclyx-lib)
+(require 'psyclyx-project)
 (require 'psyclyx-bindings)
 (require 'psyclyx-ui)
 (require 'psyclyx-editor)

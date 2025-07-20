@@ -1,4 +1,7 @@
-(defvar psyclyx-cache-dir "~/.local/state/emacs")
+;;; -*- lexical-binding: t; -*-
+(defvar psyclyx-cache-dir "~/.cache/emacs")
+(defvar psyclyx-state-dir "~/.local/state/emacs")
+
 (defvar psyclyx-leader-key "SPC")
 (defvar psyclyx-leader-alt-key "M-SPC")
 (defvar psyclyx-localleader-key "SPC m")

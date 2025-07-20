@@ -78,7 +78,7 @@ or file path may exist now."
 
 (use-package recentf
   :custom
-  (recentf-save-file (concat psyclyx-cache-dir "recentf"))
+  (recentf-save-file (concat psyclyx-state-dir "recentf"))
   (recentf-max-saved-items 512)
   :config
   (recentf-mode 1)

@@ -217,6 +217,7 @@
  "f" (cons "file" psyclyx-file-prefix-map)
  "g" (cons "git" psyclyx-git-prefix-map)
  "h" (cons "help" help-map)
+ "p" (cons "project" psyclyx-project-prefix-map)
  "s" (cons "search" psyclyx-search-prefix-map)
  "w" (cons "window" #'evil-window-map))
 
