@@ -125,8 +125,8 @@
 
 (general-define-key
  :states '(normal visual)
- "gt" #'psyclyx-tab-next-or-goto
- "gT" #'psyclyx-tab-previous-or-goto
+ "gt" #'tab-next
+ "gT" #'tab-previous
  "gd" #'xref-find-definitions
  "gD" #'xref-find-references)
 

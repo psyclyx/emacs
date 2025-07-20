@@ -22,7 +22,6 @@ let
       git-gutter-fringe
       magit
       marginalia
-      mood-line
       nerd-icons
       nerd-icons-completion
       nerd-icons-corfu
