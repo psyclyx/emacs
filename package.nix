@@ -28,8 +28,9 @@ let
       nix-mode
       orderless
       smartparens
+      treesit-grammars.with-all-grammars
       vertico
       ws-butler
     ];
 in
-(emacsPackagesFor emacs).emacsWithPackages deps
+(emacsPackagesFor (emacs.override { withTreeSitter = true; })).emacsWithPackages deps
