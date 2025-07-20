@@ -4,7 +4,7 @@
 
 (use-package project
   :init
-  (setq project-list-file (concat psyclyx-state-dir "projects")
+  (setq project-list-file (file-name-concat psyclyx-state-dir "projects")
         project-vc-merge-submodules nil)
   :config
 
