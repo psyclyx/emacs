@@ -31,6 +31,7 @@ let
       treesit-grammars.with-all-grammars
       vertico
       ws-butler
+      zig-mode
     ];
 in
 (emacsPackagesFor (emacs.override { withTreeSitter = true; })).emacsWithPackages deps
