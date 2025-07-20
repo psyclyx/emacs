@@ -172,12 +172,12 @@
  "p" (cons "Search project" #'consult-ripgrep)
  "i" (cons "imenu" #'imenu))
 
-
 (general-define-key
  :prefix-map 'psyclyx-git-find-prefix-map
  "f" (cons "Find file" #'magit-find-file)
  "g" (cons "Find gitconfig file" #'magit-find-git-config-file)
  "c" (cons "Find commit" #'magit-show-commit))
+
 
 (general-define-key
  :prefix-map 'psyclyx-git-create-prefix-map
@@ -191,7 +191,6 @@
  :prefix-map 'psyclyx-git-prefix-map
  "c" (cons "create" psyclyx-git-create-prefix-map)
  "f" (cons "find" psyclyx-git-find-prefix-map)
-
  "R" (cons "Revert file" #'vc-revert)
  "r" (cons "Revert hunk at point" #'git-gutter:revert-hunk)
  "s" (cons "Stage hunk at point" #'git-gutter:stage-hunk)
@@ -210,6 +209,9 @@
  "S" (cons "Git stage file"  #'magit-stage-file)
  "U" (cons "Git unstage file" #'magit-unstage-file))
 
+(general-define-key
+ :prefix-map 'psyclyx-tool-map
+ "e" (cons "envrc" envrc-command-map))
 
 (psyclyx-leader-def
   "b" (cons "buffer" psyclyx-buffer-prefix-map)
@@ -219,7 +221,8 @@
  "h" (cons "help" help-map)
  "p" (cons "project" psyclyx-project-prefix-map)
  "s" (cons "search" psyclyx-search-prefix-map)
- "w" (cons "window" #'evil-window-map))
+ "w" (cons "window" #'evil-window-map)
+ "T" (cons "tool" psyclyx-tool-map))
 
 
 (psyclyx-leader-def

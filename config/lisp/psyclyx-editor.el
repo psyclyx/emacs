@@ -99,6 +99,7 @@ or file path may exist now."
 (use-package which-key
   :hook (after-init)
   :custom
+  (which-key-allow-multiple-replacements t)
   (which-key-sort-order #'which-key-key-order-alpha)
   (which-key-sort-uppercase-first nil)
   (which-key-add-column-padding 1)

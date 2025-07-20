@@ -8,7 +8,6 @@ let
       consult
       consult-eglot
       corfu
-      direnv
       envrc
       evil
       evil-collection
