@@ -42,6 +42,10 @@
   (let ((marker-file (expand-file-name psyclyx-project-marker dir)))
     (make-empty-file marker-file)))
 
+(defun psyclyx-consult-switch-project ()
+  (interactive)
+  (consult-buffer '(consult--source-project-root)))
+
 (general-define-key
  :prefix-map 'psyclyx-project-prefix-map
  "." (cons "Browse project" #'project-dired)
@@ -54,7 +58,7 @@
  "d" (cons "Forget project" #'project-forget-project)
  "D" (cons "Forget projects in dir" #'project-forget-projects-under)
  "e" (cons "Edit project .dir-locals" #'psyclyx-project-edit-dir-locals)
- "p" (cons "Switch project" #'project-switch-project)
+ "p" (cons "Switch project" #'psyclyx-consult-switch-project)
  "Z" (cons "Forget zombie projects" #'project-forget-zombie-projects)
  "f" (cons "Find file in project" #'project-find-file)
  "F" (cons "Find file in other project" #'psyclyx-project-find-file-in-other-project))
