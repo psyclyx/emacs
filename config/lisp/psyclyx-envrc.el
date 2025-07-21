@@ -2,5 +2,10 @@
 
 
 (use-package envrc
-  :defines envrc-command-map
-  :hook (after-init . envrc-global-mode))
+  :config
+  (envrc-global-mode)
+  (general-define-key
+   :keymaps 'psyclyx-tool-map
+   "e" (cons "envrc" envrc-command-map)))
+
+(provide 'psyclyx-envrc)

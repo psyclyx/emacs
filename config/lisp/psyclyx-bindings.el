@@ -210,8 +210,7 @@
  "U" (cons "Git unstage file" #'magit-unstage-file))
 
 (general-define-key
- :prefix-map 'psyclyx-tool-map
- "e" (cons "envrc" envrc-command-map))
+ :prefix-map 'psyclyx-tool-map)
 
 (psyclyx-leader-def
   "b" (cons "buffer" psyclyx-buffer-prefix-map)
