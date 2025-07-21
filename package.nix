@@ -2,6 +2,7 @@
 let
   deps =
     epkgs: with epkgs; [
+      apheleia
       better-jumper
       cape
       centaur-tabs

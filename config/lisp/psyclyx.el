@@ -14,5 +14,6 @@
 (require 'psyclyx-treesit)
 (require 'psyclyx-lsp)
 (require 'psyclyx-lang-nix)
+(require 'psyclyx-format)
 
 (provide 'psyclyx)
