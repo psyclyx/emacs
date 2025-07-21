@@ -56,4 +56,4 @@
 
 ;;;; Provide
 (provide 'athame-ui)
-;;; athame.el ends here
+;;; athame-ui.el ends here
