@@ -1,8 +1,9 @@
-;;; psyclyx-completion.el -*- lexical-binding: t -*-
+;;; athame-completion.el -*- lexical-binding: t -*-
 ;;; Commentary:
 ;;; Code
 
-(defun psyclyx-corfu--move-to-minibuffer ()
+;;;; Corfu
+(defun athame-corfu--move-to-minibuffer ()
   (interactive)
   (pcase completion-in-region--data
     (`(,beg ,end ,table ,pred ,extras)
@@ -10,7 +11,7 @@
            completion-cycle-threshold completion-cycling)
        (consult-completion-in-region beg end table pred)))))
 
-(defun psyclyx-corfu--smart-sep-toggle-escape ()
+(defun athame-corfu--smart-sep-toggle-escape ()
   "Insert `corfu-separator' or toggle escape if it's already there."
   (interactive)
   (cond ((and (char-equal (char-before) corfu-separator)
@@ -21,14 +22,14 @@
                          (insert-char ?\\)))
         (t (call-interactively #'corfu-insert-separator))))
 
-(defun psyclyx-corfu--dabbrev-this-buffer ()
+(defun athame-corfu--dabbrev-this-buffer ()
   "Like `cape-dabbrev', but only scans current buffer."
   (interactive)
   (require 'cape)
   (let ((cape-dabbrev-check-other-buffers nil))
     (cape-dabbrev t)))
 
-(defun psyclyx-corfu--dabbrev-or-next (&optional arg)
+(defun athame-corfu--dabbrev-or-next (&optional arg)
   "Trigger corfu popup and select the first candidate.
 
 Intended to mimic `evil-complete-next', unless the popup is already open."
@@ -42,7 +43,7 @@ Intended to mimic `evil-complete-next', unless the popup is already open."
       (when (> corfu--total 0)
         (corfu--goto (or arg 0))))))
 
-(defun psyclyx-corfu--dabbrev-or-last (&optional arg)
+(defun athame-corfu--dabbrev-or-last (&optional arg)
   "Trigger corfu popup and select the first candidate.
 
 Intended to mimic `evil-complete-previous', unless the popup is already open."
@@ -77,27 +78,27 @@ Intended to mimic `evil-complete-previous', unless the popup is already open."
   (global-corfu-mode)
 
   (add-to-list 'corfu-auto-commands #'lispy-colon)
-  (add-to-list 'corfu-continue-commands #'psyclyx-corfu--move-to-minibuffer)
-  (add-to-list 'corfu-continue-commands #'psyclyx-corfu--smart-sep-toggle-escape)
+  (add-to-list 'corfu-continue-commands #'athame-corfu--move-to-minibuffer)
+  (add-to-list 'corfu-continue-commands #'athame-corfu--smart-sep-toggle-escape)
   (add-to-list 'completion-category-overrides `(lsp-capf (styles ,@completion-styles)))
   (add-hook 'evil-insert-state-exit-hook #'corfu-quit)
 
 
-  (add-to-list 'corfu-continue-commands #'psyclyx-corfu--smart-sep-toggle-escape)
+  (add-to-list 'corfu-continue-commands #'athame-corfu--smart-sep-toggle-escape)
 
-  (defun psyclyx-corfu--other-completion-active-p ()
+  (defun athame-corfu--other-completion-active-p ()
     (or (bound-and-true-p vertico--input)
         (where-is-internal 'minibuffer-complete (list (current-local-map)))))
 
-  (defun psyclyx-corfu--enable-in-minibuffer-p ()
+  (defun athame-corfu--enable-in-minibuffer-p ()
     (and (where-is-internal #'completion-at-point
                             (list (current-local-map)))
-         (not (psyclyx-corfu--other-completion-active-p))))
+         (not (athame-corfu--other-completion-active-p))))
 
-  (setq global-corfu-minibuffer #'psyclyx-corfu--enable-in-minibuffer-p))
+  (setq global-corfu-minibuffer #'athame-corfu--enable-in-minibuffer-p))
 
 
-(defvar psyclyx-corfu-buffer-scanning-size-limit (* 1 1024 1024))
+(defvar athame-corfu-buffer-scanning-size-limit (* 1 1024 1024))
 
 (use-package corfu-history
   :hook corfu-mode
@@ -110,34 +111,38 @@ Intended to mimic `evil-complete-previous', unless the popup is already open."
   :config
   (setq corfu-popupinfo-delay '(0.24 . 0.6)))
 
+(use-package nerd-icons-corfu
+  :config
+  (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter))
 
+;;;; Cape
 (use-package cape
   :after (dabbrev)
   :custom
   (cape-dabbrev-check-other-buffers t)
   :init
-  (defun psyclyx-corfu-add-cape-file-h ()
+  (defun athame-corfu-add-cape-file-h ()
     (add-hook 'completion-at-point-functions #'cape-file -10 t))
-  (add-hook 'prog-mode-hook #'psyclyx-corfu-add-cape-file-h)
+  (add-hook 'prog-mode-hook #'athame-corfu-add-cape-file-h)
 
-  (defun psyclyx-corfu-add-cape-elisp-block-h ()
+  (defun athame-corfu-add-cape-elisp-block-h ()
     (add-hook 'completion-at-point-functions #'cape-elisp-block 0 t))
-  (psyclyx-add-hooks '(org-mode-hook markdown-mode-hook) #'psyclyx-corfu-add-cape-elisp-block-h)
+  (athame-add-hooks '(org-mode-hook markdown-mode-hook) #'athame-corfu-add-cape-elisp-block-h)
 
-  (defun psyclyx-corfu-add-cape-dabbrev-h ()
+  (defun athame-corfu-add-cape-dabbrev-h ()
     (add-hook 'completion-at-point-functions #'cape-dabbrev 20 t))
-  (psyclyx-add-hooks '(prog-mode-hook
+  (athame-add-hooks '(prog-mode-hook
                        text-mode-hook
                        conf-mode-hook
                        comint-mode-hook
                        minibuffer-setup-hook
                        eshell-mode-hook)
-                     #'psyclyx-corfu-add-cape-dabbrev-h)
+                     #'athame-corfu-add-cape-dabbrev-h)
 
-  (defun psyclyx-corfu-dabbrev-friend-buffer-p (other-buffer)
-    (< (buffer-size other-buffer) +corfu-buffer-scanning-size-limit))
+  (defun athame-corfu-dabbrev-friend-buffer-p (other-buffer)
+    (< (buffer-size other-buffer) athame-corfu-buffer-scanning-size-limit))
 
-  (setq dabbrev-friend-buffer-function #'psyclyx-corfu-dabbrev-friend-buffer-p
+  (setq dabbrev-friend-buffer-function #'athame-corfu-dabbrev-friend-buffer-p
         dabbrev-ignored-buffer-regexps
         '("\\` "
           "\\(?:\\(?:[EG]?\\|GR\\)TAGS\\|e?tags\\|GPATH\\)\\(<[0-9]+>\\)?")
@@ -147,6 +152,7 @@ Intended to mimic `evil-complete-previous', unless the popup is already open."
   (advice-add #'eglot-completion-at-point :around #'cape-wrap-nonexclusive)
   (advice-add #'pcomplete-completions-at-point :around #'cape-wrap-nonexclusive))
 
+;;;; Vertico
 
 (use-package vertico
   :custom
@@ -204,7 +210,8 @@ Intended to mimic `evil-complete-previous', unless the popup is already open."
                          #'ignore))
                 (apply args))))
 
-(defun psyclyx-vertico--orderless-dispatch (pattern _index _total)
+;;;; Orderless
+(defun athame-vertico--orderless-dispatch (pattern _index _total)
   (let ((len (length pattern))
         (alist orderless-affix-dispatch-alist))
     (when (> len 0)
@@ -221,7 +228,7 @@ Intended to mimic `evil-complete-previous', unless the popup is already open."
           (cons style (substring pattern 0 -1))))))))
 
 
-(defun psyclyx-vertico--orderless-disambiguation-dispatch (pattern _index _total)
+(defun athame-vertico--orderless-disambiguation-dispatch (pattern _index _total)
   (when (char-equal (aref pattern (1- (length pattern))) ?$)
     `(orderless-regexp . ,(concat (substring pattern 0 -1) "[\x200000-\x300000]*$"))))
 
@@ -229,11 +236,11 @@ Intended to mimic `evil-complete-previous', unless the popup is already open."
 (use-package orderless
   :ensure t
   :config
-  (defun psyclyx-vertico--company-capf--candidates-a (fn &rest args)
+  (defun athame-vertico--company-capf--candidates-a (fn &rest args)
     (let ((orderless-match-faces [completions-common-part])
           (completion-styles '(basic partial-completion orderless)))
       (apply fn args)))
-  (advice-add 'company-capf--candidates :around #'psyclyx-vertico--company-capf--candidates-a)
+  (advice-add 'company-capf--candidates :around #'athame-vertico--company-capf--candidates-a)
 
   (setq orderless-affix-dispatch-alist
         '((?! . orderless-without-literal)
@@ -244,8 +251,8 @@ Intended to mimic `evil-complete-previous', unless the popup is already open."
           (?^ . orderless-literal-prefix)
           (?~ . orderless-flex))
         orderless-style-dispatchers
-        '(psyclyx-vertico--orderless-dispatch
-          psyclyx-vertico--orderless-disambiguation-dispatch))
+        '(athame-vertico--orderless-dispatch
+          athame-vertico--orderless-disambiguation-dispatch))
 
   (setq completion-styles '(orderless basic)
         completion-category-defaults nil
@@ -256,6 +263,7 @@ Intended to mimic `evil-complete-previous', unless the popup is already open."
   ;; ...otherwise find-file gets different highlighting than other commands
   (set-face-attribute 'completions-first-difference nil :inherit nil))
 
+;;;; Consult
 (use-package consult
   :preface
   :init
@@ -310,7 +318,7 @@ Intended to mimic `evil-complete-previous', unless the popup is already open."
    consult--source-recent-file consult--source-project-recent-file consult--source-bookmark
    :preview-key "C-SPC"))
 
-
+;;;; Marginalia
 (use-package marginalia
   :custom
   (marginalia-max-relative-age 0)
@@ -320,4 +328,11 @@ Intended to mimic `evil-complete-previous', unless the popup is already open."
   (add-to-list 'marginalia-prompt-categories '("\\<var\\>" . variable)))
 
 
-(provide 'psyclyx-completion)
+(use-package nerd-icons-completion
+  :config
+  (nerd-icons-completion-mode)
+  (add-hook 'marginalia-mode-hook #'nerd-icons-completion-marginalia-setup))
+
+;;; Provide
+(provide 'athame-completion)
+;;; athame-completion.el ends here

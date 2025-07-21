@@ -1,3 +1,7 @@
-(push (expand-file-name "lisp" user-emacs-directory) load-path)
+(let ((default-directory (expand-file-name "lisp" user-emacs-directory)))
+  (push default-directory load-path)
+  (normal-top-level-add-subdirs-to-load-path))
 
-(require 'psyclyx-init)
+(require 'athame-init)
+
+(athame-init-ui)

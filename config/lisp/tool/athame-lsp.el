@@ -1,4 +1,6 @@
-;;; -*- lexical-binding: t; -*-
+;;; athame-lsp.el -*- lexical-binding: t -*-
+;;; Commentary:
+;;; Code
 
 (use-package eglot
   :init
@@ -15,4 +17,7 @@
  :keymap 'eglot-mode-map
  [remap xref-find-apropos] #'consult-eglot-symbols)
 
-(provide 'psyclyx-lsp)
+
+;;; Provide
+(provide 'athame-lsp)
+;;; athame-lsp.el ends here

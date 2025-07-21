@@ -1,6 +1,8 @@
-;;; -*- lexical-binding: t; -*-
+;;; athame-format.el -*- lexical-binding: t -*-
+;;; Commentary:
+;;; Code
 
-(defcustom psyclyx-format-on-save-disabled-modes
+(defcustom athame-format-on-save-disabled-modes
   '(org-msg-edit-mode) "Don't format on these modes"
   :type '(list symbol))
 
@@ -9,16 +11,16 @@
   (apheleia-global-mode)
 
   (add-hook 'apheleia-inhibit-functions
-            (defun psyclyx-format-maybe-inhibit-h ()
+            (defun athame-format-maybe-inhibit-h ()
               (or (eq major-mode 'fundamental-mode)
                   (string-blank-p (buffer-name))
-                  (eq psyclyx-format-on-save-disabled-modes t)
-                  (not (null (memq major-mode psyclyx-format-on-save-disabled-modes))))))
+                  (eq athame-format-on-save-disabled-modes t)
+                  (not (null (memq major-mode athame-format-on-save-disabled-modes))))))
 
   ;; HACK: Apheleia suppresses notifications that the current buffer has
   ;;   changed, so plugins that listen for them need to be manually informed:
   (add-hook 'apheleia-post-format-hook
-            (defun psyclyx-format--update-web-mode-h ()
+            (defun athame-format--update-web-mode-h ()
               (when (eq major-mode 'web-mode)
                 (setq web-mode-fontification-off nil)
                 (when (and web-mode-scan-beg web-mode-scan-end global-font-lock-mode)
@@ -79,4 +81,6 @@
                         (apheleia-formatters-indent "--use-tabs" "--tab-width"))))))))
 
 
-(provide 'psyclyx-format)
+;;; Provide
+(provide 'athame-format)
+;;; athame-format.el ends here

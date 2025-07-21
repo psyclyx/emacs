@@ -20,6 +20,7 @@ let
       exato
       general
       git-gutter-fringe
+      helpful
       magit
       marginalia
       nerd-icons

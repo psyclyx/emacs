@@ -1,7 +1,9 @@
-;;; -*- lexical-binding: t; -*-
+;;; athame-compile.el -*- lexical-binding: t -*-
+;;; Commentary:
+;;; Code:
 
 
-(defun psyclyx-compile (arg)
+(defun athame-compile (arg)
   "Runs `compile' from the root of the current project.
 
 If a compilation window is already open, recompile that instead.
@@ -16,5 +18,6 @@ If ARG (universal argument), runs `compile' from the current directory."
          #'project-compile
        #'compile))))
 
-
-(provide 'psyclyx-compile)
+;;; Provide
+(provide 'athame-compile)
+;;; athame-compile.el ends here

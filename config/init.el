@@ -1,1 +1,2 @@
-(require 'psyclyx)
+(require 'athame-init)
+(require 'athame)

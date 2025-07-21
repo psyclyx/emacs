@@ -1,7 +1,10 @@
+;;; athame-lang-nix.el -*- lexical-binding: t -*-
+;;; Commentary:
+;;; Code
+
 (use-package tramp
   :config
   (add-to-list 'tramp-remote-path "/run/current-system/sw/bin"))
-
 
 (use-package nix-mode
   :mode "\\.nix\\'"
@@ -10,14 +13,11 @@
                (cons "/flake\\.lock\\'"
                      'js-json-mode)))
 
-
 (use-package nix-repl
   :commands nix-repl-show)
 
-
-(psyclyx-localleader-def
+(deflocalleader
  :keymaps 'nix-mode-map
- :prefix psyclyx-localleader-key
  "f" #'nix-update-fetch
  "p" #'nix-format-buffer
  "r" #'nix-repl-show
@@ -25,5 +25,6 @@
  "b" #'nix-build
  "u" #'nix-unpack)
 
-
-(provide 'psyclyx-lang-nix)
+;;; Provide
+(provide 'athame-lang-nix)
+;;; athame-lang-nix.el ends here

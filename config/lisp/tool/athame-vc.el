@@ -1,4 +1,4 @@
-;;; psyclyx-vc.el -*- lexical-binding: t -*-
+;;; athame-vc.el -*- lexical-binding: t -*-
 ;;; Commentary:
 ;;; Code
 
@@ -16,4 +16,6 @@
   (define-fringe-bitmap 'git-gutter-fr:deleted [224] nil nil '(center repeated))
   (global-git-gutter-mode))
 
-(provide 'psyclyx-vc)
+;;; Provide
+(provide 'athame-vc)
+;;; athame-vc.el ends here

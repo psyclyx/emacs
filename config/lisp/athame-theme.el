@@ -1,7 +1,8 @@
-;;; psyclyx-theme.el -*- lexical-binding: t -*-
+;;; athame-theme.el -*- lexical-binding: t -*-
 ;;; Commentary:
 ;;; Code
 
+;;;; Modus theme
 (setq modus-themes-italic-constructs t
       modus-themes-bold-constructs t
       modus-themes-mixed-fonts t
@@ -15,21 +16,20 @@
                               (t . (background 1.1)))
       x-underline-at-descent-line t)
 
-(eval-and-compile
-  (require-theme 'modus-themes)
-  (defun my/modus-themes-custom-faces (&rest _)
+(require-theme 'modus-themes)
+(defun athame-theme--modus-themes-custom-faces (&rest _)
     (modus-themes-with-colors
      (custom-set-faces
       `(mode-line ((,c :box (:line-width (16 . 10)  :style flat-button))))
-      `(mode-line-inactive ((,c :box (:line-width (16 . 10) :style flat-button))))))))
+      `(mode-line-inactive ((,c :box (:line-width (16 . 10) :style flat-button)))))))
 
-(add-hook 'modus-themes-after-load-theme-hook #'my/modus-themes-custom-faces)
+(add-hook 'modus-themes-after-load-theme-hook #'athame-theme--modus-themes-custom-faces)
 
 (modus-themes-load-theme 'modus-vivendi-tinted)
 
+;;;; Fonts
 (use-package faces
   :ensure nil
-  :demand t
   :custom
   (face-font-family-alternatives
    '(("Berkeley Mono" "Aporetic Sans Mono" "Noto Sans Mono" "SF Mono" "Menlo" "Monospace")
@@ -47,16 +47,9 @@
   (set-face-attribute 'variable-pitch nil
                       :family "Aporetic Sans"))
 
+;;;; Icons
 (use-package nerd-icons)
 
-(use-package nerd-icons-corfu
-  :after (corfu nerd-icons)
-  :config
-  (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter))
-
-(use-package nerd-icons-completion
-  :config
-  (nerd-icons-completion-mode)
-  (add-hook 'marginalia-mode-hook #'nerd-icons-completion-marginalia-setup))
-
-(provide 'psyclyx-theme)
+;;; Provide
+(provide 'athame-theme)
+;;; athame-theme.el ends here

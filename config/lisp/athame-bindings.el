@@ -1,39 +1,24 @@
-;;; psyclyx-bindings.el -*- lexical-binding: t -*-
+;;; athame-bindings.el -*- lexical-binding: t -*-
 ;;; Commentary:
 ;;; Code
-(defvar psyclyx-leader-key-states '(normal visual motion))
-(defvar psyclyx-leader-alt-key-states '(emacs insert))
-
-(defvar psyclyx-default-minibuffer-maps
-  '(minibuffer-local-map
-    minibuffer-local-ns-map
-    minibuffer-local-completion-map
-    minibuffer-local-must-match-map
-    minibuffer-local-isearch-map
-    read-expression-map))
 
 
-(general-create-definer psyclyx-leader-def
-   :keymaps 'override
-   :states psyclyx-leader-key-states
-   :prefix psyclyx-leader-key
-   :non-normal-prefix psyclyx-leader-alt-key)
-
-(general-create-definer psyclyx-localleader-def
-  :keymaps 'override
-  :states psyclyx-leader-key-states
-  :prefix psyclyx-localleader-key
-  :non-normal-prefix psyclyx-localleader-key)
-
-(general-override-mode +1)
+(defvar athame-default-minibuffer-maps
+  (append '(minibuffer-local-map
+            minibuffer-local-ns-map
+            minibuffer-local-completion-map
+            minibuffer-local-must-match-map
+            minibuffer-local-isearch-map
+            read-expression-map))
+  "A list of all the keymaps used for the minibuffer.")
 
 (general-define-key
  :keymaps 'corfu-mode-map
  :states '(insert)
  "C-@" #'completion-at-point
  "C-SPC" #'completion-at-point
- "C-n" #'psyclyx-corfu--dabbrev-or-next
- "C-p" #'psyclyx-corfu--dabbrev-or-last)
+ "C-n" #'athame-corfu--dabbrev-or-next
+ "C-p" #'athame-corfu--dabbrev-or-last)
 (general-define-key
  :keymaps 'corfu-mode-map
  :states '(normal)
@@ -49,8 +34,8 @@
 (general-define-key
  :keymaps 'corfu-map
  :states '(insert)
- "C-SPC" #'psyclyx-corfu--smart-sep-toggle-escape
- "C-S-s" #'psyclyx-corfu--move-to-minibuffer
+ "C-SPC" #'athame-corfu--smart-sep-toggle-escape
+ "C-S-s" #'athame-corfu--move-to-minibuffer
  "DEL" #'corfu-reset)
 (general-define-key
  :keymaps 'corfu-map
@@ -100,18 +85,18 @@
 
 
 (general-define-key
- :keymaps psyclyx-default-minibuffer-maps
+ :keymaps athame-default-minibuffer-maps
  [escape] #'abort-recursive-edit
  "C-a"    #'move-beginning-of-line
  "C-r"    #'evil-paste-from-register
  "C-u"    #'evil-delete-back-to-indentation
  "C-v"    #'yank
- "C-w"    #'psyclyx-delete-backward-word
+ "C-w"    #'athame-delete-backward-word
  "C-z"    (lambda () (interactive)
             (ignore-errors (call-interactively #'undo))))
 
 (general-define-key
- :keymaps psyclyx-default-minibuffer-maps
+ :keymaps athame-default-minibuffer-maps
  "C-j"    #'next-line
  "C-k"    #'previous-line
  "C-S-j"  #'scroll-up-command
@@ -132,7 +117,7 @@
 
 
 (general-define-key
- :prefix-map 'psyclyx-buffer-prefix-map
+ :prefix-map 'athame-buffer-prefix-map
  "b" (cons "Switch buffer" #'switch-to-buffer)
  "d" (cons "Kill current buffer" #'kill-current-buffer)
  "i" (cons "ibuffer" #'ibuffer)
@@ -142,18 +127,18 @@
  "r" (cons "Revert buffer" #'revert-buffer))
 
 (general-define-key
- :prefix-map 'psyclyx-code-prefix-map
+ :prefix-map 'athame-code-prefix-map
  "a" (cons "LSP Execute code action" #'eglot-code-actions)
  "r" (cons "LSP Rename" #'eglot-rename)
  "j" (cons "LSP Find declaration" #'eglot-find-declaration)
- "c" (cons "Compile" #'psyclyx-compile)
+ "c" (cons "Compile" #'athame-compile)
  "C" (cons "Compile" #'recompile)
  "d" (cons "Jump to definition" #'xref-find-definitions)
  "D" (cons "Jump to references" #'xref-find-references))
 
 
 (general-define-key
- :prefix-map 'psyclyx-file-prefix-map
+ :prefix-map 'athame-file-prefix-map
  "f" (cons "Find file" #'find-file)
  "d" (cons "Find directory" #'dired)
  "l" (cons "Locate files" #'locate)
@@ -166,20 +151,20 @@
 
 
 (general-define-key
- :prefix-map 'psyclyx-search-prefix-map
+ :prefix-map 'athame-search-prefix-map
  "s" (cons "Search buffer" #'consult-line)
  "L" (cons "Jump to link" #'ffap-menu)
  "p" (cons "Search project" #'consult-ripgrep)
  "i" (cons "imenu" #'imenu))
 
 (general-define-key
- :prefix-map 'psyclyx-git-find-prefix-map
+ :prefix-map 'athame-git-find-prefix-map
  "f" (cons "Find file" #'magit-find-file)
  "g" (cons "Find gitconfig file" #'magit-find-git-config-file)
  "c" (cons "Find commit" #'magit-show-commit))
 
 (general-define-key
- :prefix-map 'psyclyx-git-create-prefix-map
+ :prefix-map 'athame-git-create-prefix-map
  "r" (cons "Initialize repo" #'magit-init)
  "R" (cons "Clone repo" #'magit-clone)
  "c" (cons "Commit" #'magit-commit-create)
@@ -187,9 +172,9 @@
  "b" (cons "Branch" #'magit-branch-and-checkout))
 
 (general-define-key
- :prefix-map 'psyclyx-git-prefix-map
- "c" (cons "create" psyclyx-git-create-prefix-map)
- "f" (cons "find" psyclyx-git-find-prefix-map)
+ :prefix-map 'athame-git-prefix-map
+ "c" (cons "create" athame-git-create-prefix-map)
+ "f" (cons "find" athame-git-find-prefix-map)
  "R" (cons "Revert file" #'vc-revert)
  "r" (cons "Revert hunk at point" #'git-gutter:revert-hunk)
  "s" (cons "Stage hunk at point" #'git-gutter:stage-hunk)
@@ -208,24 +193,21 @@
  "S" (cons "Git stage file"  #'magit-stage-file)
  "U" (cons "Git unstage file" #'magit-unstage-file))
 
-
-
 (general-define-key
- :prefix-map 'psyclyx-tool-map)
+ :prefix-map 'athame-tool-map)
 
-(psyclyx-leader-def
-  "b" (cons "buffer" psyclyx-buffer-prefix-map)
-  "c" (cons "code" psyclyx-code-prefix-map)
- "f" (cons "file" psyclyx-file-prefix-map)
- "g" (cons "git" psyclyx-git-prefix-map)
+(defleader
+  "b" (cons "buffer" athame-buffer-prefix-map)
+  "c" (cons "code" athame-code-prefix-map)
+ "f" (cons "file" athame-file-prefix-map)
+ "g" (cons "git" athame-git-prefix-map)
  "h" (cons "help" help-map)
- "p" (cons "project" psyclyx-project-prefix-map)
- "s" (cons "search" psyclyx-search-prefix-map)
+ "p" (cons "project" athame-project-prefix-map)
+ "s" (cons "search" athame-search-prefix-map)
  "w" (cons "window" #'evil-window-map)
- "T" (cons "tool" psyclyx-tool-map))
+ "T" (cons "tool" athame-tool-map))
 
-
-(psyclyx-leader-def
+(defleader
  "'" (cons "Repeat last search" #'vertico-repeat)
  "u" (cons "Universal argument" #'universal-argument)
  ";" (cons "Eval expression" #'pp-eval-expression)
@@ -234,5 +216,6 @@
  "." (cons "Find file" #'find-file)
  "RET" (cons "Jump to bookmark" #'bookmark-jump))
 
-
-(provide 'psyclyx-bindings)
+;;; Provide
+(provide 'athame-bindings)
+;;; athame-bindings.el ends here
