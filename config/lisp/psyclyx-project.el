@@ -7,7 +7,6 @@
   (setq project-list-file (file-name-concat psyclyx-state-dir "projects")
         project-vc-merge-submodules nil)
   :config
-
   (when psyclyx-project-marker
     (add-to-list 'project-vc-extra-root-markers psyclyx-project-marker)))
 

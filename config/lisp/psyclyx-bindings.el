@@ -146,7 +146,7 @@
  "a" (cons "LSP Execute code action" #'eglot-code-actions)
  "r" (cons "LSP Rename" #'eglot-rename)
  "j" (cons "LSP Find declaration" #'eglot-find-declaration)
- "c" (cons "Compile" #'compile)
+ "c" (cons "Compile" #'psyclyx-compile)
  "C" (cons "Compile" #'recompile)
  "d" (cons "Jump to definition" #'xref-find-definitions)
  "D" (cons "Jump to references" #'xref-find-references))
@@ -178,7 +178,6 @@
  "g" (cons "Find gitconfig file" #'magit-find-git-config-file)
  "c" (cons "Find commit" #'magit-show-commit))
 
-
 (general-define-key
  :prefix-map 'psyclyx-git-create-prefix-map
  "r" (cons "Initialize repo" #'magit-init)
@@ -208,6 +207,8 @@
  "L" (cons "Magit buffer log" #'magit-log-buffer-file)
  "S" (cons "Git stage file"  #'magit-stage-file)
  "U" (cons "Git unstage file" #'magit-unstage-file))
+
+
 
 (general-define-key
  :prefix-map 'psyclyx-tool-map)
