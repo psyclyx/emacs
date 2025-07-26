@@ -17,17 +17,17 @@
           overlays = [ emacs-overlay.overlays.default ];
         });
     in
-    {
+    rec {
+      files.config = ./config;
       packages."x86_64-linux" =
         let
           pkgs = pkgsFor "x86_64-linux";
         in
         rec {
-            emacs = pkgs.callPackage ./package.nix { emacs = pkgs.emacs-unstable-pgtk; };
-            emacsConfig = ./config;
-            emacsWrapped = pkgs.writeShellScriptBin "emacs-wrapped" ''
-              ${emacs}/bin/emacs --init-directory=${emacsConfig}
-            '';
+          emacs = pkgs.callPackage ./package.nix { emacs = pkgs.emacs-unstable-pgtk; };
+          emacsWrapped = pkgs.writeShellScriptBin "emacs-wrapped" ''
+            ${emacs}/bin/emacs --init-directory=${files.config}
+          '';
         };
     };
 }
