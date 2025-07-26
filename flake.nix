@@ -18,16 +18,39 @@
         });
     in
     rec {
-      files.config = ./config;
       packages."x86_64-linux" =
         let
           pkgs = pkgsFor "x86_64-linux";
         in
         rec {
-          emacs = pkgs.callPackage ./package.nix { emacs = pkgs.emacs-unstable-pgtk; };
-          emacsWrapped = pkgs.writeShellScriptBin "emacs-wrapped" ''
-            ${emacs}/bin/emacs --init-directory=${files.config}
+          emacs = pkgs.emacs-unstable-pgtk;
+          emacsWithPackages = (pkgs.emacsPackagesFor pkgs.emacs-unstable-pgtk).emacsWithPackages (import ./emacsPackages.nix);
+          default = pkgs.writeShellScriptBin "emacs-wrapped" ''
+            ${emacsWithPackages}/bin/emacs --init-directory=${./config}
           '';
         };
+      homeManagerModules = {
+        default =
+          {
+            config,
+            lib,
+            pkgs,
+            ...
+          }:
+          {
+            options.psyclyx-emacs.enable = lib.mkEnableOption "Emacs config";
+            config = lib.mkIf config.psyclyx-emacs.enable {
+              programs.emacs = {
+                enable = true;
+                package = packages."${pkgs.system}".emacs;
+                extraPackages = import ./emacsPackages.nix;
+              };
+              home.file.".config/emacs" = {
+                source = ./config;
+                recursive = true;
+              };
+            };
+          };
+      };
     };
 }
