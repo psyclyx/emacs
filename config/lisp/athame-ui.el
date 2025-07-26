@@ -53,6 +53,11 @@
 (when (bound-and-true-p tooltip-mode)
   (tooltip-mode -1))
 
+;;;; Icons
+(use-package nerd-icons)
+
+;;;; Text
+(setq x-underline-at-descent-line t)
 
 ;;;; Provide
 (provide 'athame-ui)

@@ -66,7 +66,6 @@
 (require 'athame-help)
 (require 'athame-evil)
 (require 'athame-completion)
-(require 'athame-theme)
 
 (require 'athame-compile)
 (require 'athame-format)
