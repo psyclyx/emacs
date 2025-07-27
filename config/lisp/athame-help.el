@@ -10,15 +10,14 @@
   (apropos-do-all t))
 
 (use-package helpful
-  :init
-  (setq apropos-do-all t)
+  :defer t)
 
-  (global-set-key [remap describe-function] #'helpful-callable)
-  (global-set-key [remap describe-command]  #'helpful-command)
-  (global-set-key [remap describe-variable] #'helpful-variable)
-  (global-set-key [remap describe-key]      #'helpful-key)
-  (global-set-key [remap describe-symbol]   #'helpful-symbol))
-
+(general-def
+  [remap describe-function] #'helpful-callable
+  [remap describe-command]  #'helpful-command
+  [remap describe-variable] #'helpful-variable
+  [remap describe-key]      #'helpful-key
+  [remap describe-symbol]   #'helpful-symbol)
 
 ;;;; Which-key
 (use-package which-key
