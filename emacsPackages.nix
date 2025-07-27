@@ -22,6 +22,7 @@ epkgs: with epkgs; [
   nix-mode
   orderless
   smartparens
+  evil-cleverparens
   treesit-grammars.with-all-grammars
   vertico
   ws-butler

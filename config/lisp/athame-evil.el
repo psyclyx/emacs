@@ -5,7 +5,7 @@
 ;;;; Evil
 ;;;;; Core
 (use-package evil
-  :preface
+  :init
   (setq
    evil-want-keybinding nil
    evil-want-C-g-bindings t
@@ -14,6 +14,7 @@
    evil-want-C-u-delete  t
    evil-want-C-w-delete t
    evil-want-Y-yank-to-eol t
+   evil-move-beyond-eol t
    evil-ex-search-vim-style-regexp t
    evil-want-abbrev-expand-on-insert-exit  nil
    evil-respect-visual-line-mode nil
@@ -29,30 +30,24 @@
   (evil-select-search-module 'evil-search-module 'isearch))
 
 (use-package evil-collection
+  :after evil
   :config
   (evil-collection-init))
 
 ;;;;; Quick movement
 (use-package evil-snipe
-  :after evil
+  :custom
+  (evil-snipe-scope 'visible)
+  (evil-snipe-repeat-scope 'visible)
+  (evil-snipe-smart-case t)
   :config
   (evil-snipe-mode +1)
-  (evil-snipe-override-mode +1)
-  :custom
-  (evil-snipe-scope 'buffer)        ; Search in whole buffer instead of just line
-  (evil-snipe-repeat-scope 'buffer) ; Same for repeat
-  (evil-snipe-smart-case t)         ; Smart case sensitivity
-  )
+  (evil-snipe-override-mode +1))
 
 ;;;;; Evil-Easymotion
 (use-package evil-easymotion
-  :after (evil-snipe)
+  :defer t
   :config
-  (general-define-key
-   :states '(motion)
-   :prefix "C-;"
-   :prefix-map 'evilem-map)
-
   (general-define-key
    :keymaps 'evil-snipe-parent-transient-map
    "C-;" (evilem-create
@@ -62,14 +57,13 @@
            (evil-snipe-enable-highlight)
            (evil-snipe-enable-incremental-highlight)))))
 
-;;;;; Text objects
+(general-define-key
+ :states '(motion)
+ :prefix "C-;"
+ :prefix-map 'evilem-map)
 ;;;;;; Surround
 (use-package evil-surround
-  :hook ((prog-mode text-mode) . global-evil-surround-mode))
-
-
-;;;;;;  Exato (xml)
-(use-package exato)
+  :after evil)
 
 ;;;; Provide
 (provide 'athame-evil)
