@@ -26,7 +26,7 @@
    evil-undo-system 'undo-redo)
   :config
   (evil-mode 1)
-  (evil-select-search-module 'evil-search-module 'evil-search))
+  (evil-select-search-module 'evil-search-module 'isearch))
 
 (use-package evil-collection
   :config
@@ -65,20 +65,8 @@
 ;;;;; Text objects
 ;;;;;; Surround
 (use-package evil-surround
-  :hook ((prog-mode text-mode) . global-evil-surround-mode)
-  :commands (global-evil-surround-mode
-             evil-surround-edit
-             evil-Surround-edit
-             evil-surround-region))
+  :hook ((prog-mode text-mode) . global-evil-surround-mode))
 
-;;;;;; Anyblock
-(use-package evil-textobj-anyblock
-  :config
-  (setq evil-textobj-anyblock-blocks
-        '(("(" . ")")
-          ("{" . "}")
-          ("\\[" . "\\]")
-          ("<" . ">"))))
 
 ;;;;;;  Exato (xml)
 (use-package exato)

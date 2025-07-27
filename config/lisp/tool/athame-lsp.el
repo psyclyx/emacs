@@ -14,10 +14,28 @@
   :commands consult-eglot-symbols)
 
 (general-def
- :keymap 'eglot-mode-map
- [remap xref-find-apropos] #'consult-eglot-symbols)
+  :keymap 'eglot-mode-map
+  [remap xref-find-apropos] #'consult-eglot-symbols)
+
+(setopt display-buffer-alist
+        '(("\\*eldoc\\*"
+           (display-buffer-in-side-window)
+           (side . right)
+           (slot . 0)
+           (width . 0.3))
+          ("\\*[Hh]elp\\*"
+           (display-buffer-in-side-window)
+           (side . right)
+           (slot . -1)
+           (width . 0.3))))
+
+(add-to-list 'display-buffer-alist
+             '("\\"))
 
 
+(setq eldoc-echo-area-use-multiline-p t
+      eldoc-documentation-strategy 'eldoc-documentation-compose-eagerly
+      eldoc-echo-area-prefer-doc-buffer t)
 ;;; Provide
 (provide 'athame-lsp)
 ;;; athame-lsp.el ends here

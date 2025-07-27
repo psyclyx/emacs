@@ -3,8 +3,12 @@
 ;;; Code
 
 (require 'cl-lib)
-;;;; Helpful
-;; a better *help* buffer
+
+(use-package apropos
+  :ensure nil
+  :custom
+  (apropos-do-all t))
+
 (use-package helpful
   :init
   (setq apropos-do-all t)
@@ -12,7 +16,8 @@
   (global-set-key [remap describe-function] #'helpful-callable)
   (global-set-key [remap describe-command]  #'helpful-command)
   (global-set-key [remap describe-variable] #'helpful-variable)
-  (global-set-key [remap describe-key]      #'helpful-key))
+  (global-set-key [remap describe-key]      #'helpful-key)
+  (global-set-key [remap describe-symbol    #'helpful-symbol]))
 
 
 ;;;; Which-key
@@ -28,7 +33,8 @@
   (which-key-idle-delay 0.3)
   (which-key-idle-secondary-delay 0.1)
   :config
-  (which-key-mode))
+  (which-key-mode)
+  (which-key-setup-side-window-bottom))
 
 ;;; Provide
 (provide 'athame-help)

@@ -74,6 +74,7 @@
 (require 'athame-project)
 (require 'athame-treesit)
 (require 'athame-vc)
+(require 'athame-envrc)
 
 (require 'athame-lang-nix)
 

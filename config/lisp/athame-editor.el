@@ -67,7 +67,6 @@
 (setq use-short-answers t)
 (define-key y-or-n-p-map " " nil)
 
-
 ;;; Provide
 (provide 'athame-editor)
 ;;; athame-editor.el ends here
