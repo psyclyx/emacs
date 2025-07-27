@@ -3,14 +3,15 @@
 ;;; Code
 
 (use-package eglot
-  :init
-  (setq eglot-sync-connect 1
-        eglot-autoshutdown t)
+  :defer t
+  :custom
+  (eglot-sync-connect 1)
+  (eglot-autoshutdown t)
   :config
   (cl-callf plist-put eglot-events-buffer-config :size 0))
 
-
 (use-package consult-eglot
+  :after (consult eglot)
   :commands consult-eglot-symbols)
 
 (general-def
