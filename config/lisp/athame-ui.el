@@ -2,64 +2,39 @@
 ;;; Commentary:
 ;;; Code:
 
-;;;; Visual bell
+(setq frame-title-format '("%b – Emacs")
+      icon-title-format frame-title-format)
+
+(setopt split-width-threshold 160
+        split-height-threshold nil)
+
+(setopt indicate-buffer-boundaries nil
+        indicate-empty-lines nil)
+
+(setopt window-divider-default-right-width 1)
+
+(when (display-graphic-p)
+  (window-divider-mode 0))
+
+(setopt frame-resize-pixelwise t
+        window-resize-pixelwise t)
+
+(when (bound-and-true-p tooltip-mode)
+  (tooltip-mode -1))
+
 (defun athame-flash-modeline ()
   "Briefly inverts the `mode-line' face."
   (invert-face 'mode-line)
   (run-with-timer 0.1 nil 'invert-face 'mode-line))
 
-(setq ring-bell-function #'athame-flash-modeline)
+(setopt ring-bell-function #'athame-flash-modeline)
 
-;;;; Scroll
-(setq hscroll-margin 2
-      hscroll-step 1
-      scroll-conservatively 10
-      scroll-margin 0
-      scroll-preserve-screen-position t
-      auto-window-vscroll nil
-      mouse-wheel-scroll-amount '(2 ((shift) . hscroll))
-      mouse-wheel-scroll-amount-horizontal 2)
-
-;;;; Cursor
 (blink-cursor-mode -1)
-(setq blink-matching-paren nil
-      x-stretch-cursor nil)
 
-;;;; Buffer
-(setq indicate-buffer-boundaries t
-      indicate-empty-lines nil)
+(setopt blink-matching-paren nil
+        x-stretch-cursor nil)
 
-;;;; Frames
-(setq frame-title-format '("%b – Emacs")
-      icon-title-format frame-title-format)
+(setopt x-underline-at-descent-line t)
 
-;;;; Resize
-(setq frame-resize-pixelwise t
-      window-resize-pixelwise t)
-
-;;;; Window dividers
-(setq window-divider-default-places t
-      window-divider-default-bottom-width 0
-      window-divider-default-right-width 0)
-
-(when (display-graphic-p)
-  (window-divider-mode 0))
-
-;;;; Splits
-(setq split-width-threshold 160
-      split-height-threshold nil)
-
-;;;; Disable tooltimes
-(when (bound-and-true-p tooltip-mode)
-  (tooltip-mode -1))
-
-;;;; Icons
-(use-package nerd-icons
-  :defer t)
-
-;;;; Text
-(setq x-underline-at-descent-line t)
-
-;;;; Provide
 (provide 'athame-ui)
 ;;; athame-ui.el ends here
