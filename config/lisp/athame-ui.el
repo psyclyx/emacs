@@ -54,7 +54,8 @@
   (tooltip-mode -1))
 
 ;;;; Icons
-(use-package nerd-icons)
+(use-package nerd-icons
+  :defer t)
 
 ;;;; Text
 (setq x-underline-at-descent-line t)
