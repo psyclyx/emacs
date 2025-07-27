@@ -13,7 +13,6 @@ epkgs: with epkgs; [
   evil-surround
   exato
   general
-  git-gutter-fringe
   helpful
   magit
   marginalia

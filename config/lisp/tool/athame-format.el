@@ -26,7 +26,6 @@
                 (when (and web-mode-scan-beg web-mode-scan-end global-font-lock-mode)
                   (save-excursion
                     (font-lock-fontify-region web-mode-scan-beg web-mode-scan-end))))))
-  (add-hook 'apheleia-post-format-hook #'git-gutter)
   (add-to-list 'apheleia-mode-alist '(sh-mode . shfmt))
 
   (add-to-list 'apheleia-formatters '(lsp . eglot-format-buffer))

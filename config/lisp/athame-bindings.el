@@ -77,13 +77,6 @@
  "C-j" #'next-complete-history-element
  "C-k" #'previous-complete-history-element)
 
-
-(general-define-key
- :states 'motion
- "]d" #'git-gutter:next-hunk
- "[d" #'git-gutter:previous-hunk)
-
-
 (general-define-key
  :keymaps athame-default-minibuffer-maps
  [escape] #'abort-recursive-edit
@@ -176,10 +169,6 @@
  "c" (cons "create" athame-git-create-prefix-map)
  "f" (cons "find" athame-git-find-prefix-map)
  "R" (cons "Revert file" #'vc-revert)
- "r" (cons "Revert hunk at point" #'git-gutter:revert-hunk)
- "s" (cons "Stage hunk at point" #'git-gutter:stage-hunk)
- "]" (cons "Jump to next hunk" #'git-gutter:next-hunk)
- "[" (cons "Jump to previous hunk" #'git-gutter:previous-hunk)
  "/" (cons "Magit dispatch" #'magit-dispatch)
  "." (cons "Magit file dispatch" #'magit-dispatch)
  "b" (cons "Magit switch branch" #'magit-branch-checkout)
@@ -199,22 +188,22 @@
 (defleader
   "b" (cons "buffer" athame-buffer-prefix-map)
   "c" (cons "code" athame-code-prefix-map)
- "f" (cons "file" athame-file-prefix-map)
- "g" (cons "git" athame-git-prefix-map)
- "h" (cons "help" help-map)
- "p" (cons "project" athame-project-prefix-map)
- "s" (cons "search" athame-search-prefix-map)
- "w" (cons "window" #'evil-window-map)
- "T" (cons "tool" athame-tool-map))
+  "f" (cons "file" athame-file-prefix-map)
+  "g" (cons "git" athame-git-prefix-map)
+  "h" (cons "help" help-map)
+  "p" (cons "project" athame-project-prefix-map)
+  "s" (cons "search" athame-search-prefix-map)
+  "w" (cons "window" #'evil-window-map)
+  "T" (cons "tool" athame-tool-map))
 
 (defleader
- "'" (cons "Repeat last search" #'vertico-repeat)
- "u" (cons "Universal argument" #'universal-argument)
- ";" (cons "Eval expression" #'pp-eval-expression)
- ":" (cons "M-x" #'execute-extended-command)
- "," (cons "Switch buffer" #'switch-to-buffer)
- "." (cons "Find file" #'find-file)
- "RET" (cons "Jump to bookmark" #'bookmark-jump))
+  "'" (cons "Repeat last search" #'vertico-repeat)
+  "u" (cons "Universal argument" #'universal-argument)
+  ";" (cons "Eval expression" #'pp-eval-expression)
+  ":" (cons "M-x" #'execute-extended-command)
+  "," (cons "Switch buffer" #'switch-to-buffer)
+  "." (cons "Find file" #'find-file)
+  "RET" (cons "Jump to bookmark" #'bookmark-jump))
 
 ;;; Provide
 (provide 'athame-bindings)
