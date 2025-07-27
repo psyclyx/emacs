@@ -1,8 +1,8 @@
 ;;; athame-completion.el -*- lexical-binding: t -*-
-;;; Commentary: Lazy-loaded completion configuration
+;;; Commentary:
 ;;; Code
 
-;;;; Corfu - Load on first completion attempt
+;;;; Corfu
 (defun athame-corfu--move-to-minibuffer ()
   (interactive)
   (pcase completion-in-region--data
@@ -30,7 +30,9 @@
     (cape-dabbrev t)))
 
 (defun athame-corfu--dabbrev-or-next (&optional arg)
-  "Trigger corfu popup and select the first candidate."
+  "Trigger corfu popup and select the first candidate.
+
+Intended to mimic `evil-complete-next', unless the popup is already open."
   (interactive "p")
   (if corfu--candidates
       (corfu-next arg)
@@ -42,7 +44,9 @@
         (corfu--goto (or arg 0))))))
 
 (defun athame-corfu--dabbrev-or-last (&optional arg)
-  "Trigger corfu popup and select the first candidate."
+  "Trigger corfu popup and select the first candidate.
+
+Intended to mimic `evil-complete-previous', unless the popup is already open."
   (interactive "p")
   (if corfu--candidates
       (corfu-previous arg)
@@ -54,12 +58,10 @@
         (corfu--goto (- corfu--total (or arg 1)))))))
 
 (use-package corfu
-  :defer t
   :custom
   (corfu-auto t)
   (corfu-auto-delay 0.24)
   (corfu-auto-prefix 2)
-  (global-corfu-modes '((not erc-mode help-mode vterm-mode) t))
   (corfu-cycle t)
   (corfu-preselect 'prompt)
   (corfu-count 16)
@@ -68,188 +70,169 @@
   (corfu-quit-at-boundary 'separator)
   (corfu-quit-no-match corfu-quit-at-boundary)
   (tab-always-indent 'complete)
-
-  ;; Load Corfu when trying to complete
-  :hook ((prog-mode text-mode conf-mode) . corfu-mode)
-
   :config
   (global-corfu-mode)
 
-  (add-to-list 'corfu-auto-commands #'lispy-colon)
   (add-to-list 'corfu-continue-commands #'athame-corfu--move-to-minibuffer)
   (add-to-list 'corfu-continue-commands #'athame-corfu--smart-sep-toggle-escape)
   (add-to-list 'completion-category-overrides `(lsp-capf (styles ,@completion-styles)))
   (add-hook 'evil-insert-state-exit-hook #'corfu-quit)
+  (add-to-list 'corfu-continue-commands #'athame-corfu--smart-sep-toggle-escape)
 
   (defun athame-corfu--other-completion-active-p ()
     (or (bound-and-true-p vertico--input)
         (where-is-internal 'minibuffer-complete (list (current-local-map)))))
 
   (defun athame-corfu--enable-in-minibuffer-p ()
-    (and (where-is-internal #'completion-at-point (list (current-local-map)))
+    (and (where-is-internal #'completion-at-point
+                            (list (current-local-map)))
          (not (athame-corfu--other-completion-active-p))))
 
   (setq global-corfu-minibuffer #'athame-corfu--enable-in-minibuffer-p))
 
+
 (defvar athame-corfu-buffer-scanning-size-limit (* 1 1024 1024))
 
-;; Load corfu extensions only when corfu is active
 (use-package corfu-history
-  :defer t
-  :after corfu
-  :hook (corfu-mode . corfu-history-mode)
+  :hook corfu-mode
   :config
   (with-eval-after-load 'savehist
     (add-to-list 'savehist-additional-variables 'corfu-history)))
 
 (use-package corfu-popupinfo
-  :defer t
-  :after corfu
-  :hook (corfu-mode . corfu-popupinfo-mode)
-  :custom
-  (corfu-popupinfo-delay (0.24 . 0.6)))
+  :hook corfu-mode
+  :config
+  (setq corfu-popupinfo-delay '(0.24 . 0.6)))
 
 (use-package nerd-icons-corfu
-  :defer t
-  :after corfu
   :config
   (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter))
 
-;;;; Cape - Load only when completion is needed
+;;;; Cape
 (use-package cape
-  :defer t
   :custom
   (cape-dabbrev-check-other-buffers t)
-
-  ;; Load cape when these modes start
-  :hook ((prog-mode . athame-corfu-add-cape-file-h)
-         ((org-mode markdown-mode) . athame-corfu-add-cape-elisp-block-h)
-         ((prog-mode text-mode conf-mode comint-mode eshell-mode) . athame-corfu-add-cape-dabbrev-h))
-
   :init
   (defun athame-corfu-add-cape-file-h ()
     (add-hook 'completion-at-point-functions #'cape-file -10 t))
+  (add-hook 'prog-mode-hook #'athame-corfu-add-cape-file-h)
 
   (defun athame-corfu-add-cape-elisp-block-h ()
     (add-hook 'completion-at-point-functions #'cape-elisp-block 0 t))
+  (athame-add-hooks '(org-mode-hook markdown-mode-hook) #'athame-corfu-add-cape-elisp-block-h)
 
   (defun athame-corfu-add-cape-dabbrev-h ()
     (add-hook 'completion-at-point-functions #'cape-dabbrev 20 t))
+  (athame-add-hooks '(prog-mode-hook
+                      text-mode-hook
+                      conf-mode-hook
+                      comint-mode-hook
+                      minibuffer-setup-hook
+                      eshell-mode-hook)
+                    #'athame-corfu-add-cape-dabbrev-h)
 
-  ;; Also hook into minibuffer setup
-  (add-hook 'minibuffer-setup-hook
-            (lambda ()
-              (when (eq this-command 'eval-expression)
-                (add-hook 'completion-at-point-functions #'cape-dabbrev 20 t))))
-
-  :config
   (defun athame-corfu-dabbrev-friend-buffer-p (other-buffer)
     (< (buffer-size other-buffer) athame-corfu-buffer-scanning-size-limit))
 
   (setq dabbrev-friend-buffer-function #'athame-corfu-dabbrev-friend-buffer-p
         dabbrev-ignored-buffer-regexps
-        '("\\` " "\\(?:\\(?:[EG]?\\|GR\\)TAGS\\|e?tags\\|GPATH\\)\\(<[0-9]+>\\)?")
+        '("\\` "
+          "\\(?:\\(?:[EG]?\\|GR\\)TAGS\\|e?tags\\|GPATH\\)\\(<[0-9]+>\\)?")
         dabbrev-upcase-means-case-search t)
 
-  ;; Apply advice only after packages are loaded
-  (with-eval-after-load 'comint
-    (advice-add #'comint-completion-at-point :around #'cape-wrap-nonexclusive))
-  (with-eval-after-load 'eglot
-    (advice-add #'eglot-completion-at-point :around #'cape-wrap-nonexclusive))
-  (with-eval-after-load 'pcomplete
-    (advice-add #'pcomplete-completions-at-point :around #'cape-wrap-nonexclusive)))
+  (advice-add #'comint-completion-at-point :around #'cape-wrap-nonexclusive)
+  (advice-add #'eglot-completion-at-point :around #'cape-wrap-nonexclusive)
+  (advice-add #'pcomplete-completions-at-point :around #'cape-wrap-nonexclusive))
 
-;;;; Vertico - Load on first minibuffer use
+;;;; Vertico
+
 (use-package vertico
-  :defer t
   :custom
   (vertico-cycle t)
   (vertico-count 20)
   (vertico-resize t)
 
-  ;; Load when minibuffer is used for completion
-  :hook (minibuffer-setup . (lambda ()
-                              (when (eq 'completion-at-point-functions
-                                        (car-safe completion-at-point-functions))
-                                (vertico-mode 1))))
-
-  :general
-  (:keymaps 'vertico-map
-            "M-j" 'next-line
-            "M-k" 'previous-line
-            "M-h" 'backward-paragraph
-            "M-l" 'forward-paragraph
-            "C-x C-d" #'consult-dir
-            "C-x C-j" #'consult-dir-jump-file
-            "RET" 'vertico-directory-enter
-            "DEL" 'vertico-directory-delete-char
-            "M-DEL" 'vertico-directory-delete-word)
-
   :config
-  ;; Load extensions only after vertico is active
-  (require 'vertico-buffer)
-  (require 'vertico-grid)
-  (require 'vertico-directory)
-  (require 'vertico-reverse)
-  (require 'vertico-repeat)
-  (require 'vertico-multiform)
+  (vertico-mode)
+  (general-def
+    :keymaps 'vertico-map
+    "M-j" 'next-line
+    "M-k" 'previous-line
+    "M-h" 'backward-paragraph
+    "M-l" 'forward-paragraph)
 
-  (add-hook 'rfn-esm-update-handlers #'vertico-directory-tidy)
-  (add-hook 'minibuffer-setup-hook #'vertico-repeat-save)
-
-  (setq vertico-buffer-display-action '(display-buffer-use-least-recent-window)
-        vertico-multiform-categories '((embark-keybinding grid)))
-
-  (vertico-multiform-mode)
-
-  ;; Prompt indicator for `completing-read-multiple'
+  ;; Prompt indicator for `completing-read-multiple'.
   (when (< emacs-major-version 31)
     (advice-add #'completing-read-multiple :filter-args
                 (lambda (args)
                   (cons (format "[CRM%s] %s"
                                 (string-replace "[ \t]*" "" crm-separator)
                                 (car args))
-                        (cdr args)))))
+                        (cdr args))))))
 
-  (advice-add #'ffap-menu-ask :around
-              (lambda (&rest args)
-                (cl-letf (((symbol-function #'minibuffer-completion-help) #'ignore))
-                  (apply args)))))
+(require 'vertico-buffer)
+(require 'vertico-grid)
+(require 'vertico-directory)
+(require 'vertico-reverse)
+(require 'vertico-repeat)
+(require 'vertico-multiform)
 
-;; Global keybinding for vertico-repeat
+(add-hook 'rfn-esm-update-handlers #'vertico-directory-tidy)
+
+(general-def
+  :keymaps '(vertico-map vertico-mulltiform-map)
+  "RET" 'vertico-directory-enter
+  "DEL" 'vertico-directory-delete-char
+  "M-DEL" 'vertico-directory-delete-word)
+
+(setq vertico-buffer-display-action '(display-buffer-use-least-recent-window)
+      vertico-multiform-categories '((embark-keybinding grid)))
+
+(vertico-multiform-mode)
+
+(add-hook 'minibuffer-setup-hook #'vertico-repeat-save)
+
 (general-def
   :states '(normal insert visual motion)
   "C-M-;" 'vertico-repeat)
 
-;;;; Orderless - Load when completion styles are needed
+(advice-add #'ffap-menu-ask :around
+            (lambda (&rest args)
+              (cl-letf (((symbol-function #'minibuffer-completion-help)
+                         #'ignore))
+                (apply args))))
+
+;;;; Orderless
 (defun athame-vertico--orderless-dispatch (pattern _index _total)
   (let ((len (length pattern))
         (alist orderless-affix-dispatch-alist))
     (when (> len 0)
       (cond
+       ;; Ignore single dispatcher character
        ((and (= len 1) (alist-get (aref pattern 0) alist)) #'ignore)
+       ;; Prefix
        ((when-let ((style (alist-get (aref pattern 0) alist))
                    ((not (char-equal (aref pattern (max (1- len) 1)) ?\\))))
           (cons style (substring pattern 1))))
+       ;; Suffix
        ((when-let ((style (alist-get (aref pattern (1- len)) alist))
                    ((not (char-equal (aref pattern (max 0 (- len 2))) ?\\))))
           (cons style (substring pattern 0 -1))))))))
+
 
 (defun athame-vertico--orderless-disambiguation-dispatch (pattern _index _total)
   (when (char-equal (aref pattern (1- (length pattern))) ?$)
     `(orderless-regexp . ,(concat (substring pattern 0 -1) "[\x200000-\x300000]*$"))))
 
+
 (use-package orderless
-  :defer t
-  :after vertico  ; Load after vertico since they work together
+  :ensure t
   :config
   (defun athame-vertico--company-capf--candidates-a (fn &rest args)
     (let ((orderless-match-faces [completions-common-part])
           (completion-styles '(basic partial-completion orderless)))
       (apply fn args)))
-
-  (with-eval-after-load 'company
-    (advice-add 'company-capf--candidates :around #'athame-vertico--company-capf--candidates-a))
+  (advice-add 'company-capf--candidates :around #'athame-vertico--company-capf--candidates-a)
 
   (setq orderless-affix-dispatch-alist
         '((?! . orderless-without-literal)
@@ -265,26 +248,21 @@
 
   (setq completion-styles '(orderless basic)
         completion-category-defaults nil
+        ;; note that despite override in the name orderless can still be used in
+        ;; find-file etc.
         completion-category-overrides '((file (styles orderless partial-completion)))
         orderless-component-separator #'orderless-escapable-split-on-space)
-
+  ;; ...otherwise find-file gets different highlighting than other commands
   (set-face-attribute 'completions-first-difference nil :inherit nil))
 
-;;;; Consult - Load when specific commands are used
+;;;; Consult
 (use-package consult
-  :defer t
-  :commands (consult-bookmark consult-mark consult-register consult-goto-line
-                              consult-imenu consult-info consult-dir consult-locate consult-theme
-                              consult-recent-file consult-buffer consult-buffer-other-window
-                              consult-buffer-other-frame consult-yank-pop consult-line
-                              consult-ripgrep consult-git-grep consult-grep)
-
+  :preface
   :init
-  ;; Set up register preview early
   (advice-add #'register-preview :override #'consult-register-window)
   (setq register-preview-delay 0.5)
 
-  ;; Replace built-in functions with consult equivalents
+  :config
   (general-def
     [remap bookmark-jump]                 #'consult-bookmark
     [remap evil-show-marks]               #'consult-mark
@@ -301,7 +279,6 @@
     [remap switch-to-buffer-other-frame]  #'consult-buffer-other-frame
     [remap yank-pop]                      #'consult-yank-pop)
 
-  :config
   (setq xref-show-xrefs-function #'consult-xref
         xref-show-definitions-function #'consult-xref)
 
@@ -316,12 +293,16 @@
   (setq consult-narrow-key "<"
         consult-line-numbers-width t
         consult-async-min-input 2
-        consult-async-refresh-delay 0.15
+        consult-async-refresh-delay  0.15
         consult-async-input-throttle 0.2
         consult-async-input-debounce 0.1)
 
   (setq evil-jumps-cross-buffers nil)
   (evil-set-command-property 'consult-line :jump t)
+  (general-def
+    :keymaps 'vertico-map
+    "C-x C-d" #'consult-dir
+    "C-x C-j" #'consult-dir-jump-file)
 
   (consult-customize
    consult-ripgrep consult-git-grep consult-grep
@@ -329,10 +310,8 @@
    consult--source-recent-file consult--source-project-recent-file consult--source-bookmark
    :preview-key "C-SPC"))
 
-;;;; Marginalia - Load when minibuffer annotations are needed
+;;;; Marginalia
 (use-package marginalia
-  :defer t
-  :after vertico
   :custom
   (marginalia-max-relative-age 0)
   :config
@@ -340,13 +319,12 @@
   (add-to-list 'marginalia-prompt-categories '("\\<face\\>" . face))
   (add-to-list 'marginalia-prompt-categories '("\\<var\\>" . variable)))
 
-;; Icons for completion - load after marginalia
+
 (use-package nerd-icons-completion
-  :defer t
-  :after marginalia
   :config
   (nerd-icons-completion-mode)
   (add-hook 'marginalia-mode-hook #'nerd-icons-completion-marginalia-setup))
 
 ;;; Provide
 (provide 'athame-completion)
+;;; athame-completion.el ends here
