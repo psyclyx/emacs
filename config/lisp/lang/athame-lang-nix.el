@@ -3,6 +3,7 @@
 ;;; Code
 
 (use-package tramp
+  :defer t
   :config
   (add-to-list 'tramp-remote-path "/run/current-system/sw/bin"))
 
@@ -17,13 +18,13 @@
   :commands nix-repl-show)
 
 (deflocalleader
- :keymaps 'nix-mode-map
- "f" #'nix-update-fetch
- "p" #'nix-format-buffer
- "r" #'nix-repl-show
- "s" #'nix-shell
- "b" #'nix-build
- "u" #'nix-unpack)
+  :keymaps 'nix-mode-map
+  "f" #'nix-update-fetch
+  "p" #'nix-format-buffer
+  "r" #'nix-repl-show
+  "s" #'nix-shell
+  "b" #'nix-build
+  "u" #'nix-unpack)
 
 ;;; Provide
 (provide 'athame-lang-nix)
