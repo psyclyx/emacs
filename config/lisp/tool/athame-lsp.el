@@ -29,13 +29,10 @@
            (slot . -1)
            (width . 0.3))))
 
-(add-to-list 'display-buffer-alist
-             '("\\"))
-
-
 (setq eldoc-echo-area-use-multiline-p t
       eldoc-documentation-strategy 'eldoc-documentation-compose-eagerly
       eldoc-echo-area-prefer-doc-buffer t)
+
 ;;; Provide
 (provide 'athame-lsp)
 ;;; athame-lsp.el ends here

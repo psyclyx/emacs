@@ -1,6 +1,5 @@
 epkgs: with epkgs; [
   apheleia
-  better-jumper
   cape
   consult
   consult-eglot
@@ -12,7 +11,6 @@ epkgs: with epkgs; [
   evil-nerd-commenter
   evil-snipe
   evil-surround
-  evil-textobj-anyblock
   exato
   general
   git-gutter-fringe

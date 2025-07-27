@@ -17,7 +17,7 @@
   (global-set-key [remap describe-command]  #'helpful-command)
   (global-set-key [remap describe-variable] #'helpful-variable)
   (global-set-key [remap describe-key]      #'helpful-key)
-  (global-set-key [remap describe-symbol    #'helpful-symbol]))
+  (global-set-key [remap describe-symbol]   #'helpful-symbol))
 
 
 ;;;; Which-key
