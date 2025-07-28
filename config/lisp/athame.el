@@ -4,7 +4,8 @@
 
 ;;;; Custom
 (defgroup athame nil
-  "Configuration for athame's emacs config."
+  "Configuration for athame\\='s emacs config."
+  :group 'local
   :prefix "athame-")
 
 ;;;;; Data directories
