@@ -69,6 +69,7 @@
 
 (require 'athame-cape)
 (require 'athame-corfu)
+(require 'athame-vertico)
 (require 'athame-completion)
 
 (require 'athame-compile)

@@ -2,63 +2,15 @@
 ;;; Commentary:
 ;;; Code
 
-;;;; Vertico
+(defun athame-completion--crm-indicator-a (args)
+  (cons (format "[CRM%s] %s"
+                (string-replace "[ \t]*" "" crm-separator)
+                (car args))
+        (cdr args)))
 
-(use-package vertico
-  :custom
-  (vertico-cycle t)
-  (vertico-count 20)
-  (vertico-resize t)
-
-  :config
-  (vertico-mode)
-  (general-def
-    :keymaps 'vertico-map
-    "M-j" 'next-line
-    "M-k" 'previous-line
-    "M-h" 'backward-paragraph
-    "M-l" 'forward-paragraph)
-
-  ;; Prompt indicator for `completing-read-multiple'.
-  (when (< emacs-major-version 31)
-    (advice-add #'completing-read-multiple :filter-args
-                (lambda (args)
-                  (cons (format "[CRM%s] %s"
-                                (string-replace "[ \t]*" "" crm-separator)
-                                (car args))
-                        (cdr args))))))
-
-(require 'vertico-buffer)
-(require 'vertico-grid)
-(require 'vertico-directory)
-(require 'vertico-reverse)
-(require 'vertico-repeat)
-(require 'vertico-multiform)
-
-(add-hook 'rfn-esm-update-handlers #'vertico-directory-tidy)
-
-(general-def
-  :keymaps '(vertico-map vertico-mulltiform-map)
-  "RET" 'vertico-directory-enter
-  "DEL" 'vertico-directory-delete-char
-  "M-DEL" 'vertico-directory-delete-word)
-
-(setq vertico-buffer-display-action '(display-buffer-use-least-recent-window)
-      vertico-multiform-categories '((embark-keybinding grid)))
-
-(vertico-multiform-mode)
-
-(add-hook 'minibuffer-setup-hook #'vertico-repeat-save)
-
-(general-def
-  :states '(normal insert visual motion)
-  "C-M-;" 'vertico-repeat)
-
-(advice-add #'ffap-menu-ask :around
-            (lambda (&rest args)
-              (cl-letf (((symbol-function #'minibuffer-completion-help)
-                         #'ignore))
-                (apply args))))
+(when (< emacs-major-version 31)
+  (advice-add #'completing-read-multiple :filter-args
+              #'athame-completion--crm-indicator-a))
 
 ;;;; Orderless
 (defun athame-vertico--orderless-dispatch (pattern _index _total)
