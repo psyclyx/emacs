@@ -20,19 +20,24 @@
 
 (setopt display-buffer-alist
         '(("\\*eldoc\\*"
-           (display-buffer-in-side-window)
+           (display-buffer-reuse-mode-window
+            display-buffer-in-side-window)
            (side . right)
            (slot . 0)
            (width . 0.3))
           ("\\*[Hh]elp\\*"
-           (display-buffer-in-side-window)
+           (display-buffer-reuse-mode-window
+            display-buffer-in-side-window)
            (side . right)
            (slot . -1)
            (width . 0.3))))
 
-(setq eldoc-echo-area-use-multiline-p t
-      eldoc-documentation-strategy 'eldoc-documentation-compose-eagerly
-      eldoc-echo-area-prefer-doc-buffer t)
+(use-package eldoc
+  :ensure nil
+  :custom
+  (eldoc-echo-area-use-multiline-p t)
+  (eldoc-echo-area-prefer-doc-buffer t)
+  (eldoc-documentation-strategy 'eldoc-documentation-compose-eagerly))
 
 ;;; Provide
 (provide 'athame-lsp)
