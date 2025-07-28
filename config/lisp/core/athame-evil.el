@@ -64,7 +64,9 @@
 
 ;;;;;; Surround
 (use-package evil-surround
-  :hook evil-after-load)
+  :after evil
+  :config
+  (global-evil-surround-mode 1))
 
 ;;;; Provide
 (provide 'athame-evil)
