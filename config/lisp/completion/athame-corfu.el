@@ -2,7 +2,15 @@
 ;;; Commentary:
 ;;; Code
 
-(defun athame-corfu--smart-sep-toggle-escape ()
+(defun athame-corfu-move-to-minibuffer ()
+  (interactive)
+  (pcase completion-in-region--data
+    (`(,beg ,end ,table ,pred ,extras)
+     (let ((completion-extra-properties extras)
+           completion-cycle-threshold completion-cycling)
+       (consult-completion-in-region beg end table pred)))))
+
+(defun athame-corfu-smart-sep-toggle-escape ()
   "Insert `corfu-separator' or toggle escape if it's already there."
   (interactive)
   (cond ((and (char-equal (char-before) corfu-separator)
@@ -13,7 +21,7 @@
                          (insert-char ?\\)))
         (t (call-interactively #'corfu-insert-separator))))
 
-(defun athame-corfu--dabbrev-or-next (&optional arg)
+(defun athame-corfu-dabbrev-or-next (&optional arg)
   "Trigger corfu popup and select the first candidate.
 
 Intended to mimic `evil-complete-next', unless the popup is already open."
@@ -27,7 +35,7 @@ Intended to mimic `evil-complete-next', unless the popup is already open."
       (when (> corfu--total 0)
         (corfu--goto (or arg 0))))))
 
-(defun athame-corfu--dabbrev-or-last (&optional arg)
+(defun athame-corfu-dabbrev-or-last (&optional arg)
   "Trigger corfu popup and select the first candidate.
 
 Intended to mimic `evil-complete-previous', unless the popup is already open."
@@ -66,10 +74,8 @@ Intended to mimic `evil-complete-previous', unless the popup is already open."
   (global-corfu-minibuffer #'athame-corfu--enable-in-minibuffer-p)
   :config
   (global-corfu-mode)
-  (add-to-list 'corfu-continue-commands #'athame-corfu--smart-sep-toggle-escape)
+  (add-to-list 'corfu-continue-commands #'athame-corfu-smart-sep-toggle-escape)
   (add-hook 'evil-insert-state-exit-hook #'corfu-quit))
-
-(defvar athame-corfu--buffer-scanning-size-limit (* 1 1024 1024))
 
 (use-package corfu-history
   :hook corfu-mode
@@ -80,9 +86,10 @@ Intended to mimic `evil-complete-previous', unless the popup is already open."
 (use-package corfu-popupinfo
   :hook corfu-mode
   :config
-  (setq corfu-popupinfo-delay '(0.24 . 0.6)))
+  (setq corfu-popupinfo-delay '(0.2 . 0.4)))
 
 (use-package nerd-icons-corfu
+  :after corfu
   :config
   (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter))
 

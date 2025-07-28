@@ -1,3 +1,4 @@
+
 ;;; athame-bindings.el -*- lexical-binding: t -*-
 ;;; Commentary:
 ;;; Code
@@ -22,8 +23,8 @@
  :states '(insert)
  "C-@" #'completion-at-point
  "C-SPC" #'completion-at-point
- "C-n" #'athame-corfu--dabbrev-or-next
- "C-p" #'athame-corfu--dabbrev-or-last)
+ "C-n" #'athame-corfu-dabbrev-or-next
+ "C-p" #'athame-corfu-dabbrev-or-last)
 (general-define-key
  :keymaps 'corfu-mode-map
  :states '(normal)
@@ -39,8 +40,8 @@
 (general-define-key
  :keymaps 'corfu-map
  :states '(insert)
- "C-SPC" #'athame-corfu--smart-sep-toggle-escape
- "C-S-s" #'athame-corfu--move-to-minibuffer
+ "C-SPC" #'athame-corfu-smart-sep-toggle-escape
+ "C-S-s" #'athame-corfu-move-to-minibuffer
  "DEL" #'corfu-reset)
 (general-define-key
  :keymaps 'corfu-map
@@ -146,7 +147,6 @@
 (general-define-key
  :keymaps 'help-map
  "C-h" "")
-
 
 (general-define-key
  :prefix-map 'athame-search-prefix-map
