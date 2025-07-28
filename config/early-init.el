@@ -23,7 +23,7 @@
 (setq file-name-handler-alist nil)
 (add-hook 'emacs-startup-hook
           (lambda ()
-            (setq file-name-handler-alist athame-file-name-handler-alist)))
+            (setq file-name-handler-alist athame--file-name-handler-alist)))
 
 
 (setq native-comp-async-report-warnings-errors nil
