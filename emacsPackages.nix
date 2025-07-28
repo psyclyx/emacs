@@ -2,6 +2,7 @@ epkgs: with epkgs; [
   apheleia
   cape
   consult
+  consult-dir
   consult-eglot
   corfu
   envrc

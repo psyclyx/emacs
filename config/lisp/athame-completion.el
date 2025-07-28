@@ -72,7 +72,6 @@ Intended to mimic `evil-complete-previous', unless the popup is already open."
   (tab-always-indent 'complete)
   :config
   (global-corfu-mode)
-
   (add-to-list 'corfu-continue-commands #'athame-corfu--move-to-minibuffer)
   (add-to-list 'corfu-continue-commands #'athame-corfu--smart-sep-toggle-escape)
   (add-to-list 'completion-category-overrides `(lsp-capf (styles ,@completion-styles)))
@@ -113,23 +112,29 @@ Intended to mimic `evil-complete-previous', unless the popup is already open."
   :custom
   (cape-dabbrev-check-other-buffers t)
   :init
-  (defun athame-corfu-add-cape-file-h ()
-    (add-hook 'completion-at-point-functions #'cape-file -10 t))
-  (add-hook 'prog-mode-hook #'athame-corfu-add-cape-file-h)
+  (general-def
+    :prefix "C-c p"
+    "p" #'completion-at-point
+    "a" #'cape-abbrev
+    "b" #'cape-elisp-block
+    "d" #'cape-dabbrev
+    "e" #'cape-elisp-symbol
+    "E" #'cape-emoji
+    "D" #'cape-dict
+    "h" #'cape-history
+    "t" #'cape-keyword
+    "l" #'cape-line
+    "r" #'cape-rfc1345
+    "s" #'cape-sgml
+    "t" #'cape-tex)
+
+  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+  (add-to-list 'completion-at-point-functions #'cape-keyword)
+  (add-to-list 'completion-at-point-functions #'cape-file)
 
   (defun athame-corfu-add-cape-elisp-block-h ()
     (add-hook 'completion-at-point-functions #'cape-elisp-block 0 t))
   (athame-add-hooks '(org-mode-hook markdown-mode-hook) #'athame-corfu-add-cape-elisp-block-h)
-
-  (defun athame-corfu-add-cape-dabbrev-h ()
-    (add-hook 'completion-at-point-functions #'cape-dabbrev 20 t))
-  (athame-add-hooks '(prog-mode-hook
-                      text-mode-hook
-                      conf-mode-hook
-                      comint-mode-hook
-                      minibuffer-setup-hook
-                      eshell-mode-hook)
-                    #'athame-corfu-add-cape-dabbrev-h)
 
   (defun athame-corfu-dabbrev-friend-buffer-p (other-buffer)
     (< (buffer-size other-buffer) athame-corfu-buffer-scanning-size-limit))
@@ -226,7 +231,6 @@ Intended to mimic `evil-complete-previous', unless the popup is already open."
 
 
 (use-package orderless
-  :ensure t
   :config
   (defun athame-vertico--company-capf--candidates-a (fn &rest args)
     (let ((orderless-match-faces [completions-common-part])
@@ -257,7 +261,6 @@ Intended to mimic `evil-complete-previous', unless the popup is already open."
 
 ;;;; Consult
 (use-package consult
-  :preface
   :init
   (advice-add #'register-preview :override #'consult-register-window)
   (setq register-preview-delay 0.5)
