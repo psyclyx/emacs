@@ -32,7 +32,7 @@
   (which-key-idle-delay 0.3)
   (which-key-idle-secondary-delay 0.1)
   (which-key-allow-evil-operators t)
-  (which-key-ashow-operator-state-maps t)
+  (which-key-show-operator-state-maps t)
   :config
   (which-key-mode)
   (which-key-setup-side-window-bottom))
