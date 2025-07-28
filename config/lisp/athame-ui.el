@@ -36,5 +36,12 @@
 
 (setopt x-underline-at-descent-line t)
 
+(use-package display-line-numbers
+  :hook (prog-mode-hook text-mode-hook conf-mode-hook)
+  :custom
+  (display-line-numbers-width 3)
+  (display-line-numbers-widen t)
+  (display-line-numbers-type 'relative))
+
 (provide 'athame-ui)
 ;;; athame-ui.el ends here
