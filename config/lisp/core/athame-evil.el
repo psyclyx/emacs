@@ -5,28 +5,27 @@
 ;;;; Evil
 ;;;;; Core
 (use-package evil
-  :init
-  (setopt
-   evil-want-keybinding nil
-   evil-want-C-i-jump t
-   evil-want-C-u-scroll  t
-   evil-want-C-u-delete  t
-   evil-want-C-w-delete t
-   evil-want-Y-yank-to-eol t
-   evil-ex-search-persistent-highlight t
-   evil-move-beyond-eol t
-   evil-ex-search-vim-style-regexp t
-   evil-want-abbrev-expand-on-insert-exit  nil
-   evil-respect-visual-line-mode nil
-   evil-ex-visual-char-range t
-   evil-symbol-word-search t
-   evil-undo-system 'undo-redo)
+  :custom
+  (evil-want-keybinding nil)
+  (evil-respect-visual-line-mode nil)
+  (evil-want-C-i-jump t)
+  (evil-want-C-u-scroll  t)
+  (evil-want-C-u-delete  t)
+  (evil-want-C-w-delete t)
+  (evil-want-Y-yank-to-eol t)
+  (evil-ex-search-persistent-highlight t)
+  (evil-move-beyond-eol t)
+  (evil-ex-search-vim-style-regexp t)
+  (evil-want-abbrev-expand-on-insert-exit  nil)
+  (evil-ex-visual-char-range t)
+  (evil-symbol-word-search t)
+  (evil-undo-system 'undo-redo)
+  :config
   (setq
    evil-normal-state-cursor 'box
    evil-emacs-state-cursor  'box
    evil-insert-state-cursor 'bar
    evil-visual-state-cursor 'hollow)
-  :config
   (evil-mode 1)
   (evil-select-search-module 'evil-search-module 'isearch))
 
@@ -43,12 +42,18 @@
   (evil-snipe-repeat-scope 'whole-visible)
   (evil-snipe-smart-case t)
   :config
-  (evil-snipe-override-mode +1))
+  (evil-snipe-mode 1)
+  (evil-snipe-override-mode 1))
 
 ;;;;; Evil-Easymotion
 (use-package evil-easymotion
   :after evil-snipe
   :config
+  (general-define-key
+   :states '(motion)
+   :prefix "C-;"
+   :prefix-map 'evilem-map)
+
   (general-define-key
    :keymaps 'evil-snipe-parent-transient-map
    "C-;" (evilem-create
@@ -56,15 +61,10 @@
           :bind
           ((evil-snipe-scope 'buffer)
            (evil-snipe-enable-highlight)
-           (evil-snipe-enable-incremental-highlight))))
-  (general-define-key
-   :states '(motion)
-   :prefix "C-;"
-   :prefix-map 'evilem-map))
+           (evil-snipe-enable-incremental-highlight)))))
 
 ;;;;;; Surround
 (use-package evil-surround
-  :after evil
   :config
   (global-evil-surround-mode 1))
 
