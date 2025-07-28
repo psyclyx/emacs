@@ -31,7 +31,7 @@ From doom."
     (remove-hook 'post-command-hook #'athame-init--reset-inhibited-vars-h))
   (add-hook 'post-command-hook #'athame-init--reset-inhibited-vars-h -100))
 
-(defun athame--init--simple-startup-screen ()
+(defun athame-init--simple-startup-screen ()
   "Disables the default initial start screen."
   (setq inhibit-startup-screen t
         inhibit-startup-echo-area-message user-login-name ; does this work?
@@ -42,10 +42,10 @@ From doom."
 
 (defun athame-init-ui ()
   "Initialize the UI"
-  (athame-init--disable-pgtk-delay) font-lock-function
+  (athame-init--disable-pgtk-delay)
   (athame-init--hide-initial-frame)
-  (athame-start--strip-gui)
-  (athame-start--inhibit-startup-redisplay)
-  (athame-start--simple-startup-screen))
+  (athame-init--strip-gui)
+  (athame-init--inhibit-startup-redisplay)
+  (athame-init--simple-startup-screen))
 
 (provide 'athame-init)
