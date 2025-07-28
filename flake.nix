@@ -24,7 +24,7 @@
         in
         rec {
           emacs = pkgs.emacs-unstable-pgtk;
-          emacsWithPackages = (pkgs.emacsPackagesFor pkgs.emacs-unstable-pgtk).emacsWithPackages (import ./emacsPackages.nix);
+          emacsWithPackages = (pkgs.emacsPackagesFor emacs).emacsWithPackages (import ./emacsPackages.nix);
           default = pkgs.writeShellScriptBin "emacs-wrapped" ''
             ${emacsWithPackages}/bin/emacs --init-directory=${./config}
           '';
