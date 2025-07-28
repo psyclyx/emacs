@@ -89,9 +89,9 @@ Intended to mimic `evil-complete-previous', unless the popup is already open."
   (setq corfu-popupinfo-delay '(0.2 . 0.4)))
 
 (use-package nerd-icons-corfu
-  :after corfu
-  :config
-  (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter))
+  :defer t
+  :custom
+  (corfu-margin-formatters `(,#'nerd-icons-corfu-formatter)))
 
 (provide 'athame-corfu)
 ;;; athame-corfu.el ends here
