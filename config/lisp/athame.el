@@ -65,6 +65,8 @@
 (require 'athame-editor)
 (require 'athame-help)
 (require 'athame-evil)
+
+(require 'athame-corfu)
 (require 'athame-completion)
 
 (require 'athame-compile)
