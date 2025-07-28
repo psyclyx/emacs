@@ -14,6 +14,7 @@
    evil-want-C-u-delete  t
    evil-want-C-w-delete t
    evil-want-Y-yank-to-eol t
+   evil-ex-search-persistent-highlight t
    evil-move-beyond-eol t
    evil-ex-search-vim-style-regexp t
    evil-want-abbrev-expand-on-insert-exit  nil
@@ -36,17 +37,17 @@
 
 ;;;;; Quick movement
 (use-package evil-snipe
+  :after evil
   :custom
   (evil-snipe-scope 'visible)
-  (evil-snipe-repeat-scope 'visible)
+  (evil-snipe-repeat-scope 'whole-visible)
   (evil-snipe-smart-case t)
   :config
-  (evil-snipe-mode +1)
   (evil-snipe-override-mode +1))
 
 ;;;;; Evil-Easymotion
 (use-package evil-easymotion
-  :defer t
+  :after evil-snipe
   :config
   (general-define-key
    :keymaps 'evil-snipe-parent-transient-map
@@ -55,15 +56,15 @@
           :bind
           ((evil-snipe-scope 'buffer)
            (evil-snipe-enable-highlight)
-           (evil-snipe-enable-incremental-highlight)))))
+           (evil-snipe-enable-incremental-highlight))))
+  (general-define-key
+   :states '(motion)
+   :prefix "C-;"
+   :prefix-map 'evilem-map))
 
-(general-define-key
- :states '(motion)
- :prefix "C-;"
- :prefix-map 'evilem-map)
 ;;;;;; Surround
 (use-package evil-surround
-  :after evil)
+  :hook evil-after-load)
 
 ;;;; Provide
 (provide 'athame-evil)
