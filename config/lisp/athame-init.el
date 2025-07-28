@@ -13,9 +13,9 @@
 (defun athame-init--strip-gui ()
   "Quickly disables `menu-bar-mode', `tool-bar-lines', and `scroll-bar-mode'.
 From doom."
-  (push '(menu-bar-lines . 0)   default-frame-alist)
-  (push '(tool-bar-lines . 0)   default-frame-alist)
-  (push '(vertical-scroll-bars) default-frame-alist)
+  (push '(menu-bar-lines . 0)   initial-frame-alist)
+  (push '(tool-bar-lines . 0)   initial-frame-alist)
+  (push '(vertical-scroll-bars) initial-frame-alist)
   (setq menu-bar-mode nil
         tool-bar-mode nil
         scroll-bar-mode nil))
