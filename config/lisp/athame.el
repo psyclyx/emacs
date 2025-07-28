@@ -65,6 +65,7 @@
 (require 'athame-editor)
 (require 'athame-help)
 (require 'athame-evil)
+(require 'athame-ispell)
 
 (require 'athame-cape)
 (require 'athame-corfu)
