@@ -12,6 +12,11 @@
             read-expression-map))
   "A list of all the keymaps used for the minibuffer.")
 
+(general-def
+  :keymaps 'override
+  :states 'insert
+  "C-c p" '("cape" . cape-prefix-map))
+
 (general-define-key
  :keymaps 'corfu-mode-map
  :states '(insert)

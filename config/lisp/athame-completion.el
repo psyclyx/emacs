@@ -2,63 +2,6 @@
 ;;; Commentary:
 ;;; Code
 
-;;;; Corfu
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-;;;; Cape
-(use-package cape
-  :custom
-  (cape-dabbrev-check-other-buffers t)
-  :init
-  (general-def
-    :prefix "C-c p"
-    "p" #'completion-at-point
-    "a" #'cape-abbrev
-    "b" #'cape-elisp-block
-    "d" #'cape-dabbrev
-    "e" #'cape-elisp-symbol
-    "E" #'cape-emoji
-    "D" #'cape-dict
-    "h" #'cape-history
-    "t" #'cape-keyword
-    "l" #'cape-line
-    "r" #'cape-rfc1345
-    "s" #'cape-sgml
-    "t" #'cape-tex)
-
-  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
-  (add-to-list 'completion-at-point-functions #'cape-keyword)
-  (add-to-list 'completion-at-point-functions #'cape-file)
-
-  (defun athame-corfu-add-cape-elisp-block-h ()
-    (add-hook 'completion-at-point-functions #'cape-elisp-block 0 t))
-  (athame-add-hooks '(org-mode-hook markdown-mode-hook) #'athame-corfu-add-cape-elisp-block-h)
-
-  (defun athame-corfu-dabbrev-friend-buffer-p (other-buffer)
-    (< (buffer-size other-buffer) athame-corfu-buffer-scanning-size-limit))
-
-  (setq dabbrev-friend-buffer-function #'athame-corfu-dabbrev-friend-buffer-p
-        dabbrev-ignored-buffer-regexps
-        '("\\` "
-          "\\(?:\\(?:[EG]?\\|GR\\)TAGS\\|e?tags\\|GPATH\\)\\(<[0-9]+>\\)?")
-        dabbrev-upcase-means-case-search t)
-
-  (advice-add #'comint-completion-at-point :around #'cape-wrap-nonexclusive)
-  (advice-add #'eglot-completion-at-point :around #'cape-wrap-nonexclusive)
-  (advice-add #'pcomplete-completions-at-point :around #'cape-wrap-nonexclusive))
-
 ;;;; Vertico
 
 (use-package vertico
