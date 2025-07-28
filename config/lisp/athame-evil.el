@@ -6,9 +6,8 @@
 ;;;;; Core
 (use-package evil
   :init
-  (setq
+  (setopt
    evil-want-keybinding nil
-   evil-want-C-g-bindings t
    evil-want-C-i-jump t
    evil-want-C-u-scroll  t
    evil-want-C-u-delete  t
@@ -21,11 +20,12 @@
    evil-respect-visual-line-mode nil
    evil-ex-visual-char-range t
    evil-symbol-word-search t
+   evil-undo-system 'undo-redo)
+  (setq
    evil-normal-state-cursor 'box
    evil-emacs-state-cursor  'box
    evil-insert-state-cursor 'bar
-   evil-visual-state-cursor 'hollow
-   evil-undo-system 'undo-redo)
+   evil-visual-state-cursor 'hollow)
   :config
   (evil-mode 1)
   (evil-select-search-module 'evil-search-module 'isearch))
