@@ -3,7 +3,6 @@
 ;;; Code:
 
 ;;;; Requires
-
 (require 'cl-lib)
 (require 'dash)
 
@@ -533,7 +532,7 @@ Intended to mimic `evil-complete-previous', unless the popup is already open."
    corfu-max-width 120
    corfu-on-exact-match nil
    corfu-quit-at-boundary 'separator
-   corfu-quit-no-match 'corfu-quit-at-boundary
+   corfu-quit-no-match 'separator
    tab-always-indent 'complete
    global-corfu-minibuffer #'athame-corfu--enable-in-minibuffer-p)
 
@@ -1021,7 +1020,7 @@ If ARG (universal argument), runs `compile' from the current directory."
 
 (use-package magit
   :defer t
-  :custom
+  :config
   (gsetq
    magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1
    magit-bury-buffer-function #'magit-restore-window-configuration
@@ -1164,3 +1163,10 @@ If ARG (universal argument), runs `compile' from the current directory."
   "," (cons "Switch buffer" #'switch-to-buffer)
   "." (cons "Find file" #'find-file)
   "RET" (cons "Jump to bookmark" #'bookmark-jump))
+
+(general-def
+  :keymaps '(emacs insert normal)
+  :prefix-map 'athame-leader-map
+  :global-prefix "C-c f"
+  :non-normal-prefix "M-SPC"
+  :prefix "SPC")
