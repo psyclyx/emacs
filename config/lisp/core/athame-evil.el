@@ -36,30 +36,31 @@
     (evil-collection-init)))
 ;;;;; Quick movement
 (use-package evil-snipe
-  :defer t
+  :defer 1
   :init
   (gsetq
    evil-snipe-scope 'visible
    evil-snipe-repeat-scope 'whole-visible
    evil-snipe-smart-case t)
-  (general-after-init
-    (evil-snipe-mode 1)
-    (evil-snipe-override-mode 1)))
-;;;;; Evil-Easymotion
-;; (use-package evil-easymotion
-;;   :config
-;;   (general-after-init
-;;     (general-defs
-;;       :states 'motion
-;;       "C-;" 'evilem-map
+  :config
+  (evil-snipe-mode 1)
+  (evil-snipe-override-mode 1))
 
-;;       :keymaps 'evil-snipe-parent-transient-map
-;;       "C-;" (evilem-create
-;; 	     'evil-snipe-repeat
-;; 	     :bind
-;; 	     ((evil-snipe-scope 'buffer)
-;; 	      (evil-snipe-enable-highlight)
-;; 	      (evil-snipe-enable-incremental-highlight))))))
+;;;;; Evil-Easymotion
+(use-package evil-easymotion
+  :defer 2
+  :config
+  (general-defs
+    :states 'motion
+    "C-;" evilem-map
+
+    :keymaps 'evil-snipe-parent-transient-map
+    "C-;" (evilem-create
+ 	   'evil-snipe-repeat
+ 	   :bind
+ 	   ((evil-snipe-scope 'buffer)
+ 	    (evil-snipe-enable-highlight)
+ 	    (evil-snipe-enable-incremental-highlight)))))
 ;;;;;; Surround
 (use-package evil-surround
   :ghook
