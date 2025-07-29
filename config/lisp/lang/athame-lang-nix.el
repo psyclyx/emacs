@@ -15,16 +15,18 @@
                      'js-json-mode)))
 
 (use-package nix-repl
-  :commands nix-repl-show)
+  :defer t)
 
-(deflocalleader
-  :keymaps 'nix-mode-map
-  "f" #'nix-update-fetch
-  "p" #'nix-format-buffer
-  "r" #'nix-repl-show
-  "s" #'nix-shell
-  "b" #'nix-build
-  "u" #'nix-unpack)
+(general-after 'nix-mode
+  (general-def
+    :keymaps 'nix-mode
+    "f" #'nix-update-fetch
+    "p" #'nix-format-buffer
+    "r" #'nix-repl
+    "s" #'nix-shell
+    "b" #'nix-build
+    "u" #'nix-unpack))
+
 
 ;;; Provide
 (provide 'athame-lang-nix)

@@ -3,8 +3,9 @@
 ;;; Code
 
 (use-package ispell
-  :custom
-  (ispell-program-name "aspell"))
+  :defer t
+  :init
+  (gsetq ispell-program-name "aspell"))
 
 (provide 'athame-ispell)
 ;;; athame-ispell.el ends here

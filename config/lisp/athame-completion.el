@@ -35,103 +35,105 @@
     `(orderless-regexp . ,(concat (substring pattern 0 -1) "[\x200000-\x300000]*$"))))
 
 
+(defun athame-vertico--company-capf--candidates-a (fn &rest args)
+  (let ((orderless-match-faces [completions-common-part])
+        (completion-styles '(basic partial-completion orderless)))
+    (apply fn args)))
+
+
 (use-package orderless
+  :defer t
+  :init
+  (gsetq orderless-affix-dispatch-alist
+         '((?! . orderless-without-literal)
+           (?& . orderless-annotation)
+           (?% . char-fold-to-regexp)
+           (?` . orderless-initialism)
+           (?= . orderless-literal)
+           (?^ . orderless-literal-prefix)
+           (?~ . orderless-flex))
+         orderless-style-dispatchers
+         '(athame-vertico--orderless-dispatch
+           athame-vertico--orderless-disambiguation-dispatch))
+  (gsetq completion-styles '(orderless basic)
+         completion-category-defaults nil
+         completion-category-overrides '((file (styles orderless partial-completion))))
   :config
-  (defun athame-vertico--company-capf--candidates-a (fn &rest args)
-    (let ((orderless-match-faces [completions-common-part])
-          (completion-styles '(basic partial-completion orderless)))
-      (apply fn args)))
+  (gsetq orderless-component-separator #'orderless-escapable-split-on-space)
   (advice-add 'company-capf--candidates :around #'athame-vertico--company-capf--candidates-a)
-
-  (setq orderless-affix-dispatch-alist
-        '((?! . orderless-without-literal)
-          (?& . orderless-annotation)
-          (?% . char-fold-to-regexp)
-          (?` . orderless-initialism)
-          (?= . orderless-literal)
-          (?^ . orderless-literal-prefix)
-          (?~ . orderless-flex))
-        orderless-style-dispatchers
-        '(athame-vertico--orderless-dispatch
-          athame-vertico--orderless-disambiguation-dispatch))
-
-  (setq completion-styles '(orderless basic)
-        completion-category-defaults nil
-        ;; note that despite override in the name orderless can still be used in
-        ;; find-file etc.
-        completion-category-overrides '((file (styles orderless partial-completion)))
-        orderless-component-separator #'orderless-escapable-split-on-space)
-  ;; ...otherwise find-file gets different highlighting than other commands
   (set-face-attribute 'completions-first-difference nil :inherit nil))
 
 ;;;; Consult
 (use-package consult
   :init
+  (gsetq
+   consult-narrow-key "<"
+   consult-line-numbers-width t
+   consult-async-min-input 2
+   consult-async-refresh-delay  0.15
+   consult-async-input-throttle 0.2
+   consult-async-input-debounce 0.1
+   register-preview-delay 0.5)
   (advice-add #'register-preview :override #'consult-register-window)
-  (setq register-preview-delay 0.5)
+  :config
+  :general
+  ([remap bookmark-jump]                 #'consult-bookmark
+   [remap evil-show-marks]               #'consult-mark
+   [remap evil-show-registers]           #'consult-register
+   [remap goto-line]                     #'consult-goto-line
+   [remap imenu]                         #'consult-imenu
+   [remap Info-search]                   #'consult-info
+   [remap list-dir]                      #'consult-dir
+   [remap locate]                        #'consult-locate
+   [remap load-theme]                    #'consult-theme
+   [remap recentf-open-files]            #'consult-recent-file
+   [remap switch-to-buffer]              #'consult-buffer
+   [remap switch-to-buffer-other-window] #'consult-buffer-other-window
+   [remap switch-to-buffer-other-frame]  #'consult-buffer-other-frame
+   [remap yank-pop]                      #'consult-yank-pop)
 
   :config
-  (general-def
-    [remap bookmark-jump]                 #'consult-bookmark
-    [remap evil-show-marks]               #'consult-mark
-    [remap evil-show-registers]           #'consult-register
-    [remap goto-line]                     #'consult-goto-line
-    [remap imenu]                         #'consult-imenu
-    [remap Info-search]                   #'consult-info
-    [remap list-dir]                      #'consult-dir
-    [remap locate]                        #'consult-locate
-    [remap load-theme]                    #'consult-theme
-    [remap recentf-open-files]            #'consult-recent-file
-    [remap switch-to-buffer]              #'consult-buffer
-    [remap switch-to-buffer-other-window] #'consult-buffer-other-window
-    [remap switch-to-buffer-other-frame]  #'consult-buffer-other-frame
-    [remap yank-pop]                      #'consult-yank-pop)
-
-  (setq xref-show-xrefs-function #'consult-xref
-        xref-show-definitions-function #'consult-xref)
-
+  (gsetq xref-show-xrefs-function #'consult-xref
+	 xref-show-definitions-function #'consult-xref)
   (consult-customize
-   consult-theme :preview-key '(:debounce 0.1 any)
+   consult-theme
+   :preview-key '(:debounce 0.1 any)
    consult-ripgrep consult-git-grep consult-grep consult-man
    consult-bookmark consult-recent-file consult-xref
    consult--source-bookmark consult--source-file-register
    consult--source-recent-file consult--source-project-recent-file
-   :preview-key '(:debounce 0.3 any))
-
-  (setq consult-narrow-key "<"
-        consult-line-numbers-width t
-        consult-async-min-input 2
-        consult-async-refresh-delay  0.15
-        consult-async-input-throttle 0.2
-        consult-async-input-debounce 0.1)
-
-  (setq evil-jumps-cross-buffers nil)
-  (evil-set-command-property 'consult-line :jump t)
-  (general-def
-    :keymaps 'vertico-map
-    "C-x C-d" #'consult-dir
-    "C-x C-j" #'consult-dir-jump-file)
-
-  (consult-customize
+   :preview-key '(:debounce 0.3 any)
    consult-ripgrep consult-git-grep consult-grep
    consult-bookmark consult-recent-file
    consult--source-recent-file consult--source-project-recent-file consult--source-bookmark
-   :preview-key "C-SPC"))
+   :preview-key "C-SPC")
+
+  (general-with-eval-after-load 'evil
+    (gsetq evil-jumps-cross-buffers nil)
+    (evil-set-command-property 'consult-line :jump t))
+
+  (general-with-eval-after-load 'vertico
+    (general-def
+      :keymaps 'vertico-map
+      "C-x C-d" #'consult-dir
+      "C-x C-j" #'consult-dir-jump-file)))
 
 ;;;; Marginalia
 (use-package marginalia
-  :custom
-  (marginalia-max-relative-age 0)
+  :after vertico
+  :ghook 'vertico-mode-hook
+  :init
+  (gsetq marginalia-max-relative-age 0)
   :config
-  (marginalia-mode)
   (add-to-list 'marginalia-prompt-categories '("\\<face\\>" . face))
   (add-to-list 'marginalia-prompt-categories '("\\<var\\>" . variable)))
 
-
 (use-package nerd-icons-completion
+  :after marginalia
+  :ghook ('marginalia-mode-hook #'nerd-icons-completion-marginalia-setup)
   :config
-  (nerd-icons-completion-mode)
-  (add-hook 'marginalia-mode-hook #'nerd-icons-completion-marginalia-setup))
+  (general-after-gui
+    (nerd-icons-completion-marginalia-setup)))
 
 ;;; Provide
 (provide 'athame-completion)

@@ -4,40 +4,40 @@
 
 (use-package eglot
   :defer t
-  :custom
-  (eglot-sync-connect 1)
-  (eglot-autoshutdown t)
-  :config
-  (cl-callf plist-put eglot-events-buffer-config :size 0))
+  :init
+  (gsetq eglot-sync-connect 1
+	 eglot-autoshutdown t
+	 eglot-events-buffer-config '(:size 0 :format full)))
 
 (use-package consult-eglot
-  :after (consult eglot)
-  :commands consult-eglot-symbols)
+  :defer t
+  :after eglot
+  :general
+  (:keymap
+   'eglot-mode-map
+   [remap xref-find-apropos] #'consult-eglot-symbols))
 
-(general-def
-  :keymap 'eglot-mode-map
-  [remap xref-find-apropos] #'consult-eglot-symbols)
 
-(setopt display-buffer-alist
-        '(("\\*eldoc\\*"
-           (display-buffer-reuse-mode-window
-            display-buffer-in-side-window)
-           (side . right)
-           (slot . 0)
-           (width . 0.3))
-          ("\\*[Hh]elp\\*"
-           (display-buffer-reuse-mode-window
-            display-buffer-in-side-window)
-           (side . right)
-           (slot . -1)
-           (width . 0.3))))
+(gsetq display-buffer-alist
+       '(("\\*eldoc\\*"
+          (display-buffer-reuse-mode-window
+           display-buffer-in-side-window)
+          (side . right)
+          (slot . 0)
+          (width . 0.3))
+         ("\\*[Hh]elp\\*"
+          (display-buffer-reuse-mode-window
+           display-buffer-in-side-window)
+          (side . right)
+          (slot . -1)
+          (width . 0.3))))
 
 (use-package eldoc
-  :ensure nil
-  :custom
-  (eldoc-echo-area-use-multiline-p t)
-  (eldoc-echo-area-prefer-doc-buffer t)
-  (eldoc-documentation-strategy 'eldoc-documentation-compose-eagerly))
+  :defer t
+  :init
+  (gsetq eldoc-echo-area-use-multiline-p t
+	 eldoc-echo-area-prefer-doc-buffer t
+	 eldoc-documentation-strategy 'eldoc-documentation-compose-eagerly))
 
 ;;; Provide
 (provide 'athame-lsp)

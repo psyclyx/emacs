@@ -3,16 +3,18 @@
 ;;; Code:
 
 (use-package smartparens
+  :defer t
   :hook ((prog-mode . smartparens-mode)
          (emacs-lisp-mode . smartparens-strict-mode))
-  :custom
-  (sp-show-pair-delay 0.125)
-  (sp-show-pair-from-inside t))
+  :init
+  (gsetq sp-show-pair-delay 0.125
+	 sp-show-pair-from-inside t))
 
 (use-package evil-cleverparens
+  :defer t
   :hook (emacs-lisp-mode . evil-cleverparens-mode)
-  :custom
-  (evil-cleverparens-swap-move-by-word-and-symbol t))
+  :init
+  (gsetq evil-cleverparens-swap-move-by-word-and-symbol t))
 
 ;;;; Provide
 (provide 'athame-parens)

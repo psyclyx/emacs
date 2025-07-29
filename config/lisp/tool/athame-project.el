@@ -5,9 +5,10 @@
 (defvar athame-project-marker ".project")
 
 (use-package project
+  :defer t
   :init
-  (setq project-list-file (file-name-concat athame-state-dir "projects")
-        project-vc-merge-submodules nil)
+  (gsetq project-list-file (file-name-concat athame-state-dir "projects")
+         project-vc-merge-submodules nil)
   :config
   (when athame-project-marker
     (add-to-list 'project-vc-extra-root-markers athame-project-marker)))
@@ -25,10 +26,10 @@
 (defun athame-project-edit-dir-locals (&optional local)
   (interactive "P")
   (let* ((dir-locals-file (if local
-                             (athame--dir-locals-2-file)
-                           (athame--dir-locals-file)))
-        (root (project-root (project-current t)))
-        (expanded-file (expand-file-name dir-locals-file root)))
+                              (athame--dir-locals-2-file)
+                            (athame--dir-locals-file)))
+         (root (project-root (project-current t)))
+         (expanded-file (expand-file-name dir-locals-file root)))
     (find-file expanded-file)))
 
 (defun athame-project-find-file-in-other-project (project &optional include-all)

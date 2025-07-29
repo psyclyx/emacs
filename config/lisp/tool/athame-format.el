@@ -6,33 +6,33 @@
   '(org-msg-edit-mode) "Don't format on these modes"
   :type '(list symbol))
 
+
+(defun athame-format--inhibit-p ()
+  (or (eq major-mode 'fundamental-mode)
+      (string-blank-p (buffer-name))
+      (eq athame-format-on-save-disabled-modes t)
+      (not (null (memq major-mode athame-format-on-save-disabled-modes)))))
+
+(defun athame-format--update-web-mode-h ()
+  (when (eq major-mode 'web-mode)
+    (setq web-mode-fontification-off nil)
+    (when (and web-mode-scan-beg web-mode-scan-end global-font-lock-mode)
+      (save-excursion
+        (font-lock-fontify-region web-mode-scan-beg web-mode-scan-end)))))
+
 (use-package apheleia
+  :defer t
+  :ghook
+  'prog-mode-hook 'text-mode-hook 'conf-mode-hook
+  ('apheleia-inhibit-functions #'athame-format--inhibit-p)
+  ('apheleia-post-format-hook #'athame-format--update-web-mode-h)
+
   :config
-  (apheleia-global-mode)
-
-  (add-hook 'apheleia-inhibit-functions
-            (defun athame-format-maybe-inhibit-h ()
-              (or (eq major-mode 'fundamental-mode)
-                  (string-blank-p (buffer-name))
-                  (eq athame-format-on-save-disabled-modes t)
-                  (not (null (memq major-mode athame-format-on-save-disabled-modes))))))
-
-  ;; HACK: Apheleia suppresses notifications that the current buffer has
-  ;;   changed, so plugins that listen for them need to be manually informed:
-  (add-hook 'apheleia-post-format-hook
-            (defun athame-format--update-web-mode-h ()
-              (when (eq major-mode 'web-mode)
-                (setq web-mode-fontification-off nil)
-                (when (and web-mode-scan-beg web-mode-scan-end global-font-lock-mode)
-                  (save-excursion
-                    (font-lock-fontify-region web-mode-scan-beg web-mode-scan-end))))))
   (add-to-list 'apheleia-mode-alist '(sh-mode . shfmt))
-
   (add-to-list 'apheleia-formatters '(lsp . eglot-format-buffer))
 
   (setf (alist-get 'nix-mode apheleia-formatters) '("nixfmt" "-s"))
 
-  ;; Use clang-format for cuda and protobuf files.
   (add-to-list 'apheleia-mode-alist '(cuda-mode . clang-format))
   (add-to-list 'apheleia-mode-alist '(protobuf-mode . clang-format))
   (add-to-list 'apheleia-formatters-mode-extension-assoc '(cuda-mode . ".cu"))

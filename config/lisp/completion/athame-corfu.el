@@ -59,21 +59,22 @@ Intended to mimic `evil-complete-previous', unless the popup is already open."
        (not (athame-corfu--other-completion-active-p))))
 
 (use-package corfu
-  :custom
-  (corfu-auto t)
-  (corfu-auto-delay 0.24)
-  (corfu-auto-prefix 2)
-  (corfu-cycle t)
-  (corfu-preselect 'prompt)
-  (corfu-count 16)
-  (corfu-max-width 120)
-  (corfu-on-exact-match nil)
-  (corfu-quit-at-boundary 'separator)
-  (corfu-quit-no-match corfu-quit-at-boundary)
-  (tab-always-indent 'complete)
-  (global-corfu-minibuffer #'athame-corfu--enable-in-minibuffer-p)
+  :ghook ('emacs-startup-hook #'global-corfu-mode)
+  :init
+  (gsetq
+   corfu-auto t
+   corfu-auto-delay 0.24
+   corfu-auto-prefix 2
+   corfu-cycle t
+   corfu-preselect 'prompt
+   corfu-count 16
+   corfu-max-width 120
+   corfu-on-exact-match nil
+   corfu-quit-at-boundary 'separator
+   corfu-quit-no-match 'corfu-quit-at-boundary
+   tab-always-indent 'complete
+   global-corfu-minibuffer #'athame-corfu--enable-in-minibuffer-p)
   :config
-  (global-corfu-mode)
   (add-to-list 'corfu-continue-commands #'athame-corfu-smart-sep-toggle-escape)
   (add-hook 'evil-insert-state-exit-hook #'corfu-quit))
 
@@ -85,13 +86,13 @@ Intended to mimic `evil-complete-previous', unless the popup is already open."
 
 (use-package corfu-popupinfo
   :hook corfu-mode
-  :config
-  (setq corfu-popupinfo-delay '(0.2 . 0.4)))
+  :init
+  (gsetq corfu-popupinfo-delay '(0.15 . 0.3)))
 
 (use-package nerd-icons-corfu
   :defer t
-  :custom
-  (corfu-margin-formatters `(,#'nerd-icons-corfu-formatter)))
+  :init
+  (gsetq corfu-margin-formatters (list #'nerd-icons-corfu-formatter)))
 
 (provide 'athame-corfu)
 ;;; athame-corfu.el ends here

@@ -3,11 +3,7 @@
 ;;; Code
 
 (use-package envrc
-  :config
-  (envrc-global-mode)
-  (general-define-key
-   :keymaps 'athame-tool-map
-   "e" (cons "envrc" envrc-command-map)))
+  :ghook ('emacs-startup-hook #'envrc-global-mode))
 
 ;;; Provide
 (provide 'athame-envrc)

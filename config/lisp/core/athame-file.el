@@ -2,20 +2,19 @@
 ;;; Commentary:
 ;;; Code
 
-(setopt find-file-visit-truename t
-        vc-follow-symlinks t
-        find-file-suppress-same-file-warnings t)
+(gsetq find-file-visit-truename t
+       vc-follow-symlinks t
+       find-file-suppress-same-file-warnings t)
 
-(setopt create-lockfiles nil
-        make-backup-files nil)
+(gsetq create-lockfiles nil
+       make-backup-files nil)
 
 (use-package recentf
-  :custom
-  (recentf-save-file (file-name-concat athame-state-dir "recentf"))
-  (recentf-max-saved-items 512)
-  (recentf-auto-cleanup 15)
+  :hook (after-init . recentf-mode)
   :config
-  (recentf-mode 1)
+  (gsetq recentf-save-file (file-name-concat athame-state-dir "recentf")
+         recentf-max-saved-items 512
+         recentf-auto-cleanup 15)
   (add-to-list 'recentf-exclude
                (concat "^" (regexp-quote (or (getenv "XDG_RUNTIME_DIR")
                                              "/run"))))

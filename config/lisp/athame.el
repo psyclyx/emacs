@@ -1,7 +1,6 @@
-;;; athame.el --- foo -*- lexical-binding: t -*-
+;;; athame.el --- foo -*- lexical-binding: t; -*-
 ;;; Commentary:
 ;;; Code:
-
 ;;;; Custom
 (defgroup athame nil
   "Configuration for athame\\='s emacs config."
@@ -33,7 +32,6 @@
 (defcustom athame-localleader-alt-key "M-SPC m"
   "Alternate localleader key"
   :type '(key))
-
 ;;;; Key definers
 (defvar athame-leader-key-states '(normal visual motion))
 (defvar athame-leader-alt-key-states '(emacs insert))
@@ -54,10 +52,12 @@
 
   (general-override-mode +1))
 
+(defalias 'gsetq #'general-setq)
+
 ;;;; Save variables
 (use-package savehist
-  :custom
-  (savehist-file (file-name-concat athame-state-dir)))
+  :init
+  (gsetq savehist-file (file-name-concat athame-state-dir "savehist")))
 
 ;;;; Requires
 (require 'athame-lib)
@@ -66,26 +66,25 @@
 (require 'athame-editor)
 (require 'athame-help)
 (require 'athame-evil)
-(require 'athame-ispell)
 
+(run-hooks 'athame-ui-after-init-hook)
 (require 'athame-cape)
 (require 'athame-corfu)
 (require 'athame-vertico)
 (require 'athame-completion)
 
+(require 'athame-ispell)
 (require 'athame-compile)
 (require 'athame-format)
 (require 'athame-lsp)
 (require 'athame-parens)
 (require 'athame-project)
-(require 'athame-treesit)
 (require 'athame-vc)
 (require 'athame-envrc)
 
 (require 'athame-lang-nix)
 
 (require 'athame-bindings)
-
 ;;;; Provide
 (provide 'athame)
 ;;; athame.el ends here

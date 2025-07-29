@@ -5,10 +5,11 @@
 (use-package magit
   :defer t
   :custom
-  (magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1)
-  (magit-bury-buffer-function #'magit-restore-window-configuration)
-  (magit-save-repository-buffers 'dontask)
-  (magit-no-confirm '(stage-all-changes unstage-all-changes)))
+  (gsetq
+   magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1
+   magit-bury-buffer-function #'magit-restore-window-configuration
+   magit-save-repository-buffers 'dontask
+   magit-no-confirm '(stage-all-changes unstage-all-changes)))
 
 ;;; Provide
 (provide 'athame-vc)

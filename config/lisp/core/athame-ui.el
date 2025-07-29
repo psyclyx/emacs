@@ -2,22 +2,22 @@
 ;;; Commentary:
 ;;; Code:
 
-(setq frame-title-format '("%b – Emacs")
-      icon-title-format frame-title-format)
+(gsetq frame-title-format '("%b – Emacs")
+       icon-title-format frame-title-format)
 
-(setopt split-width-threshold 160
-        split-height-threshold nil)
+(gsetq split-width-threshold 160
+       split-height-threshold nil)
 
-(setopt indicate-buffer-boundaries nil
-        indicate-empty-lines nil)
+(gsetq indicate-buffer-boundaries nil
+       indicate-empty-lines nil)
 
-(setopt window-divider-default-right-width 1)
+(gsetq window-divider-default-right-width 1)
 
 (when (display-graphic-p)
   (window-divider-mode 0))
 
-(setopt frame-resize-pixelwise t
-        window-resize-pixelwise t)
+(gsetq frame-resize-pixelwise t
+       window-resize-pixelwise t)
 
 (when (bound-and-true-p tooltip-mode)
   (tooltip-mode -1))
@@ -27,21 +27,21 @@
   (invert-face 'mode-line)
   (run-with-timer 0.1 nil 'invert-face 'mode-line))
 
-(setopt ring-bell-function #'athame-flash-modeline)
+(gsetq ring-bell-function #'athame-flash-modeline)
 
-(blink-cursor-mode -1)
+(general-after-init
+  (blink-cursor-mode -1))
 
-(setopt blink-matching-paren nil
-        x-stretch-cursor nil)
+(gsetq blink-matching-paren nil
+       x-stretch-cursor nil)
 
-(setopt x-underline-at-descent-line t)
-
+(gsetq x-underline-at-descent-line t)
 (use-package display-line-numbers
   :hook (prog-mode-hook text-mode-hook conf-mode-hook)
-  :custom
-  (display-line-numbers-width 3)
-  (display-line-numbers-widen t)
-  (display-line-numbers-type 'relative))
+  :init
+  (gsetq display-line-numbers-width 3
+         display-line-numbers-widen t
+         display-line-numbers-type 'relative))
 
 (provide 'athame-ui)
 ;;; athame-ui.el ends here

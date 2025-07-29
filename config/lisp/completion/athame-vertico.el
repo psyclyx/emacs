@@ -9,15 +9,21 @@
 
 
 (use-package vertico
-  :custom
-  (vertico-cycle t)
-  (vertico-count 20)
-  (vertico-resize t)
-
+  :ghook 'emacs-startup-hook
+  :init
+  (gsetq vertico-cycle t
+	 vertico-count 20
+	 vertico-resize t)
   :config
   (advice-add #'ffap-menu-ask :around
-              #'athame-vertico--ffap-menu-ignore-comp-help-a)
-  (vertico-mode))
+	      #'athame-vertico--ffap-menu-ignore-comp-help-a)
+  :general-config
+  (:keymaps
+   'vertico-map
+   "M-j" #'next-line
+   "M-k" #'previous-line
+   "M-h" #'backward-paragraph
+   "M-l" #'forward-paragraph))
 
 
 (use-package vertico-directory
@@ -32,27 +38,17 @@
 
 
 (use-package vertico-multiform
-  :after (vertico vertico-grid)
-  :custom
-  (vertico-multiform-categories '((embark-keybinding grid)))
-
-  :config
-  (vertico-multiform-mode))
+  :ghook 'vertico-mode-hook
+  :init
+  (gsetq vertico-multiform-categories '((embark-keybinding grid))))
 
 
 (use-package vertico-repeat
   :defer t
-  :after vertico
   :hook (minibuffer-setup . vertico-repeat-save))
 
 
 (general-defs
-  :keymaps 'vertico-map
-  "M-j" #'next-line
-  "M-k" #'previous-line
-  "M-h" #'backward-paragraph
-  "M-l" #'forward-paragraph
-
   :keymaps '(vertico-map vertico-multiform-map)
   "RET" #'vertico-directory-enter
   "DEL" #'vertico-directory-delete-char
