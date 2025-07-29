@@ -5,6 +5,8 @@ epkgs: with epkgs; [
   consult-dir
   consult-eglot
   corfu
+  elisp-def
+  elisp-demos
   envrc
   evil
   evil-collection
@@ -13,8 +15,13 @@ epkgs: with epkgs; [
   evil-snipe
   evil-surround
   exato
+  flycheck
+  flycheck-posframe
+  flymake
+  flymake-popon
   general
   helpful
+  highlight-quoted
   magit
   marginalia
   nerd-icons
@@ -22,6 +29,7 @@ epkgs: with epkgs; [
   nerd-icons-corfu
   nix-mode
   orderless
+  posframe
   smartparens
   evil-cleverparens
   treesit-grammars.with-all-grammars

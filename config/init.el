@@ -42,16 +42,32 @@
   "Returns non-nil if BUF is temporary."
   (char-equal ?\s (aref (buffer-name buf) 0)))
 
-
 ;;;; General
 
 (use-package general
   :ensure t
   :demand t
   :config
-  (general-override-mode)
+  (general-override-mode +1)
+  (general-auto-unbind-keys)
   ;; Also includes a substantially faster `setq`
   (defalias 'gsetq #'general-setq))
+
+;;;;; Leader keys
+
+(general-def
+  :keymaps '(emacs insert normal)
+  :prefix-map 'athame-leader-map
+  :global-prefix "C-c f"
+  :non-normal-prefix "M-SPC"
+  :prefix "SPC")
+
+(general-def
+  :keymaps '(emacs insert normal)
+  :prefix-map 'athame-localleader-map
+  :global-prefix "C-c f m"
+  :non-normal-prefix "M-SPC m"
+  :prefix "SPC m")
 
 ;;;; Savehist
 
@@ -59,57 +75,70 @@
   :init
   (gsetq savehist-file (file-name-concat athame-state-dir "savehist")))
 
-;;;; Flash mode-line (visual bell)
+;;;; Editor
 
-(defun athame-flash-modeline ()
-  "Briefly inverts the `mode-line' face."
-  (invert-face 'mode-line)
-  (run-with-timer 0.1 nil 'invert-face 'mode-line))
+;;;;; Appearance
 
-(gsetq ring-bell-function #'athame-flash-modeline)
-
-;;;; Frame/window titles
+;;;;;; Frame/window titles
 
 (gsetq frame-title-format '("%b – Emacs")
        icon-title-format frame-title-format)
 
-;;;; Splits/boundaries
-
-(gsetq split-width-threshold 160
-       split-height-threshold nil)
+;;;;;; Dividers
 
 (gsetq indicate-buffer-boundaries nil
-       indicate-empty-lines nil)
-
-(gsetq window-divider-default-right-width 1)
+       indicate-empty-lines nil
+       window-divider-default-right-width 1)
 
 (when (display-graphic-p)
   (window-divider-mode 0))
 
-;;;; Pixelwise resizing
+;;;;;; Splits/boundaries
+
+(gsetq split-width-threshold 160
+       split-height-threshold nil)
+
+;;;;;; Pixelwise resizing
 
 (gsetq frame-resize-pixelwise t
        window-resize-pixelwise t)
 
+;;;;;; Cursor
 
-;;;; Cut back on blinking
+(general-after-init (blink-cursor-mode -1))
+(gsetq x-stretch-cursor nil)
 
-(general-after-init
-  (blink-cursor-mode -1))
+;;;;;; Text
 
-(gsetq blink-matching-paren nil)
+;;;;;;; Underline improvements
 
-;;;; Disable tooltips
+(gsetq x-underline-at-descent-line t)
 
-(when (bound-and-true-p tooltip-mode)
-  (tooltip-mode -1))
+;;;;;;; Spaces/tabs
 
-;;;; Improve GUI text/cursor rendering
+(gsetq indent-tabs-mode nil
+       tab-width 4)
 
-(gsetq x-stretch-cursor nil
-       x-underline-at-descent-line t)
+;;;;;;; Line wrapping/truncation
 
-;;;; Line numbers
+(gsetq truncate-lines t
+       truncate-partial-width-windows nil
+       word-wrap t
+       fill-column 80)
+
+(add-hook 'text-mode-hook #'visual-line-mode)
+
+;;;;;;; Sentence/newline style
+
+(gsetq sentence-end-double-space nil
+       require-final-newline t)
+
+;;;;;;; ws-butler (clean up whitespace)
+
+(use-package ws-butler
+  :hook ((prog-mode text-mode) . ws-butler-mode))
+
+;;;;;; Line numbers
 
 (use-package display-line-numbers
   :hook (prog-mode-hook text-mode-hook conf-mode-hook)
@@ -119,33 +148,48 @@
          display-line-numbers-widen t
          display-line-numbers-type 'relative))
 
-;;;; Follow symlinks
+;;;;;; Flash mode-line (visual bell)
+
+(defun athame-flash-modeline ()
+  "Briefly inverts the `mode-line' face."
+  (invert-face 'mode-line)
+  (run-with-timer 0.1 nil 'invert-face 'mode-line))
+
+(gsetq ring-bell-function #'athame-flash-modeline)
+
+;;;;;; Show parens
+
+(use-package paren
+  :ensure nil
+  :hook ((text-mode prog-mode conf-mode) . show-paren-mode)
+  :init
+  (gsetq show-paren-delay 0.1
+         show-paren-highlight-openparen t
+         show-paren-when-point-inside-paren t
+         show-paren-when-point-in-periphery t
+         show-paren-context-when-offscreen 'child-frame
+	 blink-matching-paren nil)
+  :config
+  (add-to-list 'show-paren--context-child-frame-parameters
+               '(border-width . 3)))
+
+;;;;;; Disable tooltips
+
+(when (bound-and-true-p tooltip-mode)
+  (tooltip-mode -1))
+
+;;;;; Files
+;;;;;; Follow symlinks
 
 (gsetq find-file-visit-truename t
        vc-follow-symlinks t
        find-file-suppress-same-file-warnings t)
 
-;;;; Disable lockfiles and backup
+;;;;;; Disable lockfiles and backup
 
-(gsetq create-lockfiles nil
-       make-backup-files nil)
+(gsetq create-lockfiles nil make-backup-files nil)
 
-;;;; Recentf
-
-(use-package recentf
-  :hook (after-init . recentf-mode)
-  :config
-  (gsetq recentf-save-file (file-name-concat athame-state-dir "recentf")
-         recentf-max-saved-items 512
-         recentf-auto-cleanup 15)
-  (add-to-list 'recentf-exclude
-               (concat "^" (regexp-quote (or (getenv "XDG_RUNTIME_DIR")
-                                             "/run"))))
-  (add-to-list 'recentf-exclude (concat "^/nix/store"))
-  (add-to-list 'recentf-filename-handlers #'substring-no-properties)
-  (run-at-time "5 min" 300 'recentf-save-list))
-
-;;;; Create missing directories
+;;;;;; Create missing directories
 
 (defun athame-file--create-missing-directories-h ()
   "Automatically create missing directories when creating new files."
@@ -160,7 +204,7 @@
 (add-hook 'find-file-not-found-functions
           #'athame-file--create-missing-directories-h)
 
-;;;; Re-guess mode when saving fundamental buffers
+;;;;;; Re-guess mode when saving fundamental buffers
 
 (defun athame-file--guess-mode-h ()
   "Guess major mode when saving a file in `fundamental-mode'.
@@ -176,56 +220,16 @@ or file path may exist now."
 
 (add-hook 'after-save-hook #'athame-file--guess-mode-h)
 
-;;;; Scrolling
+;;;;; Minibuffer
 
-(gsetq hscroll-margin 2
-       hscroll-step 1
-       scroll-conservatively 10
-       scroll-margin 0
-       scroll-preserve-screen-position t
-       mouse-wheel-scroll-amount '(2 ((shift) . hscroll))
-       mouse-wheel-scroll-amount-horizontal 2
-       auto-window-vscroll nil)
-
-;;;; Spaces/tabs
-
-(gsetq indent-tabs-mode nil
-       tab-width 4)
-
-;;;; Line wrapping/truncation
-
-(gsetq truncate-lines t
-       truncate-partial-width-windows nil
-       word-wrap t
-       fill-column 80)
-
-(add-hook 'text-mode-hook #'visual-line-mode)
-
-;;;; Sentence/newline style
-
-(gsetq sentence-end-double-space nil
-       require-final-newline t)
-
-
-;;;; ws-butler (clean up whitespace)
-
-(use-package ws-butler
-  :hook ((prog-mode text-mode) . ws-butler-mode))
-
-;;;; Kill ring
-
-(gsetq kill-do-not-save-duplicates t)
-
-;;;; Minibuffer
-
-;;;;; Recursive
+;;;;;; Recursive
 
 (gsetq enable-recursive-minibuffers t)
 
 (general-after-init
   (minibuffer-depth-indicate-mode 1))
 
-;;;;; Prompt
+;;;;;; Prompt
 
 (gsetq echo-keystrokes 0.5
        minibuffer-prompt-properties
@@ -235,7 +239,8 @@ or file path may exist now."
 
 (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
 
-;;;;; Keybinds
+;;;;;; Keybinds
+
 (defvar athame-default-minibuffer-maps
   (append '(minibuffer-local-map
             minibuffer-local-ns-map
@@ -268,25 +273,13 @@ or file path may exist now."
  "C-j" #'next-line-or-history-element
  "C-k" #'previous-line-or-history-element)
 
-;;;; Show parens
 
-(use-package paren
-  :ensure nil
-  :hook ((text-mode prog-mode conf-mode) . show-paren-mode)
-  :init
-  (gsetq show-paren-delay 0.1
-         show-paren-highlight-openparen t
-         show-paren-when-point-inside-paren t
-         show-paren-when-point-in-periphery t
-         show-paren-context-when-offscreen 'child-frame)
-  :config
-  (add-to-list 'show-paren--context-child-frame-parameters
-               '(border-width . 3)))
 
-;;;; Short y/n prompts
+;;;;; Short y/n prompts
 
 (gsetq use-short-answers t)
 (define-key y-or-n-p-map " " nil)
+
 
 ;;;; Help
 
@@ -324,7 +317,7 @@ or file path may exist now."
     (which-key-mode)
     (which-key-setup-side-window-bottom)))
 
-;;;;; Evil
+;;;; Evil
 
 ;;;;; Evil-mode
 
@@ -372,6 +365,7 @@ or file path may exist now."
 (use-package evil-collection
   :defer t
   :init
+  (gsetq evil-collection-outline-bind-tab-p t)
   (general-after-init
     (evil-collection-init)))
 
@@ -404,10 +398,10 @@ or file path may exist now."
  	    (evil-snipe-enable-incremental-highlight)))))
 
 ;;;;; Evil-surround
+
 (use-package evil-surround
   :ghook
   ('evil-mode-hook #'global-evil-surround-mode))
-
 
 ;;;; Completion
 
@@ -463,12 +457,12 @@ or file path may exist now."
 
 ;;;;; Corfu
 
+;;;;;; Commands
 (defun athame-corfu-move-to-minibuffer ()
   (interactive)
   (pcase completion-in-region--data
     (`(,beg ,end ,table ,pred ,extras)
-     (let ((completion-extra-properties extras)
-           completion-cycle-threshold completion-cycling)
+     (let ((completion-extra-properties extras) completion-cycle-threshold completion-cycling)
        (consult-completion-in-region beg end table pred)))))
 
 (defun athame-corfu-smart-sep-toggle-escape ()
@@ -510,6 +504,7 @@ Intended to mimic `evil-complete-previous', unless the popup is already open."
       (when (> corfu--total 0)
         (corfu--goto (- corfu--total (or arg 1)))))))
 
+;;;;;; Predicates
 (defun athame-corfu--other-completion-active-p ()
   (or (bound-and-true-p vertico--input)
       (where-is-internal 'minibuffer-complete (list (current-local-map)))))
@@ -519,6 +514,8 @@ Intended to mimic `evil-complete-previous', unless the popup is already open."
                           (list (current-local-map)))
        (not (athame-corfu--other-completion-active-p))))
 
+
+;;;;;; Packages
 (use-package corfu
   :ghook ('emacs-startup-hook #'global-corfu-mode)
   :init
@@ -614,10 +611,14 @@ Intended to mimic `evil-complete-previous', unless the popup is already open."
 
 ;;;;; Vertico
 
+;;;;;; Advice
+
 (defun athame-vertico--ffap-menu-ignore-comp-help-a (&rest args)
   (cl-letf (((symbol-function #'minibuffer-completion-help)
              #'ignore))
     (apply args)))
+
+;;;;; Packages
 
 (use-package vertico
   :ghook 'emacs-startup-hook
@@ -648,22 +649,23 @@ Intended to mimic `evil-complete-previous', unless the popup is already open."
 (use-package vertico-multiform
   :ghook 'vertico-mode-hook
   :init
-  (gsetq vertico-multiform-categories '((embark-keybinding grid))))
+  (gsetq vertico-multiform-categories '((embark-keybinding grid)))
+  :general
+  (:keymaps '(vertico-map vertico-multiform-map)
+            "RET" #'vertico-directory-enter
+            "DEL" #'vertico-directory-delete-char
+            "M-DEL" #'vertico-directory-delete-word))
 
 (use-package vertico-repeat
   :defer t
-  :hook (minibuffer-setup . vertico-repeat-save))
-
-(general-defs
-  :keymaps '(vertico-map vertico-multiform-map)
-  "RET" #'vertico-directory-enter
-  "DEL" #'vertico-directory-delete-char
-  "M-DEL" #'vertico-directory-delete-word
-
-  :states '(normal insert visual motion)
-  "C-M-;" #'vertico-repeat)
+  :hook (minibuffer-setup . vertico-repeat-save)
+  :general-config
+  (:states '(normal insert visual motion)
+           "C-M-;" #'vertico-repeat))
 
 ;;;;; Orderless
+
+;;;;;; Dispatchers
 
 (defun athame-orderless--dispatch (pattern _index _total)
   (let ((len (length pattern))
@@ -688,12 +690,16 @@ Intended to mimic `evil-complete-previous', unless the popup is already open."
 				  "[\x200000-\x300000]*$"))))
 
 
+;;;;;; Advice
+
 (defun athame-orderless--company-capf-candidates-a (fn &rest args)
   (let ((orderless-match-faces [completions-common-part])
         (completion-styles '(basic partial-completion orderless)))
     (apply fn args)))
 
 
+
+;;;;;; Package
 (use-package orderless
   :defer t
   :init
@@ -715,7 +721,7 @@ Intended to mimic `evil-complete-previous', unless the popup is already open."
 
   :config
   (gsetq orderless-component-separator #'orderless-escapable-split-on-space)
-  (advice-add 'company-capf--candidates :around #'athame-vertico--company-capf--candidates-a)
+  (advice-add 'company-capf--candidates :around #'athame-orderless--company-capf-candidates-a)
   (set-face-attribute 'completions-first-difference nil :inherit nil))
 
 ;;;;; Consult
@@ -795,14 +801,32 @@ Intended to mimic `evil-complete-previous', unless the popup is already open."
   (general-after-gui
     (nerd-icons-completion-marginalia-setup)))
 
-;;;; Ispell
+;;;; Tools
+
+;;;;; Smartparens/cleverparens
+
+(use-package smartparens
+  :defer t
+  :hook ((prog-mode . smartparens-mode)
+         (emacs-lisp-mode . smartparens-strict-mode))
+  :init
+  (gsetq sp-show-pair-delay 0.125
+	 sp-show-pair-from-inside t))
+
+(use-package evil-cleverparens
+  :defer t
+  :hook (emacs-lisp-mode . evil-cleverparens-mode)
+  :init
+  (gsetq evil-cleverparens-swap-move-by-word-and-symbol t))
+
+;;;;; Ispell
 
 (use-package ispell
   :defer t
   :init
   (gsetq ispell-program-name "aspell"))
 
-;;;; Compile
+;;;;; Compile
 
 (defun athame-compile (arg)
   "Runs `compile' from the root of the current project.
@@ -819,7 +843,7 @@ If ARG (universal argument), runs `compile' from the current directory."
          #'project-compile
        #'compile))))
 
-;;;; Formatting
+;;;;; Formatting
 
 (defcustom athame-format-on-save-disabled-modes
   '(org-msg-edit-mode) "Don't format on these modes"
@@ -893,7 +917,7 @@ If ARG (universal argument), runs `compile' from the current directory."
                                             (json-read-file (expand-file-name "package.json" pkg))))))
                         (apheleia-formatters-indent "--use-tabs" "--tab-width"))))))))
 
-;;;; LSP (eglot)
+;;;;; LSP (eglot)
 
 (use-package eglot
   :defer t
@@ -906,11 +930,11 @@ If ARG (universal argument), runs `compile' from the current directory."
   :defer t
   :after eglot
   :general
-  (:keymap
+  (:keymaps
    'eglot-mode-map
    [remap xref-find-apropos] #'consult-eglot-symbols))
 
-;;;; Eldoc
+;;;;; Eldoc
 
 (use-package eldoc
   :defer t
@@ -919,39 +943,7 @@ If ARG (universal argument), runs `compile' from the current directory."
 	 eldoc-echo-area-prefer-doc-buffer t
 	 eldoc-documentation-strategy 'eldoc-documentation-compose-eagerly))
 
-;;;; Window management
-
-(gsetq display-buffer-alist
-       '(("\\*eldoc\\*"
-          (display-buffer-reuse-mode-window
-           display-buffer-in-side-window)
-          (side . right)
-          (slot . 0)
-          (width . 0.3))
-         ("\\*[Hh]elp\\*"
-          (display-buffer-reuse-mode-window
-           display-buffer-in-side-window)
-          (side . right)
-          (slot . -1)
-          (width . 0.3))))
-
-;;;; Smartparens/cleverparens
-
-(use-package smartparens
-  :defer t
-  :hook ((prog-mode . smartparens-mode)
-         (emacs-lisp-mode . smartparens-strict-mode))
-  :init
-  (gsetq sp-show-pair-delay 0.125
-	 sp-show-pair-from-inside t))
-
-(use-package evil-cleverparens
-  :defer t
-  :hook (emacs-lisp-mode . evil-cleverparens-mode)
-  :init
-  (gsetq evil-cleverparens-swap-move-by-word-and-symbol t))
-
-;;;; Project
+;;;;; Project
 
 (defvar athame-project-marker ".project")
 
@@ -1037,11 +1029,89 @@ If ARG (universal argument), runs `compile' from the current directory."
 (use-package tramp
   :defer t)
 
+;;;; Flycheck
+
+(use-package flycheck
+  :defer t
+  :ghook ('evil-mode-hook #'global-flycheck-mode)
+  :config
+  (delq 'new-line flycheck-check-syntax-automatically)
+  (gsetq flycheck-emacs-lisp-load-path 'inherit
+         flycheck-idle-change-delay 1.0
+         flycheck-buffer-switch-check-intermediate-buffers t
+         flycheck-display-errors-delay 0.25)
+  :general-config
+  (:keymaps
+   'flycheck-error-list-mode-map
+   :states 'normal
+   "C-n" #'flycheck-error-list-next-error
+   "C-p" #'flycheck-error-list-previous-error
+   "j" #'flycheck-error-list-next-error
+   "k" #'flycheck-error-list-previous-error
+   "RET" #'flycheck-error-list-goto-error
+   [return] #'flycheck-error-list-goto-error))
+
+(use-package flycheck-posframe
+  :defer t
+  :ghook 'flycheck-mode-hook
+  :gfhook ('flycheck-posframe-inhibit-functions (list #'evil-insert-state-p #'evil-replace-state-p))
+  :config
+  (gsetq flycheck-posframe-warning-prefix " "
+         flycheck-posframe-info-prefix " "
+         flycheck-posframe-error-prefix " ")
+
+  (defun athame-flycheck--posframe-hide-h ()
+    (unless (flycheck-posframe-check-position)
+      (posframe-hide flycheck-posframe-buffer))
+    (remove-hook 'post-command-hook #'athame-flycheck--posframe-hide-h))
+
+  (defun athame-flycheck--hide-posframe-on-next-command-a (fn &rest args)
+    (cl-labels ((posframe-show (&rest args)
+                  (add-hook 'post-command-hook #'athame-flycheck--posframe-hide-h)
+                  (apply posframe-show args)))
+      (apply fn args)))
+
+  (advice-add 'flycheck-posframe-show-posframe :around
+              #'athame-flycheck--hide-posframe-on-next-command-a))
+
+(use-package flymake
+  :defer t
+  :ghook 'prog-mode-hook 'text-mode-hook
+  :config
+  (gsetq flymake-fringe-indicator-position 'right-fringe))
+
+(use-package flymake-popon
+  :defer t
+  :ghook 'flymake-mode-hook)
+
+;;;; Window management
+
+(gsetq display-buffer-alist
+       '(("\\*eldoc\\*"
+          (display-buffer-reuse-mode-window
+           display-buffer-in-side-window)
+          (side . right)
+          (slot . 0)
+          (width . 0.3))
+         ("\\*[hH]elp\\(ful.*\\)?\\*"
+          (display-buffer-reuse-mode-window
+           display-buffer-in-side-window)
+          (side . right)
+          (slot . -1)
+          (width . 0.3))
+         ("\\*info\\*"
+          (display-buffer-reuse-mode-window
+           display-buffer-in-side-window)
+          (side . right)
+          (slot . 1)
+          (width . 0.3))))
+
 ;;;; Languages
 
 ;;;;; Nix
 
 (use-package nix-mode
+  :defer t
   :mode "\\.nix\\'"
   :init
   (add-to-list 'auto-mode-alist
@@ -1052,13 +1122,20 @@ If ARG (universal argument), runs `compile' from the current directory."
     (add-to-list 'tramp-remote-path "/run/current-system/sw/bin"))
 
   :general-config
-  (:keymaps 'nix-mode
-	    "f" #'nix-update-fetch
-	    "p" #'nix-format-buffer
-	    "r" #'nix-repl
-	    "s" #'nix-shell
-	    "b" #'nix-build
-	    "u" #'nix-unpack))
+  (:keymaps
+   'nix-mode
+   "f" #'nix-update-fetch
+   "p" #'nix-format-buffer
+   "r" #'nix-repl
+   "s" #'nix-shell
+   "b" #'nix-build
+   "u" #'nix-unpack))
+
+;;;;; Emacs lisp
+
+;; (use-package elisp-mode
+;;   :config
+;;   (let ((modes '(emacs-lisp-mode lisp-interaction-mode lisp-data-mode)))))
 
 ;;;; Bindings
 
@@ -1081,6 +1158,10 @@ If ARG (universal argument), runs `compile' from the current directory."
 
 (general-define-key
  :prefix-map 'athame-code-prefix-map
+ "l" (cons "Start LSP" #'eglot)
+ "L" (cons "Reconnect LSP" #'eglot-reconnect)
+ "x" (cons "Shutdown LSP" #'eglot-shutdown)
+ "X" (cons "Shutdown LSP (all)" #'eglot-shutdown-all)
  "a" (cons "LSP Execute code action" #'eglot-code-actions)
  "r" (cons "LSP Rename" #'eglot-rename)
  "j" (cons "LSP Find declaration" #'eglot-find-declaration)
@@ -1089,14 +1170,13 @@ If ARG (universal argument), runs `compile' from the current directory."
  "d" (cons "Jump to definition" #'xref-find-definitions)
  "D" (cons "Jump to references" #'xref-find-references))
 
-
 (general-define-key
  :prefix-map 'athame-file-prefix-map
  "f" (cons "Find file" #'find-file)
  "d" (cons "Find directory" #'dired)
+ "h" (cons "Find heading" #'consult-outline)
  "l" (cons "Locate files" #'locate)
  "r" (cons "Recent files" #'recentf-open-files))
-
 
 (general-define-key
  :keymaps 'help-map
@@ -1104,10 +1184,13 @@ If ARG (universal argument), runs `compile' from the current directory."
 
 (general-define-key
  :prefix-map 'athame-search-prefix-map
- "s" (cons "Search buffer" #'consult-line)
+ "l" (cons "Search buffer lines" #'consult-line)
+ "S" (cons "Search all buffer lines" #'consult-line)
  "L" (cons "Jump to link" #'ffap-menu)
  "p" (cons "Search project" #'consult-ripgrep)
- "i" (cons "imenu" #'imenu))
+ "i" (cons "imenu" #'imenu)
+ "j" (cons "Jump list" #'evil-show-jumps)
+ "I" (cons "imenu (project buffers)" #'consult-imenu-multi))
 
 (general-define-key
  :prefix-map 'athame-git-find-prefix-map
@@ -1142,7 +1225,13 @@ If ARG (universal argument), runs `compile' from the current directory."
  "U" (cons "Git unstage file" #'magit-unstage-file))
 
 (general-define-key ; TODO: fill this out
- :prefix-map 'athame-tool-map)
+ :prefix-map 'athame-tool-map
+ "p" (cons "profiler" (make-keymap))
+ "p p" (cons "Profiler start" #'profiler-start)
+ "p s" (cons "Profiler stop" #'profiler-stop)
+ "p r" (cons "Profiler report" #'profile-report)
+
+ "f" (cons "Flycheck" #'flycheck-mode))
 
 (general-def
   :prefix-map 'athame-leader-map
@@ -1163,10 +1252,3 @@ If ARG (universal argument), runs `compile' from the current directory."
   "," (cons "Switch buffer" #'switch-to-buffer)
   "." (cons "Find file" #'find-file)
   "RET" (cons "Jump to bookmark" #'bookmark-jump))
-
-(general-def
-  :keymaps '(emacs insert normal)
-  :prefix-map 'athame-leader-map
-  :global-prefix "C-c f"
-  :non-normal-prefix "M-SPC"
-  :prefix "SPC")

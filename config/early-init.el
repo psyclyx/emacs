@@ -34,7 +34,7 @@
 
 (set 'pgtk-wait-for-event-timeout 0.0001)
 
-(unless (daemonp)
+(unless (or (daemonp) init-file-debug)
   (push '(visibility . nil) initial-frame-alist)
   (add-hook 'emacs-startup-hook #'make-frame-visible))
 
@@ -48,7 +48,7 @@
 (set 'load-prefer-newer noninteractive)
 
 (setq-default inhibit-redisplay t
-              inhibit-message t
+              inhibit-message (not init-file-debug)
 	      inhibit-x-resources t
               frame-inhibit-implied-resize t)
 
