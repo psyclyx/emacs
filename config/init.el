@@ -52,22 +52,6 @@
   ;; Also includes a substantially faster `setq`
   (defalias 'gsetq #'general-setq))
 
-;;;;; Leader keys
-
-(general-def
-  :keymaps '(emacs insert normal)
-  :prefix-map 'athame-leader-map
-  :global-prefix "C-c f"
-  :non-normal-prefix "M-SPC"
-  :prefix "SPC")
-
-(general-def
-  :keymaps '(emacs insert normal)
-  :prefix-map 'athame-localleader-map
-  :global-prefix "C-c f m"
-  :non-normal-prefix "M-SPC m"
-  :prefix "SPC m")
-
 ;;;; Savehist
 
 (use-package savehist
@@ -1222,6 +1206,23 @@ If ARG (universal argument), runs `compile' from the current directory."
  "L" (cons "Magit buffer log" #'magit-log-buffer-file)
  "S" (cons "Git stage file"  #'magit-stage-file)
  "U" (cons "Git unstage file" #'magit-unstage-file))
+
+
+;;;;; Leader keys
+
+(general-def
+  :keymaps '(emacs insert normal)
+  :prefix-map 'athame-leader-map
+  :global-prefix "C-c f"
+  :non-normal-prefix "M-SPC"
+  :prefix "SPC")
+
+(general-def
+  :keymaps '(emacs insert normal)
+  :prefix-map 'athame-localleader-map
+  :global-prefix "C-c f m"
+  :non-normal-prefix "M-SPC m"
+  :prefix "SPC m")
 
 (general-define-key ; TODO: fill this out
  :prefix-map 'athame-tool-map
