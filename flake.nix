@@ -18,6 +18,15 @@
         });
     in
     rec {
+      devShells."x86_64-linux" =
+        let
+          pkgs = pkgsFor "x86_64-linux";
+        in
+        {
+          default = pkgs.lib.mkShell {
+            packages = with pkgs; [ nixd ];
+          };
+        };
       packages."x86_64-linux" =
         let
           pkgs = pkgsFor "x86_64-linux";
