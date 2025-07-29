@@ -54,8 +54,8 @@
 
 (defun athame-init--reset-inhibited-vars-h ()
   (setq-default inhibit-redisplay nil inhibit-message nil)
-  (remove-hook 'emacs-startup-hook #'athame-init--reset-inhibited-vars-h))
-(add-hook 'emacs-startup-hook #'athame-init--reset-inhibited-vars-h -100)
+  (remove-hook 'after-init-hook #'athame-init--reset-inhibited-vars-h))
+(add-hook 'after-init-hook #'athame-init--reset-inhibited-vars-h -100)
 
 (set 'inhibit-startup-screen t)
 (set 'inhibit-startup-echo-area-message user-login-name)
