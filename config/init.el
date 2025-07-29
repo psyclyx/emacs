@@ -422,14 +422,15 @@ or file path may exist now."
    '("\\` "
      "\\(?:\\(?:[EG]?\\|GR\\)TAGS\\|e?tags\\|GPATH\\)\\(<[0-9]+>\\)?")
    dabbrev-upcase-means-case-search t)
-
-  :config
   (general-after-init
     (add-to-list 'completion-at-point-functions #'cape-dabbrev)
     (add-to-list 'completion-at-point-functions #'cape-keyword)
     (add-to-list 'completion-at-point-functions #'cape-file))
 
-  (general-advice-add (list #'comint-completion-at-point #'eglot-completion-at-point #'pcomplete-completions-at-point)
+  :config
+  (general-advice-add (list #'comint-completion-at-point
+                            #'eglot-completion-at-point
+                            #'pcomplete-completions-at-point)
 		      :around #'cape-wrap-nonexclusive)
 
   :general-config
