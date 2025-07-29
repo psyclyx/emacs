@@ -12,7 +12,7 @@
 (set 'auto-mode-case-fold nil)
 
 (let ((old-file-name-handler-alist file-name-handler-alist))
-  (set 'file-name-handler-alist nil)
+  (set 'file-name-handler-alist (list (rassq 'jka-compr-handler file-name-handler-alist)))
   (add-hook 'after-init-hook
             #'(lambda () (set 'file-name-handler-alist old-file-name-handler-alist))))
 
@@ -61,3 +61,10 @@
 (set 'inhibit-startup-echo-area-message user-login-name)
 (set 'initial-major-mode 'fundamental-mode)
 (set 'initial-scratch-message nil)
+
+(advice-add #'display-startup-echo-area-message :override #'ignore)
+(advice-add #'display-startup-screen :override #'ignore)
+
+(setq-default cursor-in-non-selected-windows nil)
+(set 'highlight-nonselected-windows nil)
+(set 'redisplay-skip-fontification-on-input t)
