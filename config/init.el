@@ -49,7 +49,6 @@
   :demand t
   :config
   (general-override-mode +1)
-  (general-auto-unbind-keys)
   ;; Also includes a substantially faster `setq`
   (defalias 'gsetq #'general-setq))
 
