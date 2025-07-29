@@ -162,6 +162,22 @@
   (tooltip-mode -1))
 
 ;;;;; Files
+
+;;;; Recentf
+
+(use-package recentf
+  :ghook 'emacs-startup-hook
+  :config
+  (gsetq recentf-save-file (file-name-concat athame-state-dir "recentf")
+         recentf-max-saved-items 512
+         recentf-auto-cleanup 15)
+  (add-to-list 'recentf-exclude
+               (concat "^" (regexp-quote (or (getenv "XDG_RUNTIME_DIR")
+                                             "/run"))))
+  (add-to-list 'recentf-exclude (concat "^/nix/store"))
+  (add-to-list 'recentf-filename-handlers #'substring-no-properties)
+  (run-at-time "1 min" 60 'recentf-save-list))
+
 ;;;;;; Follow symlinks
 
 (gsetq find-file-visit-truename t
