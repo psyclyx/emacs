@@ -373,7 +373,7 @@ or file path may exist now."
 ;;;;; Evil-snipe + evil-easymotion
 
 (use-package evil-snipe
-  :defer 1
+  :defer 2
   :init
   (gsetq
    evil-snipe-scope 'visible
@@ -386,17 +386,16 @@ or file path may exist now."
 (use-package evil-easymotion
   :defer 2
   :config
-  (general-defs
-    :states 'motion
-    "C-;" evilem-map
-
-    :keymaps 'evil-snipe-parent-transient-map
-    "C-;" (evilem-create
- 	   'evil-snipe-repeat
- 	   :bind
- 	   ((evil-snipe-scope 'buffer)
- 	    (evil-snipe-enable-highlight)
- 	    (evil-snipe-enable-incremental-highlight)))))
+  (evilem-default-keybindings "C-;")
+  (general-after 'evil-snipe
+    (general-defs
+      :keymaps 'evil-snipe-parent-transient-map
+      "C-;" (evilem-create
+ 	     'evil-snipe-repeat
+ 	     :bind
+ 	     ((evil-snipe-scope 'buffer)
+ 	      (evil-snipe-enable-highlight)
+ 	      (evil-snipe-enable-incremental-highlight))))))
 
 ;;;;; Evil-surround
 
