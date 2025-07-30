@@ -373,7 +373,7 @@ or file path may exist now."
 ;;;;; Evil-snipe + evil-easymotion
 
 (use-package evil-snipe
-  :defer 2
+  :defer 0.5
   :init
   (gsetq
    evil-snipe-scope 'visible
@@ -384,7 +384,7 @@ or file path may exist now."
   (evil-snipe-override-mode 1))
 
 (use-package evil-easymotion
-  :defer 2
+  :defer 0.5
   :config
   (evilem-default-keybindings "C-;")
   (general-after 'evil-snipe
