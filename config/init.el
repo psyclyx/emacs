@@ -300,6 +300,15 @@ or file path may exist now."
 
 ;;;;; Which-key
 
+;; pixel resizing can cause some entries to get cut off. this can be
+;; fixed by setting `which-key-allow-imprecise-window-fit' to nil, but
+;; there are reports of this causing crashes/slowdowns.
+(defun athame-which-key--add-line (f &rest r)
+  (apply f
+	 (list (cons (+ 1 (car (car r)))
+		     (cdr (car r))))))
+
+
 (use-package which-key
   :init
   (gsetq
@@ -316,7 +325,8 @@ or file path may exist now."
    which-key-show-operator-state-maps t)
   (general-after-init
     (which-key-mode)
-    (which-key-setup-side-window-bottom)))
+    (which-key-setup-side-window-bottom)
+    (advice-add 'which-key--show-popup :around #'athame-which-key--add-line)))
 
 ;;;; Evil
 
