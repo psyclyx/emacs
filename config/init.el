@@ -428,6 +428,7 @@ or file path may exist now."
   (< (buffer-size other-buffer) athame-cape--buffer-scan-limit))
 
 (use-package cape
+  :defer 0.5
   :ghook
   ('(org-mode-hook markdown-mode-hook) #'athame-cape--add-elisp-block-capf-h)
 
