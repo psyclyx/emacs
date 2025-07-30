@@ -561,7 +561,7 @@ Intended to mimic `evil-complete-previous', unless the popup is already open."
    :states '(insert)
    "C-SPC" #'athame-corfu-smart-sep-toggle-escape
    "C-S-s" #'athame-corfu-move-to-minibuffer
-   "DEL" #'corfu-reset)
+   "<deletechar>" #'corfu-reset)
   (:keymaps
    'corfu-map
    "TAB" #'corfu-next
