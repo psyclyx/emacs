@@ -1292,7 +1292,9 @@ If ARG (universal argument), runs `compile' from the current directory."
 (general-define-key
  :prefix-map 'athame-file-prefix-map
  "f" (cons "Find file" #'find-file)
- "d" (cons "Find directory" #'dired)
+ "s" (cons "Dirvish sidebar" #'dirvish-side)
+ "d" (cons "Dirvish" #'dirvish-dwim)
+ "e" (cons "Find directory" #'dirvish)
  "h" (cons "Find heading" #'consult-outline)
  "l" (cons "Locate files" #'locate)
  "r" (cons "Recent files" #'recentf-open-files))
