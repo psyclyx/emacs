@@ -534,7 +534,7 @@ Intended to mimic `evil-complete-previous', unless the popup is already open."
 
   :config
   (add-to-list 'corfu-continue-commands #'athame-corfu-smart-sep-toggle-escape)
-  (add-hook 'evil-insert-state-exit-hook #'corfu-quit)
+  (general-add-hook 'evil-insert-state-exit-hook (list #'corfu-quit #'corfu-popupinfo--hide))
 
   :general-config
   (:keymaps
