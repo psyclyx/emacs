@@ -1093,7 +1093,6 @@ If ARG (universal argument), runs `compile' from the current directory."
   (add-to-list 'auto-mode-alist
                (cons "/flake\\.lock\\'"
                      'js-json-mode))
-
   (general-after 'tramp
     (add-to-list 'tramp-remote-path "/run/current-system/sw/bin"))
 
