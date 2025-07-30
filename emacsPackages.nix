@@ -17,8 +17,6 @@ epkgs: with epkgs; [
   exato
   flycheck
   flycheck-posframe
-  flymake
-  flymake-popon
   general
   helpful
   highlight-quoted

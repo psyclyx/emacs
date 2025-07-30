@@ -1055,33 +1055,10 @@ If ARG (universal argument), runs `compile' from the current directory."
   :ghook 'flycheck-mode-hook
   :gfhook ('flycheck-posframe-inhibit-functions (list #'evil-insert-state-p #'evil-replace-state-p))
   :config
-  (gsetq flycheck-posframe-warning-prefix " "
+  (gsetq flycheck-posframe-warning-prefix "  "
          flycheck-posframe-info-prefix " "
-         flycheck-posframe-error-prefix " ")
+         flycheck-posframe-error-prefix " "))
 
-  (defun athame-flycheck--posframe-hide-h ()
-    (unless (flycheck-posframe-check-position)
-      (posframe-hide flycheck-posframe-buffer))
-    (remove-hook 'post-command-hook #'athame-flycheck--posframe-hide-h))
-
-  (defun athame-flycheck--hide-posframe-on-next-command-a (fn &rest args)
-    (cl-labels ((posframe-show (&rest args)
-                  (add-hook 'post-command-hook #'athame-flycheck--posframe-hide-h)
-                  (apply posframe-show args)))
-      (apply fn args)))
-
-  (advice-add 'flycheck-posframe-show-posframe :around
-              #'athame-flycheck--hide-posframe-on-next-command-a))
-
-(use-package flymake
-  :defer t
-  :ghook 'prog-mode-hook 'text-mode-hook
-  :config
-  (gsetq flymake-fringe-indicator-position 'right-fringe))
-
-(use-package flymake-popon
-  :defer t
-  :ghook 'flymake-mode-hook)
 
 ;;;; Window management
 
