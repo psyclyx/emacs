@@ -56,7 +56,9 @@
 
 (use-package savehist
   :init
-  (gsetq savehist-file (file-name-concat athame-state-dir "savehist")))
+  (gsetq savehist-file (file-name-concat athame-state-dir "savehist"))
+  (general-after-init
+    (savehist-mode)))
 
 ;;;; Editor
 
