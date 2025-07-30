@@ -802,6 +802,144 @@ Intended to mimic `evil-complete-previous', unless the popup is already open."
 
 ;;;; Tools
 
+;;;;; Dired
+
+(defun athame-dired--disable-gnu-ls-flags-maybe-h ()
+  "Remove extraneous switches from `dired-actual-switches' when it's
+uncertain that they are supported (e.g. over TRAMP or on Windows).
+
+Fixes #1703: dired over TRAMP displays a blank screen.
+Fixes #3939: unsortable dired entries on Windows."
+  (when (or (file-remote-p default-directory)
+	    (and (boundp 'ls-lisp-use-insert-directory-program)
+		 (not ls-lisp-use-insert-directory-program)))
+    (setq-local dired-actual-switches (car args))))
+
+(defun athame-dired--fix-ls () ; from doom
+  (let ((args (list "-ahl" "-v" "--group-directories-first")))
+    (when (featurep :system 'bsd)
+      ;; Use GNU ls as `gls' from `coreutils' if available. Add `(setq
+      ;; dired-use-ls-dired nil)' to your config to suppress the Dired warning
+      ;; when not using GNU ls.
+      (if-let* ((gls (executable-find "gls")))
+          (gsetq insert-directory-program gls)
+        ;; BSD ls doesn't support -v or --group-directories-first
+        (gsetq args (list (car args)))))
+    (gsetq dired-listing-switches (string-join args " "))
+    (add-hook 'dired-mode-hook #'athame-dired--disable-gnu-ls-flags-maybe-h)))
+
+(use-package dired
+  :commands dired-jump
+  :init
+  (gsetq dired-dwim-target t
+	 dired-auto-revert-buffer #'dired-buffer-stale-p
+	 dired-recursive-copies 'always
+	 dired-recursive-deletes 'top
+	 dired-create-destination-dirs 'ask
+	 image-dired-dir (expand-file-name "image-dired/" athame-cache-dir)
+	 image-dired-db-file (expand-file-name "image-dired/db.el" athame-cache-dir)
+	 image-dired-gallery-dir (expand-file-name "image-dired/gallery" athame-cache-dir)
+	 image-dired-temp-image-file (expand-file-name "image-dired/temp-image" athame-cache-dir)
+	 image-dired-temp-rotate-image-file (expand-file-name "image-dired/temp-rotate-image" athame-cache-dir)
+	 image-dired-thumb-size 150)
+  :config
+  (general-after 'evil
+    (evil-set-initial-state 'image-dired-display-image-mode 'emacs))
+  (athame-dired--fix-ls)
+  (put 'dired-find-alternate-file 'disabled nil))
+
+(use-package dirvish
+  :commands dirvish-find-entry-a dirvish-dired-noselect-a
+  :general (dired-mode-map "C-c C-r" #'dirvish-rsync)
+  :init
+  (gsetq dirvish-cache-dir (expand-file-name "dirvish/" athame-cache-dir)
+	 dirvish-attributes '(file-size nerd-icons subtree-state)
+	 dirvish-hide-details '(dirvish dirvish-side)
+	 dirvish-hide-cursor '(dirvish dirvish-side)
+	 dirvish-mode-line-format '(:left
+				    (sort file-time symlink)
+				    :right
+				    (omit yank index))
+	 dirvish-subtree-always-show-state t)
+  (advice-add #'dired--find-file :override #'dirvish--find-entry)
+  (advice-add #'dired-noselect :around #'dirvish-dired-noselect-a)
+  :config
+  (dirvish-override-dired-mode)
+  :general-config
+  (:keymaps
+   'dirvish-mode-map
+   :states 'normal
+   "?" #'dirvish-dispatch
+   "q" #'dirvish-quit
+   "b" #'dirvish-quick-access
+   "f" #'dirvish-file-info-menu
+   "p" #'dirvish-yank
+   "S" #'dirvish-quicksort
+   "F" #'dirvish-layout-toggle
+   "z" #'dirvish-history-jump
+   "gh" #'dirvish-subtree-up
+   "gl" #'dirvish-subtree-toggle
+   "h" #'dired-up-directory
+   "l" #'dired-find-file)
+  (:keymaps
+   'dirvish-mode-map
+   :states 'motion
+   [left]  #'dired-up-directory
+   [right] #'dired-find-file
+   "[h" #'dirvish-history-go-backward
+   "]h" #'dirvish-history-go-forward
+   "[e" #'dirvish-emerge-next-group
+   "]e" #'dirvish-emerge-previous-group)
+  (:keymaps
+   'dirvish-mode-map
+   :states 'normal
+   "TAB" #'dirvish-subtree-toggle
+   "M-b" #'dirvish-history-go-backward
+   "M-f" #'dirvish-history-go-forward
+   "M-n" #'dirvish-narrow
+   "M-m" #'dirvish-mark-menu
+   "M-s" #'dirvish-setup-menu
+   "M-e" #'dirvish-emerge-menu
+   "y" (cons "yank" nil)
+   "y l" #'dirvish-copy-file-true-path
+   "y n" #'dirvish-copy-file-name
+   "y p" #'dirvish-copy-file-path
+   "y r" #'dirvish-copy-remote-path
+   "y y" #'dirvish-do-copy
+   "s" (cons "symlinks" nil)
+   "s" #'dirvish-symlink
+   "S" #'dirvish-relative-symlink
+   "h" #'dirvish-hardlink))
+
+(use-package diredfl
+  :ghook 'dired-mode-hook 'dirvish-directory-view-mode-hook)
+
+(use-package dired-x
+  :ghook ('dired-mode-hook #'dired-omit-mode)
+  :config
+  (gsetq dired-omit-files
+	 (concat dired-omit-files
+		 "\\|^\\.DS_Store\\'"
+		 "\\|^flycheck_.*"
+		 "\\|^\\.project\\(?:ile\\)?\\'"
+		 "\\|^\\.\\(?:svn\\|git\\)\\'"
+		 "\\|^\\.ccls-cache\\'"
+		 "\\|\\(?:\\.js\\)?\\.meta\\'"
+		 "\\|\\.\\(?:elc\\|o\\|pyo\\|swp\\|class\\)\\'")
+
+	 dired-clean-confirm-killing-deleted-buffers nil)
+  (when-let (cmd (cond ((featurep :system 'macos) "open")
+                       ((featurep :system 'linux) "xdg-open")
+                       ((featurep :system 'windows) "start")))
+    (gsetq dired-guess-shell-alist-user
+           `(("\\.\\(?:docx\\|pdf\\|djvu\\|eps\\)\\'" ,cmd)
+             ("\\.\\(?:jpe?g\\|png\\|gif\\|xpm\\)\\'" ,cmd)
+             ("\\.\\(?:xcf\\)\\'" ,cmd)
+             ("\\.tex\\'" ,cmd)
+             ("\\.\\(?:mp4\\|mkv\\|avi\\|flv\\|rm\\|rmvb\\|ogv\\)\\(?:\\.part\\)?\\'" ,cmd)
+             ("\\.\\(?:mp3\\|flac\\)\\'" ,cmd)
+             ("\\.html?\\'" ,cmd)))))
+
 ;;;;; Smartparens/cleverparens
 
 (use-package smartparens
@@ -1057,7 +1195,8 @@ If ARG (universal argument), runs `compile' from the current directory."
   :config
   (gsetq flycheck-posframe-warning-prefix "  "
          flycheck-posframe-info-prefix " "
-         flycheck-posframe-error-prefix " "))
+         flycheck-posframe-error-prefix " ")
+  )
 
 
 ;;;; Window management
@@ -1080,7 +1219,12 @@ If ARG (universal argument), runs `compile' from the current directory."
            display-buffer-in-side-window)
           (side . right)
           (slot . 1)
-          (width . 0.3))))
+          (width . 0.3))
+	 ("^\\*image-dired"
+	  (display-buffer-reuse-mode-window
+	   display-buffer-at-bottom)
+	  (size . 0.8)
+	  (select . t))))
 
 ;;;; Languages
 
@@ -1209,12 +1353,6 @@ If ARG (universal argument), runs `compile' from the current directory."
   :non-normal-prefix "M-SPC"
   :prefix "SPC")
 
-(general-def
-  :keymaps '(emacs insert normal)
-  :prefix-map 'athame-localleader-map
-  :global-prefix "C-c f m"
-  :non-normal-prefix "M-SPC m"
-  :prefix "SPC m")
 
 (general-define-key ; TODO: fill this out
  :prefix-map 'athame-tool-map
@@ -1222,7 +1360,6 @@ If ARG (universal argument), runs `compile' from the current directory."
  "p p" (cons "Profiler start" #'profiler-start)
  "p s" (cons "Profiler stop" #'profiler-stop)
  "p r" (cons "Profiler report" #'profile-report)
-
  "f" (cons "Flycheck" #'flycheck-mode))
 
 (general-def

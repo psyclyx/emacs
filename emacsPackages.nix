@@ -5,6 +5,8 @@ epkgs: with epkgs; [
   consult-dir
   consult-eglot
   corfu
+  dirvish
+  diredfl
   elisp-def
   elisp-demos
   envrc
