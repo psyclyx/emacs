@@ -49,7 +49,7 @@
 
 (setq-default inhibit-redisplay t
               inhibit-message (not init-file-debug)
-	      inhibit-x-resources t
+              inhibit-x-resources t
               frame-inhibit-implied-resize t)
 
 (defun athame-init--reset-inhibited-vars-h ()
