@@ -826,18 +826,7 @@ Fixes #3939: unsortable dired entries on Windows."
 		 (not ls-lisp-use-insert-directory-program)))
     (setq-local dired-actual-switches (car args))))
 
-(defun athame-dired--fix-ls () ; from doom
-  (let ((args (list "-ahl" "-v" "--group-directories-first")))
-    (when (featurep :system 'bsd)
-      ;; Use GNU ls as `gls' from `coreutils' if available. Add `(setq
-      ;; dired-use-ls-dired nil)' to your config to suppress the Dired warning
-      ;; when not using GNU ls.
-      (if-let* ((gls (executable-find "gls")))
-          (gsetq insert-directory-program gls)
-        ;; BSD ls doesn't support -v or --group-directories-first
-        (gsetq args (list (car args)))))
-    (gsetq dired-listing-switches (string-join args " "))
-    (add-hook 'dired-mode-hook #'athame-dired--disable-gnu-ls-flags-maybe-h)))
+
 
 (use-package dired
   :commands dired-jump
@@ -856,7 +845,6 @@ Fixes #3939: unsortable dired entries on Windows."
   :config
   (general-after 'evil
     (evil-set-initial-state 'image-dired-display-image-mode 'emacs))
-  (athame-dired--fix-ls)
   (put 'dired-find-alternate-file 'disabled nil))
 
 (use-package dirvish
