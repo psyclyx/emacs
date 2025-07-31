@@ -815,24 +815,11 @@ Intended to mimic `evil-complete-previous', unless the popup is already open."
 
 ;;;;; Dired
 
-(defun athame-dired--disable-gnu-ls-flags-maybe-h ()
-  "Remove extraneous switches from `dired-actual-switches' when it's
-uncertain that they are supported (e.g. over TRAMP or on Windows).
-
-Fixes #1703: dired over TRAMP displays a blank screen.
-Fixes #3939: unsortable dired entries on Windows."
-  (when (or (file-remote-p default-directory)
-	    (and (boundp 'ls-lisp-use-insert-directory-program)
-		 (not ls-lisp-use-insert-directory-program)))
-    (setq-local dired-actual-switches (car args))))
-
-
-
 (use-package dired
   :commands dired-jump
   :init
   (gsetq dired-dwim-target t
-	 dired-auto-revert-buffer #'dired-buffer-stale-p
+	 dired-auto-revert-buffer t
 	 dired-recursive-copies 'always
 	 dired-recursive-deletes 'top
 	 dired-create-destination-dirs 'ask
@@ -848,8 +835,6 @@ Fixes #3939: unsortable dired entries on Windows."
   (put 'dired-find-alternate-file 'disabled nil))
 
 (use-package dirvish
-  :commands dirvish-find-entry-a dirvish-dired-noselect-a
-  :general (dired-mode-map "C-c C-r" #'dirvish-rsync)
   :init
   (gsetq dirvish-cache-dir (expand-file-name "dirvish/" athame-cache-dir)
 	 dirvish-attributes '(file-size nerd-icons subtree-state)
@@ -860,10 +845,8 @@ Fixes #3939: unsortable dired entries on Windows."
 				    :right
 				    (omit yank index))
 	 dirvish-subtree-always-show-state t)
-  (advice-add #'dired--find-file :override #'dirvish--find-entry)
-  (advice-add #'dired-noselect :around #'dirvish-dired-noselect-a)
-  :config
   (dirvish-override-dired-mode)
+  :general (:keymaps 'dired-mode-map "C-c C-r" #'dirvish-rsync)
   :general-config
   (:keymaps
    'dirvish-mode-map
@@ -925,7 +908,6 @@ Fixes #3939: unsortable dired entries on Windows."
 		 "\\|^\\.ccls-cache\\'"
 		 "\\|\\(?:\\.js\\)?\\.meta\\'"
 		 "\\|\\.\\(?:elc\\|o\\|pyo\\|swp\\|class\\)\\'")
-
 	 dired-clean-confirm-killing-deleted-buffers nil)
   (when-let (cmd (cond ((featurep :system 'macos) "open")
                        ((featurep :system 'linux) "xdg-open")
