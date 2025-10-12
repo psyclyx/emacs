@@ -929,7 +929,8 @@ Intended to mimic `evil-complete-previous', unless the popup is already open."
          (emacs-lisp-mode . smartparens-strict-mode))
   :init
   (gsetq sp-show-pair-delay 0.125
-	 sp-show-pair-from-inside t))
+	 sp-show-pair-from-inside t)
+  (require 'smartparens-config))
 
 (use-package evil-cleverparens
   :defer t
