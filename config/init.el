@@ -1346,6 +1346,14 @@ If ARG (universal argument), runs `compile' from the current directory."
  "p r" (cons "Profiler report" #'profile-report)
  "f" (cons "Flycheck" #'flycheck-mode))
 
+(general-create-definer athame-leader-def
+  :prefix-map 'athame-leader-map)
+
+(defvar athame-localleader-map (make-sparse-keymap))
+
+(general-create-definer athame-localleader-def
+  :prefix-map 'athame-localleader-map)
+
 (general-def
   :prefix-map 'athame-leader-map
   "b" (cons "buffer" athame-buffer-prefix-map)
@@ -1365,3 +1373,130 @@ If ARG (universal argument), runs `compile' from the current directory."
   "," (cons "Switch buffer" #'switch-to-buffer)
   "." (cons "Find file" #'find-file)
   "RET" (cons "Jump to bookmark" #'bookmark-jump))
+
+;;; Languages
+
+;;;; Clojure
+
+(use-package clojure-mode
+  :mode "\\.clj\\'"
+  :after (flycheck-clj-kondo apheleia)
+  :config
+  (setf (alist-get 'clojure-mode apheleia-mode-alist) 'cljstyle)
+  (setf (alist-get 'cljstyle apheleia-formatters) '("cljstyle" "pipe")))
+
+(use-package cider
+  :after clojure-mode
+  :custom
+  (cider-repl-display-help-banner nil)
+  (cider-show-error-buffer t)
+  (cider-auto-select-error-buffer nil)
+  (cider-repl-wrap-history t)
+  (cider-repl-history-size 1000)
+
+  :config
+  (general-def
+    :keymaps 'clojure-mode-map
+    [remap eval-last-sexp] 'cider-eval-last-sexp
+    [remap eval-buffer] 'cider-eval-buffer
+    [remap eval-region] 'cider-eval-region)
+
+  (general-def
+    :keymaps 'clojure-mode-map
+    :prefix "SPC m"
+
+    :infix "e"
+    "D" 'cider-insert-defun-in-repl
+    "E" 'cider-insert-last-sexp-in-repl
+    "R" 'cider-insert-region-in-repl
+    "b" 'cider-eval-buffer
+    "d" 'cider-eval-defun-at-point
+    "e" 'cider-eval-last-sexp
+    "r" 'cider-eval-region
+    "u" 'cider-undef
+    "i" 'cider-debug-defun-at-point)
+
+  (general-def
+    :keymaps 'clojure-mode-map
+    :prefix-map 'athame-localleader-map
+    :infix "g"
+    "b" 'cider-pop-back
+    "g" 'cider-find-var
+    "n" 'cider-find-ns)
+
+
+
+  ;; (athame-localleader-def
+  ;;  :keymaps 'clojure-mode-map
+  ;;  :infix "g"
+  ;;  "b" 'cider-pop-back
+  ;;  "g" 'cider-find-var
+  ;;  "n" 'cider-find-ns)
+
+  ;; (athame-localleader-def
+  ;;  :keymaps 'clojure-mode-map
+  ;;  :infix "h"
+  ;;  "a" 'cider-apropos
+  ;;  "c" 'cider-clojuredocs
+  ;;  "d" 'cider-doc
+  ;;  "j" 'cider-javadoc
+  ;;  "n" 'cider-find-ns
+  ;;  "w" 'cider-clojuredocs-web)
+
+  ;; (athame-localleader-def
+  ;;  :keymaps 'clojure-mode-map
+  ;;  :infix "i"
+  ;;  "e" 'cider-enlighten-mode
+  ;;  "i" 'cider-inspect
+  ;;  "r" 'cider-inspect-last-result)
+
+  ;; (athame-localleader-def
+  ;;  :keymaps 'clojure-mode-map
+  ;;  :infix "n"
+  ;;  "N" 'cider-browse-ns-all
+  ;;  "n" 'cider-browse-ns
+  ;;  "r" 'cider-ns-refresh
+  ;;  "u" 'cider-undef)
+
+  ;; (athame-localleader-def
+  ;;  :keymaps 'clojure-mode-map
+  ;;  :infix "p"
+  ;;  "d" 'cider-pprint-eval-defun-at-point
+  ;;  "D" 'cider-pprint-eval-defun-to-comment
+  ;;  "p" 'cider-pprint-eval-last-sexp
+  ;;  "P" 'cider-pprint-eval-last-sexp-to-comment
+  ;;  "r" 'cider-pprint-eval-last-sexp-to-repl)
+
+  ;; (athame-localleader-def
+  ;;  :keymaps 'clojure-mode-map
+  ;;  :infix "r"
+  ;;  "L" 'cider-load-buffer-and-switch-to-repl-buffer
+  ;;  "R" 'cider-restart
+  ;;  "b" 'cider-switch-to-repl-buffer
+  ;;  "c" 'cider-find-and-clear-repl-output
+  ;;  "l" 'cider-load-buffer
+  ;;  "n" 'cider-repl-set-ns
+  ;;  "q" 'cider-quit
+  ;;  "r" 'cider-ns-refresh
+  ;;  "i" 'cider-interrupt)
+
+  ;; (athame-localleader-def
+  ;;  :keymaps 'clojure-mode-map
+  ;;  :infix "t"
+  ;;  "a" 'cider-test-rerun-test
+  ;;  "l" 'cider-test-run-loaded-tests
+  ;;  "n" 'cider-test-run-ns-tests
+  ;;  "p" 'cider-test-run-project-tests
+  ;;  "r" 'cider-test-rerun-failed-tests
+  ;;  "s" 'cider-test-run-ns-tests-with-filters
+  ;;  "t" 'cider-test-run-test)
+
+  ;; (athame-localleader-def
+  ;;  :keymaps 'clojure-mode-map
+  ;;  "'" 'cider-jack-in-clj
+  ;;  "\"" 'cider-jack-in-cljs
+  ;;  "C" 'cider-connect-cljs
+  ;;  "c" 'cider-connect-clj
+  ;;  "m" 'cider-macroexpand-1
+  ;;  "M" 'cider-macroexpand-all)
+  )

@@ -1,6 +1,8 @@
 epkgs: with epkgs; [
   apheleia
   cape
+  cider
+  clojure-mode
   consult
   consult-dir
   consult-eglot
@@ -18,6 +20,7 @@ epkgs: with epkgs; [
   evil-surround
   exato
   flycheck
+  flycheck-clj-kondo
   flycheck-posframe
   general
   helpful
