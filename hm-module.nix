@@ -27,7 +27,8 @@ in
     };
     home.packages = [
       pkgs.janet
-      spork        # provides janet-format
+      pkgs.nerd-fonts.symbols-only  # NFM.ttf for nerd-icons
+      spork                         # provides janet-format
       janet-lsp
     ];
   };
