@@ -30,6 +30,8 @@
 ;; Languages
 (require 'psyc-nix)
 (require 'psyc-clojure)
+(require 'psyc-rust)
+(require 'psyc-janet)
 
 ;; Keybinds (must come after modules that define prefix maps)
 (require 'psyc-keybinds)

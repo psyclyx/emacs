@@ -23,6 +23,7 @@ epkgs: with epkgs; [
   general
   helpful
   highlight-quoted
+  janet-mode
   magit
   marginalia
   nerd-icons
