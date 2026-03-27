@@ -17,6 +17,7 @@ epkgs: with epkgs; [
   envrc
   evil
   evil-collection
+  expreg
   evil-cleverparens
   evil-nerd-commenter
   evil-snipe
@@ -35,8 +36,10 @@ epkgs: with epkgs; [
   nerd-icons-completion
   nerd-icons-corfu
   nix-mode
+  nix-ts-mode
   no-littering
   orderless
+  polymode
   smartparens
   tempel
   tempel-collection
@@ -47,4 +50,5 @@ epkgs: with epkgs; [
   ws-butler
   yaml-mode
   zig-mode
+  zig-ts-mode
 ]

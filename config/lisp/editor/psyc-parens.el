@@ -64,5 +64,28 @@
   (psyc-add-hooks psyc-lisp-mode-hooks #'evil-cleverparens-mode)
   (gsetq evil-cleverparens-swap-move-by-word-and-symbol t))
 
+;;;; Polymode (embedded language regions via `# lang: <mode>' comments)
+
+(use-package polymode
+  :defer t
+  :config
+  (define-hostmode poly-nix-hostmode
+    :mode 'nix-ts-mode)
+
+  (define-auto-innermode poly-nix-lang-comment-innermode
+    :head-matcher "^[[:blank:]]*#[[:blank:]]*lang:[[:blank:]]*\\([^ \t\n]+\\)[[:blank:]]*\n[[:blank:]]*''"
+    :tail-matcher "^[[:blank:]]*''"
+    :mode-matcher (cons "lang:[[:blank:]]*\\([^ \t\n]+\\)" 1)
+    :head-mode 'host
+    :tail-mode 'host)
+
+  (define-polymode poly-nix-mode
+    :hostmode 'poly-nix-hostmode
+    :innermodes '(poly-nix-lang-comment-innermode)))
+
+(with-eval-after-load 'nix-ts-mode
+  (require 'polymode)
+  (add-hook 'nix-ts-mode-hook #'poly-nix-mode))
+
 (provide 'psyc-parens)
 ;;; psyc-parens.el ends here
