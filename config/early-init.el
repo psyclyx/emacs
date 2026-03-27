@@ -52,10 +52,10 @@
               inhibit-x-resources t
               frame-inhibit-implied-resize t)
 
-(defun athame-init--reset-inhibited-vars-h ()
+(defun psyc-init--reset-inhibited-vars-h ()
   (setq-default inhibit-redisplay nil inhibit-message nil)
-  (remove-hook 'after-init-hook #'athame-init--reset-inhibited-vars-h))
-(add-hook 'after-init-hook #'athame-init--reset-inhibited-vars-h -100)
+  (remove-hook 'after-init-hook #'psyc-init--reset-inhibited-vars-h))
+(add-hook 'after-init-hook #'psyc-init--reset-inhibited-vars-h -100)
 
 (set 'inhibit-startup-screen t)
 (set 'inhibit-startup-echo-area-message user-login-name)

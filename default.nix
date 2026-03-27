@@ -24,9 +24,9 @@ in
           package = emacs;
           extraPackages = import ./emacsPackages.nix;
         };
-        home.file = {
-          ".config/emacs/init.el".source = ./config/init.el;
-          ".config/emacs/early-init.el".source = ./config/early-init.el;
+        home.file.".config/emacs" = {
+          source = ./config;
+          recursive = true;
         };
       };
     };
