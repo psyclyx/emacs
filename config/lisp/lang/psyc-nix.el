@@ -15,8 +15,9 @@
     (add-to-list 'tramp-remote-path "/run/current-system/sw/bin"))
 
   :general-config
-  (:keymaps
-   'nix-mode
+  (:keymaps 'nix-mode-map
+   :states 'normal
+   :prefix "SPC m"
    "f" #'nix-update-fetch
    "p" #'nix-format-buffer
    "r" #'nix-repl

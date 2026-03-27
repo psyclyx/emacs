@@ -24,7 +24,7 @@
 ;;;; Compile
 
 (defun psyc-compile (arg)
-  "Runs `compile' from the root of the current project.
+  "Runs `project-compile' from the project root.
 
 If a compilation window is already open, recompile that instead.
 
@@ -35,8 +35,8 @@ If ARG (universal argument), runs `compile' from the current directory."
       (recompile)
     (call-interactively
      (if arg
-         #'project-compile
-       #'compile))))
+         #'compile
+       #'project-compile))))
 
 (provide 'psyc-misc)
 ;;; psyc-misc.el ends here

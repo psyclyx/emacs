@@ -77,9 +77,9 @@
    "y r" #'dirvish-copy-remote-path
    "y y" #'dirvish-do-copy
    "s" (cons "symlinks" nil)
-   "s" #'dirvish-symlink
-   "S" #'dirvish-relative-symlink
-   "h" #'dirvish-hardlink))
+   "s s" #'dirvish-symlink
+   "s r" #'dirvish-relative-symlink
+   "s h" #'dirvish-hardlink))
 
 ;;;; Diredfl
 
@@ -101,9 +101,9 @@
 		 "\\|\\(?:\\.js\\)?\\.meta\\'"
 		 "\\|\\.\\(?:elc\\|o\\|pyo\\|swp\\|class\\)\\'")
 	 dired-clean-confirm-killing-deleted-buffers nil)
-  (when-let (cmd (cond ((featurep :system 'macos) "open")
-                       ((featurep :system 'linux) "xdg-open")
-                       ((featurep :system 'windows) "start")))
+  (when-let (cmd (cond ((eq system-type 'darwin) "open")
+                       ((eq system-type 'gnu/linux) "xdg-open")
+                       ((memq system-type '(windows-nt ms-dos)) "start")))
     (gsetq dired-guess-shell-alist-user
            `(("\\.\\(?:docx\\|pdf\\|djvu\\|eps\\)\\'" ,cmd)
              ("\\.\\(?:jpe?g\\|png\\|gif\\|xpm\\)\\'" ,cmd)

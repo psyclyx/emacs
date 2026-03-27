@@ -13,6 +13,7 @@
   :init
   (gsetq sp-show-pair-delay 0.125
 	 sp-show-pair-from-inside t)
+  :config
   (require 'smartparens-config))
 
 ;;;; Evil-cleverparens

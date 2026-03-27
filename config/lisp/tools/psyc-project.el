@@ -47,7 +47,7 @@
 
 (defun psyc-consult-switch-project ()
   (interactive)
-  (consult-buffer '(consult--source-project-root)))
+  (consult-buffer '(consult-source-project-root)))
 
 (general-define-key
  :prefix-map 'psyc-project-prefix-map

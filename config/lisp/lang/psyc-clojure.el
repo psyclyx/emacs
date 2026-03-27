@@ -6,10 +6,10 @@
 
 (use-package clojure-mode
   :mode "\\.clj\\'"
-  :after (flycheck-clj-kondo apheleia)
   :config
-  (setf (alist-get 'clojure-mode apheleia-mode-alist) 'cljstyle)
-  (setf (alist-get 'cljstyle apheleia-formatters) '("cljstyle" "pipe")))
+  (with-eval-after-load 'apheleia
+    (setf (alist-get 'clojure-mode apheleia-mode-alist) 'cljstyle)
+    (setf (alist-get 'cljstyle apheleia-formatters) '("cljstyle" "pipe"))))
 
 (use-package cider
   :after clojure-mode

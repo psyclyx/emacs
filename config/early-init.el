@@ -16,7 +16,7 @@
   (add-hook 'after-init-hook
             #'(lambda () (set 'file-name-handler-alist old-file-name-handler-alist))))
 
-(set 'native-comp-speed 3)
+(set 'native-comp-speed 2)
 (set 'native-comp-async-report-warnings-errors nil)
 (set 'native-comp-jit-compilation t)
 (set 'native-compile-prune-cache t)
