@@ -19,9 +19,6 @@ epkgs: with epkgs; [
   evil-snipe
   evil-surround
   exato
-  flycheck
-  flycheck-clj-kondo
-  flycheck-posframe
   general
   helpful
   highlight-quoted
@@ -33,7 +30,7 @@ epkgs: with epkgs; [
   nix-mode
   no-littering
   orderless
-  posframe
+
   smartparens
   evil-cleverparens
   treesit-grammars.with-all-grammars
