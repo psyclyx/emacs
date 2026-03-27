@@ -45,7 +45,7 @@
   (general-after-init
     (evil-collection-init)))
 
-;;;; Evil-snipe + evil-easymotion
+;;;; Evil-snipe
 
 (use-package evil-snipe
   :defer 0.5
@@ -57,20 +57,6 @@
   :config
   (evil-snipe-mode 1)
   (evil-snipe-override-mode 1))
-
-(use-package evil-easymotion
-  :defer 0.5
-  :config
-  (evilem-default-keybindings "C-;")
-  (general-after 'evil-snipe
-    (general-defs
-      :keymaps 'evil-snipe-parent-transient-map
-      "C-;" (evilem-create
- 	     'evil-snipe-repeat
- 	     :bind
- 	     ((evil-snipe-scope 'buffer)
- 	      (evil-snipe-enable-highlight)
- 	      (evil-snipe-enable-incremental-highlight))))))
 
 ;;;; Evil-surround
 

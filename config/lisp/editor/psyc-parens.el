@@ -4,19 +4,19 @@
 
 (require 'psyc-lib)
 
-;;;; Smartparens
+;;;; Electric pair (auto-pairing for all modes)
+
+(use-package elec-pair
+  :ensure nil
+  :hook (emacs-startup . electric-pair-mode))
+
+;;;; Smartparens + evil-cleverparens (structural editing for lisps)
 
 (use-package smartparens
   :defer t
-  :hook ((prog-mode . smartparens-mode)
-         (emacs-lisp-mode . smartparens-strict-mode))
-  :init
-  (gsetq sp-show-pair-delay 0.125
-	 sp-show-pair-from-inside t)
+  :hook (emacs-lisp-mode . smartparens-strict-mode)
   :config
   (require 'smartparens-config))
-
-;;;; Evil-cleverparens
 
 (use-package evil-cleverparens
   :defer t

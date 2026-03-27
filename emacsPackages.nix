@@ -14,7 +14,7 @@ epkgs: with epkgs; [
   envrc
   evil
   evil-collection
-  evil-easymotion
+
   evil-nerd-commenter
   evil-snipe
   evil-surround
