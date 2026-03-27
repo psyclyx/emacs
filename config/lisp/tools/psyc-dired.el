@@ -14,11 +14,6 @@
 	 dired-recursive-copies 'always
 	 dired-recursive-deletes 'top
 	 dired-create-destination-dirs 'ask
-	 image-dired-dir (expand-file-name "image-dired/" psyc-cache-dir)
-	 image-dired-db-file (expand-file-name "image-dired/db.el" psyc-cache-dir)
-	 image-dired-gallery-dir (expand-file-name "image-dired/gallery" psyc-cache-dir)
-	 image-dired-temp-image-file (expand-file-name "image-dired/temp-image" psyc-cache-dir)
-	 image-dired-temp-rotate-image-file (expand-file-name "image-dired/temp-rotate-image" psyc-cache-dir)
 	 image-dired-thumb-size 150)
   :config
   (general-after 'evil
@@ -29,7 +24,7 @@
 
 (use-package dirvish
   :init
-  (gsetq dirvish-cache-dir (expand-file-name "dirvish/" psyc-cache-dir)
+  (gsetq dirvish-cache-dir (no-littering-expand-var-file-name "dirvish/")
 	 dirvish-attributes '(file-size nerd-icons subtree-state)
 	 dirvish-hide-details '(dirvish dirvish-side)
 	 dirvish-hide-cursor '(dirvish dirvish-side)

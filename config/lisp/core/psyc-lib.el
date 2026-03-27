@@ -5,10 +5,23 @@
 (require 'cl-lib)
 (require 'dash)
 
-;;;; Config vars
+;;;; No-littering
 
 (defvar psyc-cache-dir "~/.cache/emacs")
 (defvar psyc-state-dir "~/.local/state/emacs")
+
+(use-package no-littering
+  :demand t
+  :init
+  (setq no-littering-etc-directory (file-name-concat psyc-state-dir "etc/")
+        no-littering-var-directory (file-name-concat psyc-state-dir "var/"))
+  :config
+  (setq auto-save-file-name-transforms
+        `((".*" ,(no-littering-expand-var-file-name "auto-save/") t)))
+  (when (fboundp 'startup-redirect-eln-cache)
+    (startup-redirect-eln-cache
+     (convert-standard-filename
+      (no-littering-expand-var-file-name "eln-cache/")))))
 
 ;;;; Helpers
 

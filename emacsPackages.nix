@@ -31,6 +31,7 @@ epkgs: with epkgs; [
   nerd-icons-completion
   nerd-icons-corfu
   nix-mode
+  no-littering
   orderless
   posframe
   smartparens

@@ -9,8 +9,7 @@
 (use-package project
   :defer t
   :init
-  (gsetq project-list-file (file-name-concat psyc-state-dir "projects")
-         project-vc-merge-submodules nil)
+  (gsetq project-vc-merge-submodules nil)
   :config
   (when psyc-project-marker
     (add-to-list 'project-vc-extra-root-markers psyc-project-marker)))
