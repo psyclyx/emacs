@@ -23,32 +23,39 @@
   :config
   (general-def
     :keymaps 'clojure-mode-map
-    [remap eval-last-sexp] 'cider-eval-last-sexp
-    [remap eval-buffer] 'cider-eval-buffer
-    [remap eval-region] 'cider-eval-region)
+    [remap eval-last-sexp] #'cider-eval-last-sexp
+    [remap eval-buffer] #'cider-eval-buffer
+    [remap eval-region] #'cider-eval-region)
 
   (general-def
     :keymaps 'clojure-mode-map
+    :states 'normal
     :prefix "SPC m"
 
+    "" '(:ignore t :which-key "clojure")
+
     :infix "e"
-    "D" 'cider-insert-defun-in-repl
-    "E" 'cider-insert-last-sexp-in-repl
-    "R" 'cider-insert-region-in-repl
-    "b" 'cider-eval-buffer
-    "d" 'cider-eval-defun-at-point
-    "e" 'cider-eval-last-sexp
-    "r" 'cider-eval-region
-    "u" 'cider-undef
-    "i" 'cider-debug-defun-at-point)
+    "" '(:ignore t :which-key "eval")
+    "D" #'cider-insert-defun-in-repl
+    "E" #'cider-insert-last-sexp-in-repl
+    "R" #'cider-insert-region-in-repl
+    "b" #'cider-eval-buffer
+    "d" #'cider-eval-defun-at-point
+    "e" #'cider-eval-last-sexp
+    "r" #'cider-eval-region
+    "u" #'cider-undef
+    "i" #'cider-debug-defun-at-point)
 
   (general-def
     :keymaps 'clojure-mode-map
-    :prefix-map 'psyc-localleader-map
+    :states 'normal
+    :prefix "SPC m"
+
     :infix "g"
-    "b" 'cider-pop-back
-    "g" 'cider-find-var
-    "n" 'cider-find-ns))
+    "" '(:ignore t :which-key "goto")
+    "b" #'cider-pop-back
+    "g" #'cider-find-var
+    "n" #'cider-find-ns))
 
 (provide 'psyc-clojure)
 ;;; psyc-clojure.el ends here

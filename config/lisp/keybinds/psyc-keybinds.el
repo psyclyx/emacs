@@ -133,6 +133,7 @@
   "h" (cons "help" help-map)
   "p" (cons "project" psyc-project-prefix-map)
   "s" (cons "search" psyc-search-prefix-map)
+  "m" (cons "local" psyc-localleader-map)
   "w" (cons "window" #'evil-window-map)
   "T" (cons "tool" psyc-tool-map)
 
