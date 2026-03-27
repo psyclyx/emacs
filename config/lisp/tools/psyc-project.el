@@ -14,24 +14,14 @@
   (when psyc-project-marker
     (add-to-list 'project-vc-extra-root-markers psyc-project-marker)))
 
-(defun psyc--dir-locals-file ()
-  (if (eq system-type 'ms-dos)
-      (dosified-file-name dir-locals-file)
-    dir-locals-file))
-
-(defun psyc--dir-locals-2-file ()
-  (let ((dir-locals (psyc--dir-locals-file)))
-    (when (string-match "\\.el\\'" dir-locals)
-      (replace-match "-2.el" t nil dir-locals))))
-
 (defun psyc-project-edit-dir-locals (&optional local)
+  "Edit .dir-locals.el at project root. With LOCAL, edit -2.el variant."
   (interactive "P")
-  (let* ((dir-locals-file (if local
-                              (psyc--dir-locals-2-file)
-                            (psyc--dir-locals-file)))
-         (root (project-root (project-current t)))
-         (expanded-file (expand-file-name dir-locals-file root)))
-    (find-file expanded-file)))
+  (let* ((file (if local
+                   (replace-regexp-in-string "\\.el\\'" "-2.el" dir-locals-file)
+                 dir-locals-file))
+         (root (project-root (project-current t))))
+    (find-file (expand-file-name file root))))
 
 (defun psyc-project-find-file-in-other-project (project &optional include-all)
   (interactive (list (funcall project-prompter)) "P")

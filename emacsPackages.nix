@@ -15,7 +15,7 @@ epkgs: with epkgs; [
   envrc
   evil
   evil-collection
-
+  evil-cleverparens
   evil-nerd-commenter
   evil-snipe
   evil-surround
@@ -31,9 +31,7 @@ epkgs: with epkgs; [
   nix-mode
   no-littering
   orderless
-
   smartparens
-  evil-cleverparens
   treesit-grammars.with-all-grammars
   vertico
   ws-butler
