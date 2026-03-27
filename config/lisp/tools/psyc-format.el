@@ -22,6 +22,13 @@
 
   :config
   (add-to-list 'apheleia-mode-alist '(sh-mode . shfmt))
+  (add-to-list 'apheleia-mode-alist '(bash-ts-mode . shfmt))
+
+  ;; Web languages via prettier
+  (dolist (mode '(js-ts-mode typescript-ts-mode tsx-ts-mode
+                  css-ts-mode web-mode json-ts-mode yaml-mode
+                  markdown-mode))
+    (add-to-list 'apheleia-mode-alist (cons mode 'prettier)))
   (add-to-list 'apheleia-formatters '(lsp . eglot-format-buffer))
 
   (setf (alist-get 'nix-mode apheleia-formatters) '("nixfmt" "-s"))

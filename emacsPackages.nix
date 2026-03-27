@@ -7,11 +7,13 @@ epkgs: with epkgs; [
   consult-dir
   consult-eglot
   corfu
+  dap-mode
   diff-hl
   dirvish
   diredfl
   elisp-def
   elisp-demos
+  emmet-mode
   envrc
   evil
   evil-collection
@@ -25,8 +27,10 @@ epkgs: with epkgs; [
   helpful
   highlight-quoted
   janet-mode
+  json-mode
   magit
   marginalia
+  markdown-mode
   nerd-icons
   nerd-icons-completion
   nerd-icons-corfu
@@ -34,8 +38,13 @@ epkgs: with epkgs; [
   no-littering
   orderless
   smartparens
+  tempel
+  tempel-collection
+  toml-mode
   treesit-grammars.with-all-grammars
   vertico
+  web-mode
   ws-butler
+  yaml-mode
   zig-mode
 ]

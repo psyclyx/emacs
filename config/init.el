@@ -28,12 +28,20 @@
 (require 'psyc-misc)
 (require 'psyc-org)
 (require 'psyc-ai)
+(require 'psyc-snippets)
+(require 'psyc-debug)
 
 ;; Languages
 (require 'psyc-nix)
 (require 'psyc-clojure)
 (require 'psyc-rust)
 (require 'psyc-janet)
+(require 'psyc-zig)
+(require 'psyc-python)
+(require 'psyc-java)
+(require 'psyc-shell)
+(require 'psyc-web)
+(require 'psyc-data)
 
 ;; Keybinds (must come after modules that define prefix maps)
 (require 'psyc-keybinds)

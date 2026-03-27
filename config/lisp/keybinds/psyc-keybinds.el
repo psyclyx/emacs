@@ -7,6 +7,7 @@
 (require 'psyc-misc)
 (require 'psyc-org)
 (require 'psyc-ai)
+(require 'psyc-debug)
 
 ;;;; Motion keys
 
@@ -39,9 +40,12 @@
  "r" (cons "LSP Rename" #'eglot-rename)
  "j" (cons "LSP Find declaration" #'eglot-find-declaration)
  "c" (cons "Compile" #'psyc-compile)
- "C" (cons "Compile" #'recompile)
+ "C" (cons "Recompile" #'recompile)
  "d" (cons "Jump to definition" #'xref-find-definitions)
- "D" (cons "Jump to references" #'xref-find-references))
+ "D" (cons "Jump to references" #'xref-find-references)
+ "s" (cons "Insert snippet" #'tempel-insert)
+ "e" (cons "Diagnostics" #'flymake-show-buffer-diagnostics)
+ "E" (cons "Project diagnostics" #'flymake-show-project-diagnostics))
 
 (general-define-key
  :prefix-map 'psyc-file-prefix-map
@@ -99,6 +103,25 @@
  "S" (cons "Git stage file"  #'magit-stage-file)
  "U" (cons "Git unstage file" #'magit-unstage-file))
 
+;;;; Debug map
+
+(general-define-key
+ :prefix-map 'psyc-debug-prefix-map
+ "d" (cons "Start/continue" #'dap-debug)
+ "l" (cons "Debug last" #'dap-debug-last)
+ "r" (cons "Debug recent" #'dap-debug-recent)
+ "b" (cons "Toggle breakpoint" #'dap-breakpoint-toggle)
+ "B" (cons "Set conditional breakpoint" #'dap-breakpoint-condition)
+ "n" (cons "Step over" #'dap-next)
+ "i" (cons "Step in" #'dap-step-in)
+ "o" (cons "Step out" #'dap-step-out)
+ "c" (cons "Continue" #'dap-continue)
+ "k" (cons "Disconnect" #'dap-disconnect)
+ "e" (cons "Eval at point" #'dap-eval-thing-at-point)
+ "E" (cons "Eval expression" #'dap-eval)
+ "R" (cons "REPL" #'dap-ui-repl)
+ "h" (cons "Hydra" #'dap-hydra))
+
 ;;;; Tool map
 
 (general-define-key
@@ -130,6 +153,7 @@
   :prefix-map 'psyc-leader-map
   "b" (cons "buffer" psyc-buffer-prefix-map)
   "c" (cons "code" psyc-code-prefix-map)
+  "d" (cons "debug" psyc-debug-prefix-map)
   "f" (cons "file" psyc-file-prefix-map)
   "g" (cons "git" psyc-git-prefix-map)
   "h" (cons "help" help-map)
@@ -149,6 +173,24 @@
   "," (cons "Switch buffer" #'switch-to-buffer)
   "." (cons "Find file" #'find-file)
   "RET" (cons "Jump to bookmark" #'bookmark-jump))
+
+;;;; Which-key from anywhere
+
+(general-define-key
+ :keymaps 'override
+ :states '(normal insert visual motion emacs)
+ "<f5>" #'which-key-show-top-level
+ "C-<f5>" #'which-key-show-major-mode)
+
+;; Also available in minibuffer/vertico contexts
+(general-define-key
+ :keymaps psyc-default-minibuffer-maps
+ "<f5>" #'which-key-show-top-level)
+
+(with-eval-after-load 'vertico
+  (general-define-key
+   :keymaps 'vertico-map
+   "<f5>" #'which-key-show-top-level))
 
 (provide 'psyc-keybinds)
 ;;; psyc-keybinds.el ends here
