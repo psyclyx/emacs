@@ -48,8 +48,6 @@
 
 (use-package janet-mode
   :mode "\\.janet\\'"
-  :hook ((janet-mode . smartparens-strict-mode)
-         (janet-mode . evil-cleverparens-mode))
   :config
   (with-eval-after-load 'eglot
     (add-to-list 'eglot-server-programs '(janet-mode "janet-lsp")))
