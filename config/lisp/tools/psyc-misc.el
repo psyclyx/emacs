@@ -9,11 +9,6 @@
 (use-package envrc
   :ghook ('emacs-startup-hook #'envrc-global-mode))
 
-;;;; Tramp
-
-(use-package tramp
-  :defer t)
-
 ;;;; Ispell
 
 (use-package ispell

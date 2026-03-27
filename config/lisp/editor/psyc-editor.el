@@ -108,8 +108,7 @@
 
 ;;;;; Disable tooltips
 
-(when (bound-and-true-p tooltip-mode)
-  (tooltip-mode -1))
+(tooltip-mode -1)
 
 ;;;; Files
 
@@ -184,8 +183,8 @@ or file path may exist now."
 (gsetq echo-keystrokes 0.5
        minibuffer-prompt-properties
        '(read-only t
-                   intangible t
-                   cursor-intangible t face minibuffer-prompt))
+                   cursor-intangible t
+                   face minibuffer-prompt))
 
 (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
 
@@ -246,12 +245,8 @@ or file path may exist now."
 
 ;;;;; Which-key
 
-(defun psyc-which-key--add-line (f &rest r)
-  (apply f
-	 (list (cons (+ 1 (car (car r)))
-		     (cdr (car r))))))
-
 (use-package which-key
+  :ensure nil
   :init
   (gsetq
    which-key-allow-multiple-replacements t
@@ -261,14 +256,13 @@ or file path may exist now."
    which-key-max-display-columns nil
    which-key-min-display-lines 6
    which-key-side-window-slot -10
+   which-key-side-window-location 'bottom
    which-key-idle-delay 0.3
    which-key-idle-secondary-delay 0.1
    which-key-allow-evil-operators t
    which-key-show-operator-state-maps t)
   (general-after-init
-    (which-key-mode)
-    (which-key-setup-side-window-bottom)
-    (advice-add 'which-key--show-popup :around #'psyc-which-key--add-line)))
+    (which-key-mode)))
 
 (provide 'psyc-editor)
 ;;; psyc-editor.el ends here

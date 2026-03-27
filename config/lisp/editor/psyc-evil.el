@@ -11,26 +11,17 @@
   :init
   (gsetq
    evil-want-keybinding nil
-   evil-respect-visual-line-mode nil
-   evil-want-C-i-jump t
    evil-want-C-u-scroll t
    evil-want-C-u-delete t
-   evil-want-C-w-delete t
    evil-want-Y-yank-to-eol t
-   evil-ex-search-persistent-highlight t
    evil-move-beyond-eol t
    evil-ex-search-vim-style-regexp t
    evil-want-abbrev-expand-on-insert-exit nil
    evil-ex-visual-char-range t
    evil-symbol-word-search t
    evil-undo-system 'undo-redo
-   evil-normal-state-cursor 'box
-   evil-emacs-state-cursor  'box
    evil-insert-state-cursor 'bar
    evil-visual-state-cursor 'hollow)
-
-  :config
-  (evil-select-search-module 'evil-search-module 'isearch)
 
   :general-config
   (:keymaps
