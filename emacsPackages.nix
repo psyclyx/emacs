@@ -21,6 +21,7 @@ epkgs: with epkgs; [
   evil-surround
   exato
   general
+  gptel
   helpful
   highlight-quoted
   janet-mode

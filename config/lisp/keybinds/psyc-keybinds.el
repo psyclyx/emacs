@@ -6,6 +6,7 @@
 (require 'psyc-project)
 (require 'psyc-misc)
 (require 'psyc-org)
+(require 'psyc-ai)
 
 ;;;; Motion keys
 
@@ -136,6 +137,7 @@
   "s" (cons "search" psyc-search-prefix-map)
   "m" (cons "local" psyc-localleader-map)
   "w" (cons "window" #'evil-window-map)
+  "a" (cons "ai" psyc-ai-prefix-map)
   "n" (cons "notes" psyc-notes-prefix-map)
   "T" (cons "tool" psyc-tool-map)
 
