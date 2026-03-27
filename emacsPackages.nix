@@ -7,6 +7,7 @@ epkgs: with epkgs; [
   consult-dir
   consult-eglot
   corfu
+  diff-hl
   dirvish
   diredfl
   elisp-def

@@ -13,5 +13,15 @@
    magit-save-repository-buffers 'dontask
    magit-no-confirm '(stage-all-changes unstage-all-changes)))
 
+;;;; Diff-hl (git gutter)
+
+(use-package diff-hl
+  :ghook ('emacs-startup-hook #'global-diff-hl-mode)
+  :hook ((dired-mode . diff-hl-dired-mode)
+         (magit-pre-refresh . diff-hl-magit-pre-refresh)
+         (magit-post-refresh . diff-hl-magit-post-refresh))
+  :config
+  (diff-hl-flydiff-mode 1))
+
 (provide 'psyc-vcs)
 ;;; psyc-vcs.el ends here
