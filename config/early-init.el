@@ -30,7 +30,8 @@
     (delete lisp-path load-path)
     (delete url-path load-path)
     (set 'load-path (append (list emacs-lisp-path lisp-path url-path) load-path))
-    (add-hook 'after-init-hook #'(lambda ()(set 'load-path old-load-path)))))
+    (add-hook 'after-init-hook #'(lambda ()(set 'load-path old-load-path)))
+    ))
 
 (set 'pgtk-wait-for-event-timeout 0.0001)
 

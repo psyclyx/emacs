@@ -4,7 +4,7 @@
 
 ;; Add lisp subdirectories to load-path
 (let ((lisp-dir (expand-file-name "lisp" user-emacs-directory)))
-  (dolist (subdir '("core" "editor" "completion" "tools" "ui" "lang" "keybinds"))
+  (dolist (subdir '("core" "editor" "completion" "tools" "lang" "keybinds"))
     (add-to-list 'load-path (expand-file-name subdir lisp-dir))))
 
 ;; Core
@@ -26,9 +26,6 @@
 (require 'psyc-vcs)
 (require 'psyc-check)
 (require 'psyc-misc)
-
-;; UI
-(require 'psyc-windows)
 
 ;; Languages
 (require 'psyc-nix)
