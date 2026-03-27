@@ -25,8 +25,7 @@ If a compilation window is already open, recompile that instead.
 
 If ARG (universal argument), runs `compile' from the current directory."
   (interactive "P")
-  (if (and (bound-and-true-p compilation-in-progress)
-           (buffer-live-p compilation-last-buffer))
+  (if (buffer-live-p compilation-last-buffer)
       (recompile)
     (call-interactively
      (if arg

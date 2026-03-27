@@ -77,38 +77,18 @@
 ;; muscle memory just works.
 
 (defun psyc-org--capture-evil-binds ()
-  (evil-define-command psyc-org-capture-write ()
-    :repeat nil
-    (interactive)
-    (org-capture-finalize))
-  (evil-define-command psyc-org-capture-wq ()
-    :repeat nil
-    (interactive)
-    (org-capture-finalize))
-  (evil-define-command psyc-org-capture-quit ()
-    :repeat nil
-    (interactive)
-    (org-capture-kill))
-  (evil-ex-define-cmd "w[rite]" #'psyc-org-capture-write)
-  (evil-ex-define-cmd "wq" #'psyc-org-capture-wq)
-  (evil-ex-define-cmd "q[uit]" #'psyc-org-capture-quit))
+  "Set buffer-local evil ex commands for org-capture."
+  (setq-local evil-ex-local-commands
+              '(("w" . org-capture-finalize)
+                ("wq" . org-capture-finalize)
+                ("q" . org-capture-kill))))
 
 (defun psyc-org--src-edit-evil-binds ()
-  (evil-define-command psyc-org-src-write ()
-    :repeat nil
-    (interactive)
-    (org-edit-src-save))
-  (evil-define-command psyc-org-src-wq ()
-    :repeat nil
-    (interactive)
-    (org-edit-src-exit))
-  (evil-define-command psyc-org-src-quit ()
-    :repeat nil
-    (interactive)
-    (org-edit-src-abort))
-  (evil-ex-define-cmd "w[rite]" #'psyc-org-src-write)
-  (evil-ex-define-cmd "wq" #'psyc-org-src-wq)
-  (evil-ex-define-cmd "q[uit]" #'psyc-org-src-quit))
+  "Set buffer-local evil ex commands for org-src-edit."
+  (setq-local evil-ex-local-commands
+              '(("w" . org-edit-src-save)
+                ("wq" . org-edit-src-exit)
+                ("q" . org-edit-src-abort))))
 
 (add-hook 'org-capture-mode-hook #'psyc-org--capture-evil-binds)
 (add-hook 'org-src-mode-hook #'psyc-org--src-edit-evil-binds)

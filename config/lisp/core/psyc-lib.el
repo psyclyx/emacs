@@ -3,7 +3,6 @@
 ;;; Code:
 
 (require 'cl-lib)
-(require 'dash)
 
 ;;;; No-littering
 
@@ -54,14 +53,16 @@
   "Returns non-nil if BUF is temporary."
   (char-equal ?\s (aref (buffer-name buf) 0)))
 
-;;;; General (keybinding framework)
+;;;; gsetq — like `setq' but respects defcustom :set
 
-(use-package general
-  :ensure t
-  :demand t
-  :config
-  (general-override-mode +1)
-  (defalias 'gsetq #'general-setq))
+(defmacro gsetq (&rest settings)
+  "Like `setq' but uses the defcustom :set handler when known.
+Falls back to `set' when no custom setter exists, avoiding autoloads
+for packages that haven't loaded yet."
+  `(progn
+     ,@(cl-loop for (var val) on settings by #'cddr
+                collect `(funcall (or (get ',var 'custom-set) #'set)
+                                  ',var ,val))))
 
 (provide 'psyc-lib)
 ;;; psyc-lib.el ends here

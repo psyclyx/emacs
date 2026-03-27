@@ -9,6 +9,13 @@
 (require 'psyc-ai)
 (require 'psyc-debug)
 
+;;;; General (keybinding framework)
+
+(use-package general
+  :demand t
+  :config
+  (general-override-mode +1))
+
 ;;;; Motion keys
 
 (general-define-key
@@ -64,7 +71,7 @@
 (general-define-key
  :prefix-map 'psyc-search-prefix-map
  "l" (cons "Search buffer lines" #'consult-line)
- "S" (cons "Search all buffer lines" #'consult-line)
+ "S" (cons "Search all buffer lines" #'consult-line-multi)
  "L" (cons "Jump to link" #'ffap-menu)
  "p" (cons "Search project" #'consult-ripgrep)
  "i" (cons "imenu" #'imenu)
@@ -94,7 +101,7 @@
  "." (cons "Magit file dispatch" #'magit-dispatch)
  "b" (cons "Magit switch branch" #'magit-branch-checkout)
  "g" (cons "Magit status" #'magit-status)
- "G" (cons "Magit status here" #'magit-status)
+ "G" (cons "Magit status here" #'magit-status-here)
  "D" (cons "Magit file delete" #'magit-file-delete)
  "B" (cons "Magit blame" #'magit-blame-addition)
  "C" (cons "Magit clone" #'magit-clone)
@@ -126,11 +133,10 @@
 
 (general-define-key
  :prefix-map 'psyc-tool-map
- "p" (cons "profiler" (make-keymap))
+ "p" (cons "profiler" (make-sparse-keymap))
  "p p" (cons "Profiler start" #'profiler-start)
  "p s" (cons "Profiler stop" #'profiler-stop)
- "p r" (cons "Profiler report" #'profile-report)
- "f" (cons "Flycheck" #'flycheck-mode))
+ "p r" (cons "Profiler report" #'profiler-report))
 
 ;;;; Leader keys
 

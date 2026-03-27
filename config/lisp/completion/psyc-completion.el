@@ -105,7 +105,6 @@
   (gsetq corfu-auto t
          corfu-auto-delay 0.24
          corfu-auto-prefix 2
-         corfu-auto-trigger '(?. ?> ?:)
          corfu-cycle t
          corfu-preselect 'prompt
          corfu-count 16
@@ -153,7 +152,7 @@
             "C-<down>" #'corfu-popupinfo-scroll-up))
 
 (use-package nerd-icons-corfu
-  :defer t
+  :after corfu
   :init
   (gsetq corfu-margin-formatters (list #'nerd-icons-corfu-formatter)))
 
@@ -230,7 +229,7 @@
 (use-package consult
   :init
   (gsetq consult-narrow-key "<"
-         consult-line-numbers-width t
+         consult-line-numbers-widen t
          consult-async-min-input 2
          consult-async-refresh-delay  0.15
          consult-async-input-throttle 0.2

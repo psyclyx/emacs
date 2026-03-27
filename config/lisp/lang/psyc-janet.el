@@ -51,6 +51,7 @@
   :config
   (with-eval-after-load 'eglot
     (add-to-list 'eglot-server-programs '(janet-mode "janet-lsp")))
+  (add-hook 'janet-mode-hook #'eglot-ensure)
   (with-eval-after-load 'apheleia
     (setf (alist-get 'janet-format apheleia-formatters) '("janet-format"))
     (setf (alist-get 'janet-mode apheleia-mode-alist) 'janet-format))

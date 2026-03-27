@@ -6,7 +6,7 @@
 
 (defcustom psyc-format-on-save-disabled-modes
   '(org-msg-edit-mode) "Don't format on these modes"
-  :type '(list symbol))
+  :type '(repeat symbol))
 
 (defun psyc-format--inhibit-p ()
   (or (eq major-mode 'fundamental-mode)
@@ -29,9 +29,7 @@
                   css-ts-mode web-mode json-ts-mode yaml-mode
                   markdown-mode))
     (add-to-list 'apheleia-mode-alist (cons mode 'prettier)))
-  (add-to-list 'apheleia-formatters '(lsp . eglot-format-buffer))
-
-  (setf (alist-get 'nix-mode apheleia-formatters) '("nixfmt" "-s"))
+  (setf (alist-get 'nixfmt apheleia-formatters) '("nixfmt" "-s"))
 
   (add-to-list 'apheleia-mode-alist '(cuda-mode . clang-format))
   (add-to-list 'apheleia-mode-alist '(protobuf-mode . clang-format))

@@ -57,7 +57,6 @@
         (switch-to-buffer buf)
       (when buf (kill-buffer buf))
       (switch-to-buffer (make-term "claude-code" "claude"))
-      (term-mode)
       (term-char-mode))))
 
 ;;;; Keybinds

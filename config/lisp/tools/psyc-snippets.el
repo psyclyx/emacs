@@ -8,21 +8,19 @@
   :defer t
   :init
   (gsetq tempel-trigger-prefix "<")
+  (defun psyc-tempel--capf ()
+    (add-hook 'completion-at-point-functions #'tempel-expand -90 t))
+  (psyc-add-hooks '(prog-mode-hook text-mode-hook conf-mode-hook)
+                  #'psyc-tempel--capf)
 
   :general
-  (:keymaps '(insert normal)
+  (:states '(insert normal)
    "M-+" #'tempel-complete
    "M-*" #'tempel-insert)
   (:keymaps 'tempel-map
    "M-n" #'tempel-next
    "M-p" #'tempel-previous
-   "M-RET" #'tempel-done)
-
-  :config
-  (defun psyc-tempel--capf ()
-    (add-hook 'completion-at-point-functions #'tempel-expand -90 t))
-  (psyc-add-hooks '(prog-mode-hook text-mode-hook conf-mode-hook)
-                  #'psyc-tempel--capf))
+   "M-RET" #'tempel-done))
 
 (use-package tempel-collection
   :after tempel)

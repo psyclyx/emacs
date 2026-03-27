@@ -24,7 +24,7 @@
     (find-file (expand-file-name file root))))
 
 (defun psyc-project-find-file-in-other-project (project &optional include-all)
-  (interactive (list (funcall project-prompter)) "P")
+  (interactive (list (funcall project-prompter) current-prefix-arg))
   (project--remember-dir project)
   (let ((project-current-directory-override project))
     (project-find-file include-all)))

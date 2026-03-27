@@ -83,10 +83,15 @@
 
 ;;;;; Flash mode-line (visual bell)
 
-(defun psyc-flash-modeline ()
-  "Briefly inverts the `mode-line' face."
-  (invert-face 'mode-line)
-  (run-with-timer 0.1 nil 'invert-face 'mode-line))
+(defun psyc-flash-modeline (&optional type)
+  "Flash the modeline."
+  (let* ((face (if (eq type 'error) 'error 'success))
+         (cookie (face-remap-add-relative 'mode-line face)))
+    (force-mode-line-update)
+    (run-with-timer 0.15 nil
+                    (lambda ()
+                      (face-remap-remove-relative cookie)
+                      (force-mode-line-update)))))
 
 (gsetq ring-bell-function #'psyc-flash-modeline)
 
@@ -162,10 +167,9 @@ Likely, something has changed since the buffer was opened. e.g. A shebang line
 or file path may exist now."
   (when (eq major-mode 'fundamental-mode)
     (let ((buffer (or (buffer-base-buffer) (current-buffer))))
-      (and (buffer-file-name buffer)
-           (eq buffer (window-buffer (selected-window)))
-           (set-auto-mode)
-           (not (eq major-mode 'fundamental-mode))))))
+      (when (and (buffer-file-name buffer)
+                 (eq buffer (window-buffer (selected-window))))
+        (set-auto-mode)))))
 
 (add-hook 'after-save-hook #'psyc-file--guess-mode-h)
 
@@ -191,12 +195,12 @@ or file path may exist now."
 ;;;;; Keybinds
 
 (defvar psyc-default-minibuffer-maps
-  (append '(minibuffer-local-map
-            minibuffer-local-ns-map
-            minibuffer-local-completion-map
-            minibuffer-local-must-match-map
-            minibuffer-local-isearch-map
-            read-expression-map))
+  '(minibuffer-local-map
+    minibuffer-local-ns-map
+    minibuffer-local-completion-map
+    minibuffer-local-must-match-map
+    minibuffer-local-isearch-map
+    read-expression-map)
   "A list of all the keymaps used for the minibuffer.")
 
 (general-define-key

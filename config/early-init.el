@@ -11,9 +11,14 @@
 (setq auto-mode-case-fold nil)
 
 (let ((old-file-name-handler-alist file-name-handler-alist))
-  (setq file-name-handler-alist (list (rassq 'jka-compr-handler file-name-handler-alist)))
+  (setq file-name-handler-alist
+        (delq nil (list (rassq 'jka-compr-handler file-name-handler-alist))))
   (add-hook 'after-init-hook
-            (lambda () (setq file-name-handler-alist old-file-name-handler-alist))))
+            (lambda ()
+              (setq file-name-handler-alist
+                    (delete-dups
+                     (append file-name-handler-alist
+                             old-file-name-handler-alist))))))
 
 (setq native-comp-async-report-warnings-errors nil
       native-comp-jit-compilation t
@@ -33,7 +38,7 @@
       tool-bar-mode nil
       scroll-bar-mode nil)
 
-(setq load-prefer-newer noninteractive)
+(setq load-prefer-newer (not noninteractive))
 
 (setq-default inhibit-redisplay t
               inhibit-message (not init-file-debug)

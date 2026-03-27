@@ -9,7 +9,6 @@
   :defer t
   :mode ("\\.sh\\'" . bash-ts-mode)
   :mode ("\\.bash\\'" . bash-ts-mode)
-  :mode ("\\.zsh\\'" . bash-ts-mode)
   :hook (bash-ts-mode . eglot-ensure))
 
 (with-eval-after-load 'eglot
