@@ -4,6 +4,9 @@ let
   emacsOverlay = import sources.emacs-overlay;
   emacsPkgs = pkgs.extend emacsOverlay;
   emacs = emacsPkgs.emacs-unstable-pgtk;
+
+  spork = pkgs.callPackage ./packages/spork.nix {};
+  janet-lsp = pkgs.callPackage ./packages/janet-lsp.nix { inherit spork; };
 in
 {
   options.psyclyx-emacs.enable = lib.mkEnableOption "Emacs config";
@@ -22,5 +25,10 @@ in
       source = ./config;
       recursive = true;
     };
+    home.packages = [
+      pkgs.janet
+      spork        # provides janet-format
+      janet-lsp
+    ];
   };
 }
