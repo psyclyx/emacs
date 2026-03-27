@@ -5,6 +5,7 @@
 (require 'psyc-lib)
 (require 'psyc-project)
 (require 'psyc-misc)
+(require 'psyc-org)
 
 ;;;; Motion keys
 
@@ -135,6 +136,7 @@
   "s" (cons "search" psyc-search-prefix-map)
   "m" (cons "local" psyc-localleader-map)
   "w" (cons "window" #'evil-window-map)
+  "n" (cons "notes" psyc-notes-prefix-map)
   "T" (cons "tool" psyc-tool-map)
 
   "/" (cons "Search project" #'consult-ripgrep)

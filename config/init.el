@@ -26,6 +26,7 @@
 (require 'psyc-vcs)
 (require 'psyc-check)
 (require 'psyc-misc)
+(require 'psyc-org)
 
 ;; Languages
 (require 'psyc-nix)
