@@ -137,6 +137,7 @@
   "w" (cons "window" #'evil-window-map)
   "T" (cons "tool" psyc-tool-map)
 
+  "/" (cons "Search project" #'consult-ripgrep)
   "'" (cons "Repeat last search" #'vertico-repeat)
   "u" (cons "Universal argument" #'universal-argument)
   ";" (cons "Eval expression" #'pp-eval-expression)
