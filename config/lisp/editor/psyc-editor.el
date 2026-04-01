@@ -7,9 +7,7 @@
 ;;;; Savehist
 
 (use-package savehist
-  :init
-  (general-after-init
-    (savehist-mode)))
+  :hook (after-init . savehist-mode))
 
 ;;;; Appearance
 
@@ -39,7 +37,7 @@
 
 ;;;;; Cursor
 
-(general-after-init (blink-cursor-mode -1))
+(add-hook 'after-init-hook (lambda () (blink-cursor-mode -1)))
 (gsetq x-stretch-cursor nil)
 
 ;;;;; Text
@@ -179,8 +177,7 @@ or file path may exist now."
 
 (gsetq enable-recursive-minibuffers t)
 
-(general-after-init
-  (minibuffer-depth-indicate-mode 1))
+(add-hook 'after-init-hook (lambda () (minibuffer-depth-indicate-mode 1)))
 
 ;;;;; Prompt
 
@@ -265,8 +262,7 @@ or file path may exist now."
    which-key-idle-secondary-delay 0.1
    which-key-allow-evil-operators t
    which-key-show-operator-state-maps t)
-  (general-after-init
-    (which-key-mode)))
+  :hook (after-init . which-key-mode))
 
 (provide 'psyc-editor)
 ;;; psyc-editor.el ends here

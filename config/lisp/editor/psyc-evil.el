@@ -42,8 +42,7 @@
   :defer t
   :init
   (gsetq evil-collection-outline-bind-tab-p t)
-  (general-after-init
-    (evil-collection-init)))
+  (add-hook 'after-init-hook #'evil-collection-init))
 
 ;;;; Evil-snipe
 
