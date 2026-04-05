@@ -14,13 +14,22 @@
                   #'psyc-tempel--capf)
 
   :general
-  (:states '(insert normal)
-   "M-+" #'tempel-complete
-   "M-*" #'tempel-insert)
   (:keymaps 'tempel-map
    "M-n" #'tempel-next
    "M-p" #'tempel-previous
-   "M-RET" #'tempel-done))
+   "M-RET" #'tempel-done)
+
+  :config
+  (unless psyc-vanilla-mode
+    (general-def
+      :states '(insert normal)
+      "M-+" #'tempel-complete
+      "M-*" #'tempel-insert))
+
+  ;; These binds work in both evil and modal (M- keys pass through)
+  (general-def
+    "M-+" #'tempel-complete
+    "M-*" #'tempel-insert))
 
 (use-package tempel-collection
   :after tempel)

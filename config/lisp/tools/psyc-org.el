@@ -73,25 +73,24 @@
      (shell . t))))
 
 ;;;; Evil integration for capture and src-edit buffers
-;; Make :w finalize and :q abort in capture/src-edit, so the vim
-;; muscle memory just works.
 
-(defun psyc-org--capture-evil-binds ()
-  "Set buffer-local evil ex commands for org-capture."
-  (setq-local evil-ex-local-commands
-              '(("w" . org-capture-finalize)
-                ("wq" . org-capture-finalize)
-                ("q" . org-capture-kill))))
+(unless psyc-vanilla-mode
+  (defun psyc-org--capture-evil-binds ()
+    "Set buffer-local evil ex commands for org-capture."
+    (setq-local evil-ex-local-commands
+                '(("w" . org-capture-finalize)
+                  ("wq" . org-capture-finalize)
+                  ("q" . org-capture-kill))))
 
-(defun psyc-org--src-edit-evil-binds ()
-  "Set buffer-local evil ex commands for org-src-edit."
-  (setq-local evil-ex-local-commands
-              '(("w" . org-edit-src-save)
-                ("wq" . org-edit-src-exit)
-                ("q" . org-edit-src-abort))))
+  (defun psyc-org--src-edit-evil-binds ()
+    "Set buffer-local evil ex commands for org-src-edit."
+    (setq-local evil-ex-local-commands
+                '(("w" . org-edit-src-save)
+                  ("wq" . org-edit-src-exit)
+                  ("q" . org-edit-src-abort))))
 
-(add-hook 'org-capture-mode-hook #'psyc-org--capture-evil-binds)
-(add-hook 'org-src-mode-hook #'psyc-org--src-edit-evil-binds)
+  (add-hook 'org-capture-mode-hook #'psyc-org--capture-evil-binds)
+  (add-hook 'org-src-mode-hook #'psyc-org--src-edit-evil-binds))
 
 ;;;; Keybinds
 
@@ -104,6 +103,24 @@
  "p" (cons "Open projects" (psyc-cmd (find-file (concat psyc-org-dir "projects.org"))))
  "n" (cons "Open notes" (psyc-cmd (find-file (concat psyc-org-dir "notes.org"))))
  "d" (cons "Dashboard" (psyc-cmd (org-agenda nil "d"))))
+
+;; Modal integration: notes in space-map, local-leader for capture/src-edit
+(with-eval-after-load 'psyc-modal
+  (define-key psyc-modal-space-map "n" psyc-notes-prefix-map)
+
+  (add-hook 'org-capture-mode-hook
+            (lambda ()
+              (setq psyc-modal-local-map (make-sparse-keymap "Capture"))
+              (define-key psyc-modal-local-map "f" #'org-capture-finalize)
+              (define-key psyc-modal-local-map "k" #'org-capture-kill)
+              (define-key psyc-modal-local-map "r" #'org-capture-refile)))
+
+  (add-hook 'org-src-mode-hook
+            (lambda ()
+              (setq psyc-modal-local-map (make-sparse-keymap "Src Edit"))
+              (define-key psyc-modal-local-map "s" #'org-edit-src-save)
+              (define-key psyc-modal-local-map "f" #'org-edit-src-exit)
+              (define-key psyc-modal-local-map "k" #'org-edit-src-abort))))
 
 (provide 'psyc-org)
 ;;; psyc-org.el ends here

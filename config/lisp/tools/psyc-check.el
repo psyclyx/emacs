@@ -9,11 +9,13 @@
   :hook (prog-mode text-mode)
   :init
   (gsetq flymake-show-diagnostics-at-end-of-line t)
-  :general-config
-  (:keymaps 'flymake-mode-map
-   :states '(normal visual)
-   "]d" #'flymake-goto-next-error
-   "[d" #'flymake-goto-prev-error))
+  :config
+  (unless psyc-vanilla-mode
+    (general-def
+      :keymaps 'flymake-mode-map
+      :states '(normal visual)
+      "]d" #'flymake-goto-next-error
+      "[d" #'flymake-goto-prev-error)))
 
 (provide 'psyc-check)
 ;;; psyc-check.el ends here

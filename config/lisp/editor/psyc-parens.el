@@ -12,10 +12,20 @@
 ;;;; Expand-region (incremental selection expansion)
 
 (use-package expreg
-  :general
-  (:states 'visual
-   "v" #'expreg-expand
-   "V" #'expreg-contract))
+  :defer t
+  :config
+  (unless psyc-vanilla-mode
+    (general-def
+      :states 'visual
+      "v" #'expreg-expand
+      "V" #'expreg-contract)))
+
+;;;; Multiple cursors
+
+(use-package multiple-cursors
+  :defer t
+  :init
+  (gsetq mc/always-run-for-all t))
 
 ;;;; Combobulate (tree-sitter structural editing)
 
@@ -27,7 +37,7 @@
          (css-ts-mode . combobulate-mode)
          (bash-ts-mode . combobulate-mode)))
 
-;;;; Smartparens + evil-cleverparens (structural editing for lisps)
+;;;; Lisp modes
 
 (defvar psyc-lisp-mode-hooks
   '(emacs-lisp-mode-hook
@@ -42,27 +52,56 @@
     lisp-interaction-mode-hook)
   "Mode hooks where structural editing should be enabled.")
 
-(use-package smartparens
-  :commands (smartparens-strict-mode)
-  :init
-  (psyc-add-hooks psyc-lisp-mode-hooks #'smartparens-strict-mode)
-  :config
-  (require 'smartparens-config)
-  (general-def
-    :keymaps 'smartparens-strict-mode-map
-    :states 'insert
-    [remap delete-backward-char] #'sp-backward-delete-char
-    [remap backward-delete-char-untabify] #'sp-backward-delete-char
-    [remap delete-forward-char] #'sp-delete-char)
-  ;; Avoid double-pairing with electric-pair-mode
-  (add-hook 'smartparens-enabled-hook
-            (lambda () (electric-pair-local-mode -1))))
+(if psyc-vanilla-mode
+    ;; Modal mode: use built-in structural editing via psyc-modal match mode.
+    ;; Disable electric-pair in lisp modes (parens handled by our own insert logic).
+    (progn
+      (defun psyc-modal--lisp-insert-pair ()
+        "Auto-close parens/brackets in lisp modes during insert state."
+        (electric-pair-local-mode -1)
+        ;; Use Emacs built-in skeleton pairs for balanced insertion
+        (setq-local skeleton-pair t)
+        (local-set-key "(" #'skeleton-pair-insert-maybe)
+        (local-set-key "[" #'skeleton-pair-insert-maybe)
+        (local-set-key "{" #'skeleton-pair-insert-maybe)
+        (local-set-key "\"" #'skeleton-pair-insert-maybe))
+      (psyc-add-hooks psyc-lisp-mode-hooks #'psyc-modal--lisp-insert-pair)
 
-(use-package evil-cleverparens
-  :commands (evil-cleverparens-mode)
-  :init
-  (psyc-add-hooks psyc-lisp-mode-hooks #'evil-cleverparens-mode)
-  (gsetq evil-cleverparens-swap-move-by-word-and-symbol t))
+      ;; Default lisp local-leader (eval commands via emacs built-ins)
+      (with-eval-after-load 'psyc-modal
+        (psyc-modal-localleader emacs-lisp-mode-hook "Emacs Lisp"
+          "ee" #'eval-last-sexp
+          "eb" #'eval-buffer
+          "ed" #'eval-defun
+          "er" #'eval-region)
+
+        (psyc-modal-localleader lisp-interaction-mode-hook "Lisp Interaction"
+          "ee" #'eval-last-sexp
+          "eb" #'eval-buffer
+          "ed" #'eval-defun
+          "er" #'eval-region)))
+
+  ;; Evil mode: smartparens + evil-cleverparens
+  (use-package smartparens
+    :commands (smartparens-strict-mode)
+    :init
+    (psyc-add-hooks psyc-lisp-mode-hooks #'smartparens-strict-mode)
+    :config
+    (require 'smartparens-config)
+    (general-def
+      :keymaps 'smartparens-strict-mode-map
+      :states 'insert
+      [remap delete-backward-char] #'sp-backward-delete-char
+      [remap backward-delete-char-untabify] #'sp-backward-delete-char
+      [remap delete-forward-char] #'sp-delete-char)
+    (add-hook 'smartparens-enabled-hook
+              (lambda () (electric-pair-local-mode -1))))
+
+  (use-package evil-cleverparens
+    :commands (evil-cleverparens-mode)
+    :init
+    (psyc-add-hooks psyc-lisp-mode-hooks #'evil-cleverparens-mode)
+    (gsetq evil-cleverparens-swap-move-by-word-and-symbol t)))
 
 ;;;; Polymode (embedded language regions via `# lang: <mode>' comments)
 

@@ -16,8 +16,9 @@
 	 dired-create-destination-dirs 'ask
 	 image-dired-thumb-size 150)
   :config
-  (general-after 'evil
-    (evil-set-initial-state 'image-dired-display-image-mode 'emacs))
+  (unless psyc-vanilla-mode
+    (general-after 'evil
+      (evil-set-initial-state 'image-dired-display-image-mode 'emacs)))
   (put 'dired-find-alternate-file 'disabled nil))
 
 ;;;; Dirvish
@@ -35,51 +36,49 @@
 	 dirvish-subtree-always-show-state t)
   (dirvish-override-dired-mode)
   :general (:keymaps 'dired-mode-map "C-c C-r" #'dirvish-rsync)
-  :general-config
-  (:keymaps
-   'dirvish-mode-map
-   :states 'normal
-   "?" #'dirvish-dispatch
-   "q" #'dirvish-quit
-   "b" #'dirvish-quick-access
-   "f" #'dirvish-file-info-menu
-   "p" #'dirvish-yank
-   "S" #'dirvish-quicksort
-   "F" #'dirvish-layout-toggle
-   "z" #'dirvish-history-jump
-   "gh" #'dirvish-subtree-up
-   "gl" #'dirvish-subtree-toggle
-   "h" #'dired-up-directory
-   "l" #'dired-find-file)
-  (:keymaps
-   'dirvish-mode-map
-   :states 'motion
-   [left]  #'dired-up-directory
-   [right] #'dired-find-file
-   "[h" #'dirvish-history-go-backward
-   "]h" #'dirvish-history-go-forward
-   "[e" #'dirvish-emerge-next-group
-   "]e" #'dirvish-emerge-previous-group)
-  (:keymaps
-   'dirvish-mode-map
-   :states 'normal
-   "TAB" #'dirvish-subtree-toggle
-   "M-b" #'dirvish-history-go-backward
-   "M-f" #'dirvish-history-go-forward
-   "M-n" #'dirvish-narrow
-   "M-m" #'dirvish-mark-menu
-   "M-s" #'dirvish-setup-menu
-   "M-e" #'dirvish-emerge-menu
-   "y" (cons "yank" nil)
-   "y l" #'dirvish-copy-file-true-path
-   "y n" #'dirvish-copy-file-name
-   "y p" #'dirvish-copy-file-path
-   "y r" #'dirvish-copy-remote-path
-   "y y" #'dirvish-do-copy
-   "s" (cons "symlinks" nil)
-   "s s" #'dirvish-symlink
-   "s r" #'dirvish-relative-symlink
-   "s h" #'dirvish-hardlink))
+  :config
+  (unless psyc-vanilla-mode
+    (general-def
+      :keymaps 'dirvish-mode-map
+      :states 'normal
+      "?" #'dirvish-dispatch
+      "q" #'dirvish-quit
+      "b" #'dirvish-quick-access
+      "f" #'dirvish-file-info-menu
+      "p" #'dirvish-yank
+      "S" #'dirvish-quicksort
+      "F" #'dirvish-layout-toggle
+      "z" #'dirvish-history-jump
+      "gh" #'dirvish-subtree-up
+      "gl" #'dirvish-subtree-toggle
+      "h" #'dired-up-directory
+      "l" #'dired-find-file
+      "TAB" #'dirvish-subtree-toggle
+      "M-b" #'dirvish-history-go-backward
+      "M-f" #'dirvish-history-go-forward
+      "M-n" #'dirvish-narrow
+      "M-m" #'dirvish-mark-menu
+      "M-s" #'dirvish-setup-menu
+      "M-e" #'dirvish-emerge-menu
+      "y" (cons "yank" nil)
+      "y l" #'dirvish-copy-file-true-path
+      "y n" #'dirvish-copy-file-name
+      "y p" #'dirvish-copy-file-path
+      "y r" #'dirvish-copy-remote-path
+      "y y" #'dirvish-do-copy
+      "s" (cons "symlinks" nil)
+      "s s" #'dirvish-symlink
+      "s r" #'dirvish-relative-symlink
+      "s h" #'dirvish-hardlink)
+    (general-def
+      :keymaps 'dirvish-mode-map
+      :states 'motion
+      [left]  #'dired-up-directory
+      [right] #'dired-find-file
+      "[h" #'dirvish-history-go-backward
+      "]h" #'dirvish-history-go-forward
+      "[e" #'dirvish-emerge-next-group
+      "]e" #'dirvish-emerge-previous-group)))
 
 ;;;; Diredfl
 

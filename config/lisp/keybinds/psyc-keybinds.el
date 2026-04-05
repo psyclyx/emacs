@@ -9,13 +9,6 @@
 (require 'psyc-ai)
 (require 'psyc-debug)
 
-;;;; General (keybinding framework)
-
-(use-package general
-  :demand t
-  :config
-  (general-override-mode +1))
-
 ;;;; Motion keys
 
 (general-define-key

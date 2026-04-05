@@ -27,35 +27,52 @@
     [remap eval-buffer] #'cider-eval-buffer
     [remap eval-region] #'cider-eval-region)
 
-  (general-def
-    :keymaps 'clojure-mode-map
-    :states 'normal
-    :prefix "SPC m"
+  (unless psyc-vanilla-mode
+    (general-def
+      :keymaps 'clojure-mode-map
+      :states 'normal
+      :prefix "SPC m"
 
-    "" '(:ignore t :which-key "clojure")
+      "" '(:ignore t :which-key "clojure")
 
-    :infix "e"
-    "" '(:ignore t :which-key "eval")
-    "D" #'cider-insert-defun-in-repl
-    "E" #'cider-insert-last-sexp-in-repl
-    "R" #'cider-insert-region-in-repl
-    "b" #'cider-eval-buffer
-    "d" #'cider-eval-defun-at-point
-    "e" #'cider-eval-last-sexp
-    "r" #'cider-eval-region
-    "u" #'cider-undef
-    "i" #'cider-debug-defun-at-point)
+      :infix "e"
+      "" '(:ignore t :which-key "eval")
+      "D" #'cider-insert-defun-in-repl
+      "E" #'cider-insert-last-sexp-in-repl
+      "R" #'cider-insert-region-in-repl
+      "b" #'cider-eval-buffer
+      "d" #'cider-eval-defun-at-point
+      "e" #'cider-eval-last-sexp
+      "r" #'cider-eval-region
+      "u" #'cider-undef
+      "i" #'cider-debug-defun-at-point)
 
-  (general-def
-    :keymaps 'clojure-mode-map
-    :states 'normal
-    :prefix "SPC m"
+    (general-def
+      :keymaps 'clojure-mode-map
+      :states 'normal
+      :prefix "SPC m"
 
-    :infix "g"
-    "" '(:ignore t :which-key "goto")
-    "b" #'cider-pop-back
-    "g" #'cider-find-var
-    "n" #'cider-find-ns))
+      :infix "g"
+      "" '(:ignore t :which-key "goto")
+      "b" #'cider-pop-back
+      "g" #'cider-find-var
+      "n" #'cider-find-ns)))
+
+;; Modal local-leader
+(with-eval-after-load 'psyc-modal
+  (psyc-modal-localleader clojure-mode-hook "Clojure"
+    "eD" #'cider-insert-defun-in-repl
+    "eE" #'cider-insert-last-sexp-in-repl
+    "eR" #'cider-insert-region-in-repl
+    "eb" #'cider-eval-buffer
+    "ed" #'cider-eval-defun-at-point
+    "ee" #'cider-eval-last-sexp
+    "er" #'cider-eval-region
+    "eu" #'cider-undef
+    "ei" #'cider-debug-defun-at-point
+    "gb" #'cider-pop-back
+    "gg" #'cider-find-var
+    "gn" #'cider-find-ns))
 
 (provide 'psyc-clojure)
 ;;; psyc-clojure.el ends here

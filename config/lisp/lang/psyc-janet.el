@@ -62,23 +62,33 @@
     [remap eval-buffer] #'janet-eval-buffer
     [remap eval-region] #'janet-eval-region)
 
-  (general-def
-    :keymaps 'janet-mode-map
-    :states 'normal
-    :prefix "SPC m"
+  (unless psyc-vanilla-mode
+    (general-def
+      :keymaps 'janet-mode-map
+      :states 'normal
+      :prefix "SPC m"
 
-    "" '(:ignore t :which-key "janet")
+      "" '(:ignore t :which-key "janet")
 
-    :infix "e"
-    "" '(:ignore t :which-key "eval")
-    "b" #'janet-eval-buffer
-    "d" #'janet-eval-defun
-    "e" #'janet-eval-last-sexp
-    "r" #'janet-eval-region
+      :infix "e"
+      "" '(:ignore t :which-key "eval")
+      "b" #'janet-eval-buffer
+      "d" #'janet-eval-defun
+      "e" #'janet-eval-last-sexp
+      "r" #'janet-eval-region
 
-    :infix "r"
-    "" '(:ignore t :which-key "repl")
-    "r" #'janet-repl))
+      :infix "r"
+      "" '(:ignore t :which-key "repl")
+      "r" #'janet-repl)))
+
+;; Modal local-leader
+(with-eval-after-load 'psyc-modal
+  (psyc-modal-localleader janet-mode-hook "Janet"
+    "ee" #'janet-eval-last-sexp
+    "eb" #'janet-eval-buffer
+    "ed" #'janet-eval-defun
+    "er" #'janet-eval-region
+    "rr" #'janet-repl))
 
 (provide 'psyc-janet)
 ;;; psyc-janet.el ends here

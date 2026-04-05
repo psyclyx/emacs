@@ -204,12 +204,16 @@ or file path may exist now."
  :keymaps psyc-default-minibuffer-maps
  [escape] #'abort-recursive-edit
  "C-a"    #'move-beginning-of-line
- "C-r"    #'evil-paste-from-register
- "C-u"    #'evil-delete-back-to-indentation
  "C-v"    #'yank
  "C-w"    #'psyc-delete-backward-word
  "C-z"    (lambda () (interactive)
             (ignore-errors (call-interactively #'undo))))
+
+(with-eval-after-load 'evil
+  (general-define-key
+   :keymaps psyc-default-minibuffer-maps
+   "C-r"    #'evil-paste-from-register
+   "C-u"    #'evil-delete-back-to-indentation))
 
 (general-define-key
  :keymaps psyc-default-minibuffer-maps

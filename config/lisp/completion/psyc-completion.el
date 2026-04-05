@@ -116,24 +116,25 @@
 
   :config
   (add-to-list 'corfu-continue-commands #'psyc-corfu-smart-sep-toggle-escape)
-  (add-hook 'evil-insert-state-exit-hook #'corfu-quit)
 
-  :general-config
-  (:keymaps 'corfu-mode-map :states 'insert
-            "C-SPC" #'completion-at-point
-            "C-n" #'psyc-corfu-dabbrev-or-next
-            "C-p" #'psyc-corfu-dabbrev-or-prev)
-  (:keymaps 'corfu-mode-map :states 'normal
-            "C-SPC" (psyc-cmd (evil-insert-state) (completion-at-point)))
-  (:keymaps 'corfu-map :states 'insert
-            "C-SPC" #'psyc-corfu-smart-sep-toggle-escape
-            "C-S-s" #'psyc-corfu-move-to-minibuffer)
-  (:keymaps 'corfu-map
-            "TAB" #'corfu-next
-            "S-TAB" #'corfu-previous
-            [backtab] #'corfu-previous
-            "C-j" #'corfu-next
-            "C-k" #'corfu-previous))
+  ;; Non-evil keybinds (work in both modes)
+  (define-key corfu-mode-map (kbd "C-SPC") #'completion-at-point)
+  (define-key corfu-mode-map (kbd "C-n") #'psyc-corfu-dabbrev-or-next)
+  (define-key corfu-mode-map (kbd "C-p") #'psyc-corfu-dabbrev-or-prev)
+  (define-key corfu-map (kbd "C-SPC") #'psyc-corfu-smart-sep-toggle-escape)
+  (define-key corfu-map (kbd "C-S-s") #'psyc-corfu-move-to-minibuffer)
+  (define-key corfu-map (kbd "TAB") #'corfu-next)
+  (define-key corfu-map (kbd "S-TAB") #'corfu-previous)
+  (define-key corfu-map [backtab] #'corfu-previous)
+  (define-key corfu-map (kbd "C-j") #'corfu-next)
+  (define-key corfu-map (kbd "C-k") #'corfu-previous)
+
+  ;; Evil-specific
+  (unless psyc-vanilla-mode
+    (add-hook 'evil-insert-state-exit-hook #'corfu-quit)
+    (general-def
+      :keymaps 'corfu-mode-map :states 'normal
+      "C-SPC" (psyc-cmd (evil-insert-state) (completion-at-point)))))
 
 (use-package corfu-history
   :hook corfu-mode
@@ -145,11 +146,10 @@
   :hook corfu-mode
   :init
   (gsetq corfu-popupinfo-delay '(0.15 . 0.3))
-  :general-config
-  (:keymaps 'corfu-popupinfo-map
-            "C-h" #'corfu-popupinfo-toggle
-            "C-<up>" #'corfu-popupinfo-scroll-down
-            "C-<down>" #'corfu-popupinfo-scroll-up))
+  :config
+  (define-key corfu-popupinfo-map (kbd "C-h") #'corfu-popupinfo-toggle)
+  (define-key corfu-popupinfo-map (kbd "C-<up>") #'corfu-popupinfo-scroll-down)
+  (define-key corfu-popupinfo-map (kbd "C-<down>") #'corfu-popupinfo-scroll-up))
 
 (use-package nerd-icons-corfu
   :after corfu
@@ -179,9 +179,8 @@
 
   (advice-add 'eglot-completion-at-point :around #'cape-wrap-buster)
 
-  :general-config
-  (:keymaps 'override :states 'insert
-            "C-c p" '("cape" . cape-prefix-map)))
+  ;; Cape prefix map — available globally via C-c p
+  (global-set-key (kbd "C-c p") cape-prefix-map))
 
 ;;;; Vertico
 
@@ -191,12 +190,11 @@
   (gsetq vertico-cycle t
          vertico-count 20
          vertico-resize t)
-  :general-config
-  (:keymaps 'vertico-map
-            "M-j" #'next-line
-            "M-k" #'previous-line
-            "M-h" #'backward-paragraph
-            "M-l" #'forward-paragraph))
+  :config
+  (define-key vertico-map (kbd "M-j") #'next-line)
+  (define-key vertico-map (kbd "M-k") #'previous-line)
+  (define-key vertico-map (kbd "M-h") #'backward-paragraph)
+  (define-key vertico-map (kbd "M-l") #'forward-paragraph))
 
 (use-package vertico-directory
   :defer t
@@ -211,18 +209,17 @@
   :ghook 'vertico-mode-hook
   :init
   (gsetq vertico-multiform-categories '((embark-keybinding grid)))
-  :general
-  (:keymaps '(vertico-map vertico-multiform-map)
-            "RET" #'vertico-directory-enter
-            "DEL" #'vertico-directory-delete-char
-            "M-DEL" #'vertico-directory-delete-word))
+  :config
+  (define-key vertico-map (kbd "RET") #'vertico-directory-enter)
+  (define-key vertico-map (kbd "DEL") #'vertico-directory-delete-char)
+  (define-key vertico-map (kbd "M-DEL") #'vertico-directory-delete-word))
 
 (use-package vertico-repeat
   :defer t
   :hook (minibuffer-setup . vertico-repeat-save)
-  :general-config
-  (:states '(normal insert visual motion)
-           "C-M-;" #'vertico-repeat))
+  :config
+  ;; Global bind — works regardless of evil/modal
+  (global-set-key (kbd "C-M-;") #'vertico-repeat))
 
 ;;;; Consult
 
@@ -267,15 +264,14 @@
    consult-source-recent-file consult-source-project-recent-file
    :preview-key '(:debounce 0.3 any))
 
-  (general-with-eval-after-load 'evil
-    (gsetq evil-jumps-cross-buffers nil)
-    (evil-set-command-property 'consult-line :jump t))
+  (unless psyc-vanilla-mode
+    (general-with-eval-after-load 'evil
+      (gsetq evil-jumps-cross-buffers nil)
+      (evil-set-command-property 'consult-line :jump t)))
 
-  (general-with-eval-after-load 'vertico
-    (general-def
-      :keymaps 'vertico-map
-      "C-x C-d" #'consult-dir
-      "C-x C-j" #'consult-dir-jump-file)))
+  (with-eval-after-load 'vertico
+    (define-key vertico-map (kbd "C-x C-d") #'consult-dir)
+    (define-key vertico-map (kbd "C-x C-j") #'consult-dir-jump-file)))
 
 ;;;; Marginalia
 
