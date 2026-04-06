@@ -18,7 +18,7 @@
     (add-to-list 'tramp-remote-path "/run/current-system/sw/bin"))
 
   :config
-  (unless psyc-vanilla-mode
+  (when psyc-use-evil
     (general-def
       :keymaps 'nix-ts-mode-map
       :states 'normal

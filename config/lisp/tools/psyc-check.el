@@ -10,7 +10,7 @@
   :init
   (gsetq flymake-show-diagnostics-at-end-of-line t)
   :config
-  (unless psyc-vanilla-mode
+  (when psyc-use-evil
     (general-def
       :keymaps 'flymake-mode-map
       :states '(normal visual)

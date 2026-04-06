@@ -130,7 +130,7 @@
   (define-key corfu-map (kbd "C-k") #'corfu-previous)
 
   ;; Evil-specific
-  (unless psyc-vanilla-mode
+  (when psyc-use-evil
     (add-hook 'evil-insert-state-exit-hook #'corfu-quit)
     (general-def
       :keymaps 'corfu-mode-map :states 'normal
@@ -264,7 +264,7 @@
    consult-source-recent-file consult-source-project-recent-file
    :preview-key '(:debounce 0.3 any))
 
-  (unless psyc-vanilla-mode
+  (when psyc-use-evil
     (general-with-eval-after-load 'evil
       (gsetq evil-jumps-cross-buffers nil)
       (evil-set-command-property 'consult-line :jump t)))

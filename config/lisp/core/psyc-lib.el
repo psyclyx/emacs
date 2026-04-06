@@ -31,9 +31,9 @@
 
 ;;;; Vanilla mode — set to t before init to disable evil and custom keybinds
 
-(defvar psyc-vanilla-mode nil
-  "When non-nil, skip loading evil-mode and custom keybindings.
-Set this in early-init.el or via `emacs --eval \"(setq psyc-vanilla-mode t)\"'.")
+(defvar psyc-use-evil nil
+  "When non-nil, use evil-mode instead of psyc-modal.
+Set this in early-init.el or via `emacs --eval \"(setq psyc-use-evil t)\"'.")
 
 ;;;; Helpers
 

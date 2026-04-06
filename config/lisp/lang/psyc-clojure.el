@@ -27,7 +27,7 @@
     [remap eval-buffer] #'cider-eval-buffer
     [remap eval-region] #'cider-eval-region)
 
-  (unless psyc-vanilla-mode
+  (when psyc-use-evil
     (general-def
       :keymaps 'clojure-mode-map
       :states 'normal

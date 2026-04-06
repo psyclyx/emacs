@@ -12,11 +12,10 @@
 
 ;; Editor
 (require 'psyc-editor)
-(if psyc-vanilla-mode
-    (progn
-      (require 'psyc-modal)
-      (add-hook 'emacs-startup-hook #'psyc-modal-global-mode))
-  (require 'psyc-evil))
+(if psyc-use-evil
+    (require 'psyc-evil)
+  (require 'psyc-modal)
+  (add-hook 'emacs-startup-hook #'psyc-modal-global-mode))
 (require 'psyc-parens)
 
 ;; Completion
@@ -48,5 +47,5 @@
 (require 'psyc-data)
 
 ;; Keybinds (must come after modules that define prefix maps)
-(unless psyc-vanilla-mode
+(when psyc-use-evil
   (require 'psyc-keybinds))

@@ -20,7 +20,7 @@
    "M-RET" #'tempel-done)
 
   :config
-  (unless psyc-vanilla-mode
+  (when psyc-use-evil
     (general-def
       :states '(insert normal)
       "M-+" #'tempel-complete

@@ -62,7 +62,7 @@
     [remap eval-buffer] #'janet-eval-buffer
     [remap eval-region] #'janet-eval-region)
 
-  (unless psyc-vanilla-mode
+  (when psyc-use-evil
     (general-def
       :keymaps 'janet-mode-map
       :states 'normal

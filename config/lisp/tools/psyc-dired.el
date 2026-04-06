@@ -16,7 +16,7 @@
 	 dired-create-destination-dirs 'ask
 	 image-dired-thumb-size 150)
   :config
-  (unless psyc-vanilla-mode
+  (when psyc-use-evil
     (general-after 'evil
       (evil-set-initial-state 'image-dired-display-image-mode 'emacs)))
   (put 'dired-find-alternate-file 'disabled nil))
@@ -37,7 +37,7 @@
   (dirvish-override-dired-mode)
   :general (:keymaps 'dired-mode-map "C-c C-r" #'dirvish-rsync)
   :config
-  (unless psyc-vanilla-mode
+  (when psyc-use-evil
     (general-def
       :keymaps 'dirvish-mode-map
       :states 'normal

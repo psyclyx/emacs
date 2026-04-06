@@ -74,7 +74,7 @@
 
 ;;;; Evil integration for capture and src-edit buffers
 
-(unless psyc-vanilla-mode
+(when psyc-use-evil
   (defun psyc-org--capture-evil-binds ()
     "Set buffer-local evil ex commands for org-capture."
     (setq-local evil-ex-local-commands
