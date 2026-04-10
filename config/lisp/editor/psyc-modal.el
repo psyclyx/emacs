@@ -265,7 +265,9 @@
   "Delete selection, or char at point (d).  Saves to kill ring."
   (interactive)
   (if (use-region-p)
-      (kill-region (region-beginning) (region-end))
+      (let ((len (- (region-end) (region-beginning))))
+        (kill-region (region-beginning) (region-end))
+        (message "Deleted %d chars" len))
     (delete-char 1)))
 
 (defun psyc-modal-change ()
@@ -280,8 +282,10 @@
   "Copy selection to kill ring (y)."
   (interactive)
   (when (use-region-p)
-    (kill-ring-save (region-beginning) (region-end))
-    (deactivate-mark)))
+    (let ((len (- (region-end) (region-beginning))))
+      (kill-ring-save (region-beginning) (region-end))
+      (deactivate-mark)
+      (message "Yanked %d chars" len))))
 
 (defun psyc-modal-paste-after ()
   "Paste after cursor/selection (p)."
@@ -669,7 +673,8 @@ DESC is the keymap name.  BINDINGS are KEY CMD pairs."
            (end (region-end)))
       (deactivate-mark)
       (goto-char end) (insert (cdr pair))
-      (goto-char beg) (insert (car pair)))))
+      (goto-char beg) (insert (car pair))
+      (message "Surrounded with %s…%s" (car pair) (cdr pair)))))
 
 (defun psyc-modal-surround-delete ()
   "Delete nearest surrounding pair (md)."
@@ -682,7 +687,8 @@ DESC is the keymap name.  BINDINGS are KEY CMD pairs."
         (when-let ((beg-pos (save-excursion
                               (search-backward (car pair) nil t))))
           (goto-char (1- end-pos)) (delete-char (length (cdr pair)))
-          (goto-char beg-pos) (delete-char (length (car pair))))))))
+          (goto-char beg-pos) (delete-char (length (car pair)))
+          (message "Deleted %s…%s" (car pair) (cdr pair)))))))
 
 (defun psyc-modal-surround-replace ()
   "Replace surrounding pair (mr)."
@@ -699,7 +705,9 @@ DESC is the keymap name.  BINDINGS are KEY CMD pairs."
           (goto-char (1- end-pos))
           (delete-char (length (cdr old))) (insert (cdr new))
           (goto-char beg-pos)
-          (delete-char (length (car old))) (insert (car new)))))))
+          (delete-char (length (car old))) (insert (car new))
+          (message "Replaced %s…%s with %s…%s"
+                   (car old) (cdr old) (car new) (cdr new)))))))
 
 ;;;;; Structural editing (built-in, no smartparens needed)
 
@@ -907,46 +915,62 @@ DESC is the keymap name.  BINDINGS are KEY CMD pairs."
              ('ctrl-meta '(control meta)))
            (list (event-basic-type event)))))
 
+(defun psyc-modal--god-show-which-key (keymap desc)
+  "Show which-key popup for KEYMAP with DESC as header, if available."
+  (when (and (keymapp keymap) (fboundp 'which-key--show-keymap))
+    (which-key--show-keymap desc keymap nil nil t)))
+
+(defun psyc-modal--god-hide-which-key ()
+  "Hide which-key popup if visible."
+  (when (fboundp 'which-key--hide-popup)
+    (which-key--hide-popup)))
+
 (defun psyc-modal-god-execute ()
   "Execute a key sequence with implicit Control modifier.
-Prefixes: `g' for Meta, `G' for C-M-, SPC for literal next key."
+Prefixes: `g' for Meta, `G' for C-M-, SPC for literal next key.
+Shows which-key popup at prefix boundaries."
   (interactive)
   (let ((keys [])
         (mod 'ctrl)
         (literal nil))
-    (cl-block god
-      (while t
-        (let* ((desc (concat (pcase mod
-                               ('ctrl "C-") ('meta "M-") ('ctrl-meta "C-M-"))
-                             (key-description keys)))
-               (raw (read-event (format "god: %s" desc))))
-          (cond
-           ;; g/G prefix — switch modifier (only at start of sequence)
-           ((and (zerop (length keys)) (not literal) (eq raw ?g) (eq mod 'ctrl))
-            (setq mod 'meta))
-           ((and (zerop (length keys)) (not literal) (eq raw ?G) (eq mod 'ctrl))
-            (setq mod 'ctrl-meta))
-           ;; SPC — send next key literally
-           ((and (eq raw ?\s) (not literal))
-            (setq literal t))
-           ;; Escape — cancel
-           ((eq raw 'escape)
-            (message "god: cancelled")
-            (cl-return-from god))
-           ;; Regular key
-           (t
-            (let ((event (if literal raw (psyc-modal--god-modify raw mod))))
-              (setq literal nil
-                    keys (vconcat keys (vector event)))
-              (let ((binding (key-binding keys)))
-                (cond
-                 ((commandp binding)
-                  (call-interactively binding)
-                  (cl-return-from god))
-                 ((keymapp binding) nil) ; keep reading
-                 (t
-                  (message "god: %s is undefined" (key-description keys))
-                  (cl-return-from god))))))))))))
+    (unwind-protect
+        (cl-block god
+          (while t
+            (let* ((desc (concat "god: "
+                                 (pcase mod
+                                   ('ctrl "C-") ('meta "M-") ('ctrl-meta "C-M-"))
+                                 (key-description keys)))
+                   (raw (read-event desc)))
+              (cond
+               ;; g/G prefix — switch modifier (only at start of sequence)
+               ((and (zerop (length keys)) (not literal) (eq raw ?g) (eq mod 'ctrl))
+                (setq mod 'meta))
+               ((and (zerop (length keys)) (not literal) (eq raw ?G) (eq mod 'ctrl))
+                (setq mod 'ctrl-meta))
+               ;; SPC — send next key literally
+               ((and (eq raw ?\s) (not literal))
+                (setq literal t))
+               ;; Escape — cancel
+               ((eq raw 'escape)
+                (message "god: cancelled")
+                (cl-return-from god))
+               ;; Regular key
+               (t
+                (let ((event (if literal raw (psyc-modal--god-modify raw mod))))
+                  (setq literal nil
+                        keys (vconcat keys (vector event)))
+                  (let ((binding (key-binding keys)))
+                    (cond
+                     ((commandp binding)
+                      (call-interactively binding)
+                      (cl-return-from god))
+                     ((keymapp binding)
+                      (psyc-modal--god-show-which-key
+                       binding (key-description keys)))
+                     (t
+                      (message "god: %s is undefined" (key-description keys))
+                      (cl-return-from god))))))))))
+      (psyc-modal--god-hide-which-key))))
 
 ;;;; --- Normal mode bindings ---
 
@@ -1038,8 +1062,11 @@ Prefixes: `g' for Meta, `G' for C-M-, SPC for literal next key."
   (define-key m (kbd "M-d") #'psyc-modal-delete-no-yank)
   (define-key m (kbd "M-c") #'psyc-modal-change-no-yank)
   (define-key m (kbd "M-s") #'psyc-modal-split-on-newlines)
+  (define-key m (kbd "M-S") #'psyc-modal-for-each-line)
   (define-key m (kbd "M-x") #'psyc-modal-shrink-to-line)
   (define-key m (kbd "M-:") #'psyc-modal-ensure-forward)
+  (define-key m (kbd "M-'") #'psyc-modal-split-selection)
+  (define-key m (kbd "M-p") #'psyc-modal-paste-split)
   (define-key m "K" #'psyc-modal-keep-matching)
   (define-key m "|" #'psyc-modal-pipe-shell)
 
@@ -1067,6 +1094,7 @@ Prefixes: `g' for Meta, `G' for C-M-, SPC for literal next key."
   ;; Macros
   (define-key m "Q" #'kmacro-start-macro-or-insert-counter)
   (define-key m "q" #'kmacro-end-or-call-macro)
+  (define-key m (kbd "M-q") #'apply-macro-to-region-lines)
 
   ;; Unimpaired — ] prefix (next), [ prefix (prev)
   (define-key m "]d" #'flymake-goto-next-error)
@@ -1089,6 +1117,7 @@ Prefixes: `g' for Meta, `G' for C-M-, SPC for literal next key."
   ;; Which-key (available from every state)
   (define-key m [f5]   #'which-key-show-top-level)
   (define-key m [C-f5] #'which-key-show-major-mode)
+  (define-key m "?" #'psyc-modal-show-keys)
 
   ;; Digit arguments
   (dotimes (i 10)
@@ -1133,10 +1162,19 @@ Prefixes: `g' for Meta, `G' for C-M-, SPC for literal next key."
 
 (defun psyc-modal-split-on-newlines ()
   "Split selection into one selection per line (Alt-s).
-With multiple-cursors: creates a cursor per line."
+With multiple-cursors: creates a cursor per line.
+Without: activates rectangle-mark-mode on the region."
   (interactive)
-  (when (and (use-region-p) (fboundp 'mc/edit-lines))
-    (mc/edit-lines)))
+  (cond
+   ((and (use-region-p) (fboundp 'mc/edit-lines))
+    (mc/edit-lines))
+   ((use-region-p)
+    (let ((beg (region-beginning))
+          (end (region-end)))
+      (goto-char beg)
+      (rectangle-mark-mode 1)
+      (goto-char end)))
+   (t (message "No selection to split"))))
 
 (defun psyc-modal-shrink-to-line ()
   "Shrink selection to line bounds, excluding leading/trailing whitespace (Alt-x)."
@@ -1170,6 +1208,61 @@ With multiple-cursors: creates a cursor per line."
                                (read-string "pipe: ") t t)
     (shell-command-on-region (line-beginning-position) (line-end-position)
                              (read-string "pipe: ") t t)))
+
+;;;; --- For-each-line ---
+
+(defun psyc-modal-for-each-line ()
+  "Run a command on each line of the selection.
+Prompts for an interactive command, then executes it with point at
+the beginning of each line (bottom-to-top for stability).
+The whole operation is a single undo step."
+  (interactive)
+  (unless (use-region-p) (user-error "No selection"))
+  (let* ((cmd (intern (completing-read "command per line: " obarray #'commandp t)))
+         (beg (save-excursion (goto-char (region-beginning))
+                              (line-beginning-position)))
+         (end (save-excursion (goto-char (region-end))
+                              (when (bolp) (forward-line -1))
+                              (line-end-position)))
+         (lines (count-lines beg end)))
+    (deactivate-mark)
+    (atomic-change-group
+      (save-excursion
+        (goto-char end)
+        (dotimes (_ lines)
+          (beginning-of-line)
+          (set-mark (line-end-position))
+          (call-interactively cmd)
+          (forward-line -1))))
+    (message "Ran %s on %d lines" cmd lines)))
+
+;;;; --- Split ring ---
+
+(defvar psyc-modal--split-ring nil
+  "List of strings from the last split operation.  FIFO — consumed by paste.")
+
+(defun psyc-modal-split-selection ()
+  "Split selection into pieces by newline (or prompted separator).
+Pieces are stored in a FIFO split ring, pasted with `psyc-modal-paste-split'.
+With prefix arg, prompts for a custom separator regex."
+  (interactive)
+  (unless (use-region-p) (user-error "No selection"))
+  (let* ((sep (if current-prefix-arg
+                  (read-string "split on (regex): ")
+                "\n"))
+         (text (buffer-substring-no-properties (region-beginning) (region-end)))
+         (pieces (split-string text sep)))
+    (setq psyc-modal--split-ring pieces)
+    (deactivate-mark)
+    (message "Split into %d pieces — M-p to paste" (length pieces))))
+
+(defun psyc-modal-paste-split ()
+  "Paste and consume the next piece from the split ring (FIFO)."
+  (interactive)
+  (unless psyc-modal--split-ring (user-error "Split ring empty"))
+  (let ((piece (pop psyc-modal--split-ring)))
+    (insert piece)
+    (message "Pasted (%d remaining)" (length psyc-modal--split-ring))))
 
 ;;;; --- Search enhancements ---
 
@@ -1300,6 +1393,105 @@ Deletes matching pair when between them, skips over close parens in lisps."
   "Decrement number at point by ARG (default 1)."
   (interactive "p")
   (increment-number-at-point (- (or arg 1))))
+
+;;;; --- Which-key descriptions ---
+
+(defun psyc-modal--setup-which-key ()
+  "Register which-key descriptions for psyc-modal keymaps."
+  (when (fboundp 'which-key-add-keymap-based-replacements)
+    ;; Sub-map prefixes in normal map
+    (which-key-add-keymap-based-replacements psyc-modal-normal-map
+      "g" "goto"
+      "m" "match/surround/struct"
+      " " "leader"
+      "C-w" "window"
+      "z" "view"
+      "]" "next…"
+      "[" "prev…")
+    ;; Goto map
+    (which-key-add-keymap-based-replacements psyc-modal-goto-map
+      "g" "file start"
+      "e" "file end"
+      "h" "line start"
+      "l" "line end"
+      "s" "first non-blank"
+      "t" "window top"
+      "c" "window center"
+      "b" "window bottom"
+      "d" "definition"
+      "r" "references"
+      "n" "next buffer"
+      "p" "prev buffer")
+    ;; Match map
+    (which-key-add-keymap-based-replacements psyc-modal-match-map
+      "m" "match bracket"
+      "s" "surround add"
+      "d" "surround delete"
+      "r" "surround replace"
+      "w" "wrap sexp"
+      "i" "select inside"
+      "a" "select around"
+      ")" "slurp →"
+      "(" "slurp ←"
+      "}" "barf →"
+      "{" "barf ←"
+      "S" "splice"
+      "R" "raise"
+      "T" "transpose")
+    ;; Space map
+    (which-key-add-keymap-based-replacements psyc-modal-space-map
+      "f" "find file"
+      "F" "project file"
+      "b" "switch buffer"
+      "s" "save"
+      "w" "window…"
+      "/" "ripgrep"
+      " " "M-x"
+      "q" "quit window"
+      "d" "kill buffer"
+      "c" "comment"
+      "k" "eldoc"
+      "y" "clipboard copy"
+      "p" "clipboard paste"
+      "R" "rename file"
+      "i" "imenu"
+      "l" "line search"
+      "a" "code action"
+      "r" "rename symbol"
+      "e" "diagnostics"
+      "E" "project diagnostics"
+      "h" "help…"
+      "m" "local leader"
+      "g" "git…")
+    ;; Window map
+    (which-key-add-keymap-based-replacements psyc-modal-window-map
+      "s" "split horiz"
+      "v" "split vert"
+      "h" "← window"
+      "j" "↓ window"
+      "k" "↑ window"
+      "l" "→ window"
+      "H" "swap ←"
+      "J" "swap ↓"
+      "K" "swap ↑"
+      "L" "swap →"
+      "q" "close"
+      "o" "only"
+      "=" "balance"
+      "w" "other"
+      "f" "file other")))
+
+(add-hook 'after-init-hook #'psyc-modal--setup-which-key)
+
+(defun psyc-modal-show-keys ()
+  "Show which-key popup for current psyc-modal state."
+  (interactive)
+  (if (fboundp 'which-key-show-keymap)
+      (pcase psyc-modal--state
+        ('normal (which-key-show-keymap 'psyc-modal-normal-map))
+        ('insert (which-key-show-keymap 'psyc-modal-insert-map))
+        (_ (which-key-show-keymap 'psyc-modal-normal-map)))
+    (message "which-key not available")))
 
 ;;;; --- Corfu integration ---
 

@@ -677,4 +677,92 @@ Point is at position 1 unless `|' marker is present in INITIAL."
     (should (region-active-p))
     (should (string-match-p "defun" (modal-selection)))))
 
+;;;; --- For-each-line ---
+
+(ert-deftest modal-test-for-each-line-basic ()
+  "For-each-line should run a command on every line in selection."
+  (with-modal-buffer "  hello\n  world\n  there"
+    (goto-char 1)
+    (set-mark (point-max))
+    (cl-letf (((symbol-function 'completing-read)
+               (lambda (&rest _) "delete-trailing-whitespace")))
+      (psyc-modal-for-each-line))
+    ;; Should not error, and buffer should remain intact (no trailing ws to delete here)
+    (should (equal (modal-buf-string) "  hello\n  world\n  there"))))
+
+(ert-deftest modal-test-for-each-line-upcase ()
+  "For-each-line with upcase-region should upcase each line."
+  (with-modal-buffer "aaa\nbbb\nccc"
+    (goto-char 1)
+    (set-mark (point-max))
+    (cl-letf (((symbol-function 'completing-read)
+               (lambda (&rest _) "upcase-region")))
+      (psyc-modal-for-each-line))
+    (should (equal (modal-buf-string) "AAA\nBBB\nCCC"))))
+
+(ert-deftest modal-test-for-each-line-single-line ()
+  "For-each-line on a single line."
+  (with-modal-buffer "hello"
+    (goto-char 1)
+    (set-mark (point-max))
+    (cl-letf (((symbol-function 'completing-read)
+               (lambda (&rest _) "upcase-region")))
+      (psyc-modal-for-each-line))
+    (should (equal (modal-buf-string) "HELLO"))))
+
+(ert-deftest modal-test-for-each-line-no-region ()
+  "For-each-line without selection should error."
+  (with-modal-buffer "hello"
+    (deactivate-mark)
+    (should-error (psyc-modal-for-each-line) :type 'user-error)))
+
+;;;; --- Split ring ---
+
+(ert-deftest modal-test-split-selection-basic ()
+  "Split selection should populate the split ring."
+  (with-modal-buffer "alpha\nbeta\ngamma"
+    (goto-char 1)
+    (set-mark (point-max))
+    (psyc-modal-split-selection)
+    (should (equal psyc-modal--split-ring '("alpha" "beta" "gamma")))))
+
+(ert-deftest modal-test-paste-split-fifo ()
+  "Paste-split should consume pieces FIFO."
+  (with-modal-buffer ""
+    (setq psyc-modal--split-ring '("one" "two" "three"))
+    (psyc-modal-paste-split)
+    (should (equal (modal-buf-string) "one"))
+    (should (equal psyc-modal--split-ring '("two" "three")))
+    (psyc-modal-paste-split)
+    (should (equal (modal-buf-string) "onetwo"))
+    (should (equal psyc-modal--split-ring '("three")))
+    (psyc-modal-paste-split)
+    (should (equal (modal-buf-string) "onetwothree"))
+    (should (null psyc-modal--split-ring))))
+
+(ert-deftest modal-test-paste-split-empty ()
+  "Paste-split with exhausted ring should error."
+  (with-modal-buffer ""
+    (setq psyc-modal--split-ring nil)
+    (should-error (psyc-modal-paste-split) :type 'user-error)))
+
+(ert-deftest modal-test-split-selection-custom-separator ()
+  "Split with custom separator via prefix arg."
+  (with-modal-buffer "a,b,c"
+    (goto-char 1)
+    (set-mark (point-max))
+    (let ((current-prefix-arg '(4)))
+      (cl-letf (((symbol-function 'read-string)
+                 (lambda (&rest _) ",")))
+        (psyc-modal-split-selection)))
+    (should (equal psyc-modal--split-ring '("a" "b" "c")))))
+
+(ert-deftest modal-test-split-empty-pieces ()
+  "Split with consecutive separators produces empty strings."
+  (with-modal-buffer "a\n\nb"
+    (goto-char 1)
+    (set-mark (point-max))
+    (psyc-modal-split-selection)
+    (should (equal psyc-modal--split-ring '("a" "" "b")))))
+
 ;;; test-psyc-modal.el ends here
