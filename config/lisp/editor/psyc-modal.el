@@ -66,7 +66,7 @@
         (setq psyc-modal--emu-alist
               `((psyc-modal--normal-p . ,psyc-modal-normal-map)
                 (psyc-modal--insert-p . ,psyc-modal-insert-map)))
-        (add-to-list 'emulation-mode-map-alists 'psyc-modal--emu-alist)
+        (cl-pushnew 'psyc-modal--emu-alist emulation-mode-map-alists)
         (psyc-modal-enter-normal))
     (setq psyc-modal--normal-p nil psyc-modal--insert-p nil
           psyc-modal--emu-alist nil cursor-type 'box)
@@ -198,7 +198,8 @@
        (let ((pos (save-excursion
                     (forward-char)
                     (search-forward (char-to-string ch) (line-end-position) t))))
-         (when pos (goto-char (1- pos))))))))
+         (if pos (goto-char (1- pos))
+           (message "No %c on line" ch)))))))
 
 (defun psyc-modal-till-forward ()
   "Find character forward, exclusive (t)."
@@ -209,7 +210,8 @@
        (let ((pos (save-excursion
                     (forward-char)
                     (search-forward (char-to-string ch) (line-end-position) t))))
-         (when pos (goto-char (- pos 2))))))))
+         (if pos (goto-char (- pos 2))
+           (message "No %c on line" ch)))))))
 
 (defun psyc-modal-find-backward ()
   "Find character backward, inclusive (F)."
@@ -219,7 +221,8 @@
      (lambda ()
        (let ((pos (save-excursion
                     (search-backward (char-to-string ch) (line-beginning-position) t))))
-         (when pos (goto-char pos)))))))
+         (if pos (goto-char pos)
+           (message "No %c on line" ch)))))))
 
 (defun psyc-modal-till-backward ()
   "Find character backward, exclusive (T)."
@@ -229,7 +232,8 @@
      (lambda ()
        (let ((pos (save-excursion
                     (search-backward (char-to-string ch) (line-beginning-position) t))))
-         (when pos (goto-char (1+ pos))))))))
+         (if pos (goto-char (1+ pos))
+           (message "No %c on line" ch)))))))
 
 ;;;; --- Line operations ---
 
@@ -596,11 +600,14 @@
   "Set up local leader for MODE-HOOK.
 DESC is the keymap name.  BINDINGS are KEY CMD pairs."
   (declare (indent 2))
-  `(add-hook ',mode-hook
-             (lambda ()
-               (setq psyc-modal-local-map (make-sparse-keymap ,desc))
-               ,@(cl-loop for (key cmd) on bindings by #'cddr
-                          collect `(define-key psyc-modal-local-map ,key ,cmd)))))
+  (let ((fn-name (intern (format "psyc-modal--localleader-%s"
+                                 (replace-regexp-in-string "-hook\\'" "" (symbol-name mode-hook))))))
+    `(progn
+       (defun ,fn-name ()
+         (setq psyc-modal-local-map (make-sparse-keymap ,desc))
+         ,@(cl-loop for (key cmd) on bindings by #'cddr
+                    collect `(define-key psyc-modal-local-map ,key ,cmd)))
+       (add-hook ',mode-hook #',fn-name))))
 
 ;;;; --- Goto mode ---
 
@@ -865,6 +872,18 @@ DESC is the keymap name.  BINDINGS are KEY CMD pairs."
   (set-transient-map psyc-modal-view-sticky-map t)
   (message "view (sticky): z/c/t/b/j/k — ESC to exit"))
 
+;;;; --- Frame / client management ---
+
+(defun psyc-modal-quit-frame ()
+  "Quit the current frame.  Calls `server-edit' for emacsclient
+frames, `delete-frame' otherwise (or `save-buffers-kill-emacs' if
+this is the last frame)."
+  (interactive)
+  (cond
+   ((frame-parameter nil 'client) (server-edit))
+   ((< 1 (length (frame-list))) (delete-frame))
+   (t (save-buffers-kill-emacs))))
+
 ;;;; --- Space mode (leader) ---
 
 (let ((m psyc-modal-space-map))
@@ -876,6 +895,7 @@ DESC is the keymap name.  BINDINGS are KEY CMD pairs."
   (define-key m " "   #'execute-extended-command)
   (define-key m "?"   #'execute-extended-command)
   (define-key m "q"   #'quit-window)
+  (define-key m "Q"   #'psyc-modal-quit-frame)
   (define-key m "d"   #'kill-current-buffer)
   (define-key m "c"   #'comment-dwim)
   (define-key m "k"   #'eldoc-doc-buffer)
@@ -1110,9 +1130,10 @@ Shows which-key popup at prefix boundaries."
   (define-key m "]g" #'diff-hl-next-hunk)
   (define-key m "[g" #'diff-hl-previous-hunk)
 
-  ;; Increment / decrement (Helix: C-a / C-x)
+  ;; Increment / decrement (Helix uses C-a/C-x, but C-x shadows the
+  ;; entire ctl-x-map prefix, so decrement lives on -)
   (define-key m "\C-a" #'increment-number-at-point)
-  (define-key m "\C-x" #'decrement-number-at-point)
+  (define-key m "-"    #'decrement-number-at-point)
 
   ;; Which-key (available from every state)
   (define-key m [f5]   #'which-key-show-top-level)
@@ -1448,6 +1469,7 @@ Deletes matching pair when between them, skips over close parens in lisps."
       "/" "ripgrep"
       " " "M-x"
       "q" "quit window"
+      "Q" "quit frame/client"
       "d" "kill buffer"
       "c" "comment"
       "k" "eldoc"

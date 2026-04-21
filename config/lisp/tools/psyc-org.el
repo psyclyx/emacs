@@ -36,29 +36,58 @@
                           (concat psyc-org-dir "projects.org")
                           (concat psyc-org-dir "inbox.org"))
 
-   ;; Capture templates: the key insight is everything lands in inbox
-   ;; unless it's a journal entry (which has its own place).
+   ;; Capture templates: everything lands in inbox first (refile later),
+   ;; except journal entries which go straight to the datetree.
    org-capture-templates
    `(("t" "Task" entry (file ,(concat psyc-org-dir "inbox.org"))
-      "* TODO %?\n%U\n" :empty-lines 1)
+      "* TODO %?\n%U\n%a\n" :empty-lines 1)
 
      ("n" "Note" entry (file ,(concat psyc-org-dir "inbox.org"))
-      "* %?\n%U\n" :empty-lines 1)
+      "* %?\n%U\n%a\n" :empty-lines 1)
+
+     ("b" "Bug" entry (file ,(concat psyc-org-dir "inbox.org"))
+      "* TODO [#A] BUG %?\n%U\n%a\n** Repro\n\n** Expected\n\n" :empty-lines 1)
+
+     ("f" "Feature" entry (file ,(concat psyc-org-dir "inbox.org"))
+      "* TODO FEATURE %?\n%U\n%a\n" :empty-lines 1)
+
+     ("m" "Meeting" entry
+      (file+datetree ,(concat psyc-org-dir "notes.org"))
+      "* %? :meeting:\n%U\n** Attendees\n\n** Notes\n\n** Action items\n\n"
+      :empty-lines 1 :clock-in t :clock-resume t)
 
      ("j" "Journal" entry
       (file+datetree ,(concat psyc-org-dir "notes.org"))
       "* %?\n%U\n" :empty-lines 1))
 
-   ;; Agenda view: show a simple daily/weekly view + all TODOs
+   ;; Common tags
+   org-tag-alist '((:startgroup) ("@work" . ?w) ("@home" . ?h) (:endgroup)
+                   ("bug" . ?b) ("feature" . ?f) ("refactor" . ?r)
+                   ("review" . ?v) ("meeting" . ?m) ("idea" . ?i))
+
+   ;; Priorities: A (urgent), B (default), C (low)
+   org-priority-default ?B
+   org-priority-lowest ?C
+
+   ;; Agenda view
    org-agenda-custom-commands
    '(("d" "Dashboard"
       ((agenda "" ((org-agenda-span 'week)))
        (todo "NEXT" ((org-agenda-overriding-header "Up Next")))
        (todo "WAITING" ((org-agenda-overriding-header "Blocked/Waiting")))
+       (tags-todo "+PRIORITY=\"A\""
+                  ((org-agenda-overriding-header "High Priority")
+                   (org-agenda-skip-function
+                    '(org-agenda-skip-entry-if 'todo '("NEXT" "WAITING")))))
        (tags-todo "inbox"
                   ((org-agenda-overriding-header "Inbox (refile me)")
                    (org-agenda-files
-                    (list (concat org-directory "inbox.org"))))))))
+                    (list (concat org-directory "inbox.org")))))))
+     ("b" "Bugs" tags-todo "bug"
+      ((org-agenda-overriding-header "Bugs")))
+     ("p" "Projects" tags-todo "LEVEL=1"
+      ((org-agenda-files (list (concat org-directory "projects.org")))
+       (org-agenda-overriding-header "Active Projects"))))
 
    ;; Start week on Monday
    org-agenda-start-on-weekday 1
@@ -108,19 +137,15 @@
 (with-eval-after-load 'psyc-modal
   (define-key psyc-modal-space-map "n" psyc-notes-prefix-map)
 
-  (add-hook 'org-capture-mode-hook
-            (lambda ()
-              (setq psyc-modal-local-map (make-sparse-keymap "Capture"))
-              (define-key psyc-modal-local-map "f" #'org-capture-finalize)
-              (define-key psyc-modal-local-map "k" #'org-capture-kill)
-              (define-key psyc-modal-local-map "r" #'org-capture-refile)))
+  (psyc-modal-localleader org-capture-mode-hook "Capture"
+    "f" #'org-capture-finalize
+    "k" #'org-capture-kill
+    "r" #'org-capture-refile)
 
-  (add-hook 'org-src-mode-hook
-            (lambda ()
-              (setq psyc-modal-local-map (make-sparse-keymap "Src Edit"))
-              (define-key psyc-modal-local-map "s" #'org-edit-src-save)
-              (define-key psyc-modal-local-map "f" #'org-edit-src-exit)
-              (define-key psyc-modal-local-map "k" #'org-edit-src-abort))))
+  (psyc-modal-localleader org-src-mode-hook "Src Edit"
+    "s" #'org-edit-src-save
+    "f" #'org-edit-src-exit
+    "k" #'org-edit-src-abort))
 
 (provide 'psyc-org)
 ;;; psyc-org.el ends here
