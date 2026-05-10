@@ -40,6 +40,7 @@ epkgs: with epkgs; [
   no-littering
   orderless
   polymode
+  sly
   smartparens
   tempel
   tempel-collection

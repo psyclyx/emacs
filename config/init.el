@@ -40,6 +40,7 @@
 ;; Languages
 (require 'psyc-nix)
 (require 'psyc-clojure)
+(require 'psyc-lisp)
 (require 'psyc-rust)
 (require 'psyc-janet)
 (require 'psyc-zig)
