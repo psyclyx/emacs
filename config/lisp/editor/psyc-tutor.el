@@ -1,150 +1,21 @@
-;;; psyc-tutor.el --- Interactive modal editing trainer -*- lexical-binding: t -*-
-
+;;; psyc-tutor.el --- vimtutor-style guide for psyc-modal -*- lexical-binding: t -*-
 ;;; Commentary:
 ;;
-;; A typing-game-style trainer for psyc-modal.  Presents "transform A → B"
-;; challenges and validates solutions using real psyc-modal commands.
+;; A hands-on, vimtutor-style walkthrough of psyc-modal.  The tutor opens
+;; an editable buffer containing the lessons; the reader practices the
+;; techniques directly on the text in front of them.
 ;;
-;; Keybindings are discovered dynamically from the live keymaps, so the
-;; tutor adapts when bindings change.
+;; A live quick reference is also provided — keys are looked up from the
+;; current keymaps, so it stays accurate after rebinding.
 ;;
-;; Usage:  M-x psyc-tutor          (start at level 1)
-;;         C-u 3 M-x psyc-tutor   (start at level 3)
-;;
-;; Controls (in tutor buffer):
-;;   C-c n  — skip challenge
-;;   C-c r  — retry challenge
-;;   C-c q  — quit tutor
-;;   C-c +  — increase difficulty
-;;   C-c -  — decrease difficulty
-;;   C-c ?  — show session stats
+;; Usage:  M-x psyc-tutor                  Start the tutor
+;;         M-x psyc-tutor-quick-reference  Show live keybinding reference
 
 ;;; Code:
 
-(require 'cl-lib)
-(require 'subr-x)
 (require 'psyc-modal)
 
-;;;; --- Faces ---
-
-(defface psyc-tutor-header
-  '((t :inherit header-line :weight bold :height 1.1))
-  "Header line face."
-  :group 'psyc-modal)
-
-(defface psyc-tutor-goal
-  '((t :inherit default))
-  "Goal text face."
-  :group 'psyc-modal)
-
-(defface psyc-tutor-goal-cursor
-  '((t :inverse-video t))
-  "Goal cursor indicator."
-  :group 'psyc-modal)
-
-(defface psyc-tutor-hint
-  '((t :inherit font-lock-keyword-face :weight bold))
-  "Hint keybind face."
-  :group 'psyc-modal)
-
-(defface psyc-tutor-description
-  '((t :inherit font-lock-doc-face))
-  "Challenge description face."
-  :group 'psyc-modal)
-
-(defface psyc-tutor-success
-  '((t :inherit success :weight bold))
-  "Success feedback."
-  :group 'psyc-modal)
-
-(defface psyc-tutor-diff
-  '((t :inherit diff-removed))
-  "Characters that still differ from goal."
-  :group 'psyc-modal)
-
-(defface psyc-tutor-timer
-  '((t :inherit font-lock-comment-face))
-  "Timer display."
-  :group 'psyc-modal)
-
-;;;; --- Data structures ---
-
-(cl-defstruct (psyc-tutor-challenge (:constructor psyc-tutor-challenge--create))
-  "A single transform-A-to-B challenge."
-  (category   'movement :documentation "Symbol: movement, editing, text-object, surround, structural, multi-step")
-  (difficulty 1         :documentation "Integer 1-5")
-  (start-text ""        :documentation "Initial buffer contents")
-  (start-point 1        :documentation "Initial cursor position (1-indexed)")
-  (goal-text  ""        :documentation "Desired buffer contents")
-  (goal-point 1         :documentation "Desired cursor position")
-  (hint-keys  nil       :documentation "List of key strings for the solution")
-  (description ""       :documentation "What the user should do")
-  (setup-fn   nil       :documentation "Function called before challenge starts")
-  (goal-state 'normal   :documentation "Expected psyc-modal state after completion"))
-
-(cl-defstruct (psyc-tutor-stats (:constructor psyc-tutor-stats--create))
-  "Per-challenge performance tracking."
-  (attempts 0)
-  (successes 0)
-  (best-time nil)
-  (streak 0))
-
-(cl-defstruct (psyc-tutor-session (:constructor psyc-tutor-session--create))
-  "Active tutoring session."
-  (challenges   []      :documentation "Vector of challenges")
-  (current-idx  0       :documentation "Index into challenges")
-  (difficulty   1       :documentation "Current difficulty 1-5")
-  (show-hints-p t       :documentation "Whether to show keybind hints")
-  (stats        nil     :documentation "Hash-table: index -> psyc-tutor-stats")
-  (start-time   0.0     :documentation "Timestamp for current challenge")
-  (hint-timer   nil     :documentation "Timer for hint reveal")
-  (completed    0       :documentation "Number of challenges completed")
-  (window-config nil    :documentation "Window config before tutor started"))
-
-;;;; --- Session state ---
-
-(defvar-local psyc-tutor--session nil "Active session in this buffer.")
-(defvar-local psyc-tutor--edit-start nil "Marker for start of editable region.")
-(defvar-local psyc-tutor--goal-buffer nil "The goal display buffer.")
-
-(defconst psyc-tutor--edit-buf-name "*psyc-tutor*")
-(defconst psyc-tutor--goal-buf-name "*psyc-tutor-goal*")
-(defconst psyc-tutor--reference-buf-name "*psyc-modal quick ref*")
-
-;;;; --- Difficulty config ---
-
-(defvar psyc-tutor-difficulty-config
-  '((1 . (:show-hints t   :timeout nil  :label "Guided"))
-    (2 . (:show-hints t   :timeout 15.0 :label "Timed"))
-    (3 . (:show-hints nil  :timeout 10.0 :label "Recall"))
-    (4 . (:show-hints nil  :timeout 6.0  :label "Speed"))
-    (5 . (:show-hints nil  :timeout 4.0  :label "Mastery")))
-  "Per-level configuration for hint display and timeout.")
-
-(defun psyc-tutor--diff-config (level key)
-  "Get KEY from difficulty config for LEVEL."
-  (plist-get (alist-get level psyc-tutor-difficulty-config) key))
-
-;;;; --- Keymap introspection ---
-
-(defun psyc-tutor--collect-bindings (keymap &optional prefix)
-  "Walk KEYMAP, return alist of (KEY-STRING . COMMAND).
-Sub-keymaps are recursed with PREFIX prepended."
-  (let (bindings)
-    (map-keymap
-     (lambda (event binding)
-       (let ((key-str (concat (or prefix "")
-                              (key-description (vector event)))))
-         (cond
-          ((commandp binding)
-           (push (cons key-str binding) bindings))
-          ((keymapp binding)
-           (setq bindings
-                 (nconc (psyc-tutor--collect-bindings binding
-                                                      (concat key-str " "))
-                        bindings))))))
-     keymap)
-    (nreverse bindings)))
+;;;; --- Quick reference ---
 
 (defun psyc-tutor--key-for-command (cmd &optional keymap)
   "Return the key string bound to CMD in KEYMAP (default: normal-map)."
@@ -152,7 +23,7 @@ Sub-keymaps are recursed with PREFIX prepended."
     (key-description keys)))
 
 (defun psyc-tutor--reference-key (cmd)
-  "Return a display key for CMD."
+  "Return a display key for CMD, falling back to its symbol name."
   (or (psyc-tutor--key-for-command cmd)
       (symbol-name cmd)))
 
@@ -181,6 +52,8 @@ Sub-keymaps are recursed with PREFIX prepended."
               "\n"))
     (insert "\n")))
 
+(defconst psyc-tutor--reference-buf-name "*psyc-modal quick ref*")
+
 (defvar psyc-tutor-reference-mode-map
   (let ((m (make-sparse-keymap)))
     (set-keymap-parent m special-mode-map)
@@ -192,655 +65,6 @@ Sub-keymaps are recursed with PREFIX prepended."
 (define-derived-mode psyc-tutor-reference-mode special-mode "Tutor Ref"
   "Quick reference for psyc-modal editing patterns."
   (setq-local truncate-lines t))
-
-;;;; --- Command classification ---
-
-(defvar psyc-tutor--movement-commands
-  '((psyc-modal-word-next       . "Jump to the next word start")
-    (psyc-modal-word-back       . "Jump back to the previous word start")
-    (psyc-modal-word-end        . "Jump to the end of the current word")
-    (psyc-modal-WORD-next       . "Jump to the next WORD start (whitespace-delimited)")
-    (psyc-modal-WORD-back       . "Jump back to the previous WORD start")
-    (psyc-modal-WORD-end        . "Jump to the end of the current WORD")
-    (psyc-modal-goto-file-start . "Go to the very beginning of the buffer")
-    (psyc-modal-goto-file-end   . "Go to the very end of the buffer")
-    (psyc-modal-goto-line-start . "Go to the beginning of the line")
-    (psyc-modal-goto-line-end   . "Go to the end of the line")
-    (psyc-modal-goto-first-nonblank . "Go to the first non-blank character on the line")
-    (psyc-modal-forward-sexp    . "Jump forward over the next s-expression")
-    (psyc-modal-backward-sexp   . "Jump backward over the previous s-expression"))
-  "Movement commands and their descriptions for challenge generation.")
-
-(defvar psyc-tutor--sample-texts
-  '("(defun greet (name)\n  (message \"Hello, %s!\" name))\n\n(defun add (a b)\n  (+ a b))"
-    "The quick brown fox jumps over the lazy dog.\nPack my box with five dozen liquor jugs."
-    "fn main() {\n    let x = 42;\n    println!(\"value: {}\", x);\n}"
-    "one two three four five\nsix seven eight nine ten\neleven twelve thirteen")
-  "Sample texts for auto-generated challenges.")
-
-;;;; --- Challenge generation (movements) ---
-
-(defun psyc-tutor--generate-movement (cmd desc sample-text start-pos)
-  "Generate a movement challenge for CMD from START-POS in SAMPLE-TEXT.
-DESC is the human-readable description.
-Returns a challenge struct, or nil if the command doesn't move point."
-  (let (goal-point)
-    (with-temp-buffer
-      (insert sample-text)
-      (goto-char (min start-pos (point-max)))
-      (psyc-modal-mode 1)
-      (psyc-modal-enter-normal)
-      (ignore-errors (call-interactively cmd))
-      (setq goal-point (point)))
-    (when (and goal-point (/= start-pos goal-point)
-               (<= goal-point (1+ (length sample-text))))
-      (let ((key (psyc-tutor--key-for-command cmd)))
-        (when key
-          (psyc-tutor-challenge--create
-           :category 'movement
-           :difficulty 1
-           :start-text sample-text
-           :start-point start-pos
-           :goal-text sample-text
-           :goal-point goal-point
-           :hint-keys (list key)
-           :description desc))))))
-
-(defun psyc-tutor--generate-movement-challenges ()
-  "Auto-generate movement challenges from bound commands."
-  (let (challenges)
-    (pcase-dolist (`(,cmd . ,desc) psyc-tutor--movement-commands)
-      (when (psyc-tutor--key-for-command cmd)
-        (dolist (text psyc-tutor--sample-texts)
-          ;; Try a few starting positions per text
-          (dolist (start-pos (list 1 8 15 (max 1 (/ (length text) 2))))
-            (when-let ((ch (psyc-tutor--generate-movement cmd desc text start-pos)))
-              (push ch challenges))))))
-    (nreverse challenges)))
-
-;;;; --- Hand-crafted challenge bank ---
-
-(defun psyc-tutor--builtin-challenges ()
-  "Return list of hand-crafted challenges."
-  (list
-   ;; --- Level 1: Basic movements ---
-   (psyc-tutor-challenge--create
-    :category 'movement :difficulty 1
-    :start-text "hello world" :start-point 1
-    :goal-text "hello world" :goal-point 7
-    :hint-keys (list (or (psyc-tutor--key-for-command 'psyc-modal-word-next) "w"))
-    :description "Move to the next word")
-
-   (psyc-tutor-challenge--create
-    :category 'movement :difficulty 1
-    :start-text "hello world foo" :start-point 7
-    :goal-text "hello world foo" :goal-point 1
-    :hint-keys (list (or (psyc-tutor--key-for-command 'psyc-modal-goto-line-start) "g h"))
-    :description "Go to the start of the line")
-
-   (psyc-tutor-challenge--create
-    :category 'movement :difficulty 1
-    :start-text "one two three four" :start-point 1
-    :goal-text "one two three four" :goal-point 18
-    :hint-keys (list (or (psyc-tutor--key-for-command 'psyc-modal-goto-line-end) "g l"))
-    :description "Go to the end of the line")
-
-   (psyc-tutor-challenge--create
-    :category 'movement :difficulty 1
-    :start-text "foo, bar, baz" :start-point 1
-    :goal-text "foo, bar, baz" :goal-point 4
-    :hint-keys (list (or (psyc-tutor--key-for-command 'psyc-modal-find-forward) "f") ",")
-    :description "Find the comma")
-
-   (psyc-tutor-challenge--create
-    :category 'movement :difficulty 1
-    :start-text "foo, bar, baz" :start-point 1
-    :goal-text "foo, bar, baz" :goal-point 3
-    :hint-keys (list (or (psyc-tutor--key-for-command 'psyc-modal-till-forward) "t") ",")
-    :description "Move up to (but not on) the comma")
-
-   (psyc-tutor-challenge--create
-    :category 'movement :difficulty 1
-    :start-text "first\nsecond\nthird" :start-point 1
-    :goal-text "first\nsecond\nthird" :goal-point 13
-    :hint-keys (list (or (psyc-tutor--key-for-command 'psyc-modal-goto-file-end) "g e"))
-    :description "Go to the end of the buffer")
-
-   ;; --- Level 2: Selection + single action ---
-   (psyc-tutor-challenge--create
-    :category 'editing :difficulty 2
-    :start-text "hello cruel world" :start-point 7
-    :goal-text "hello world" :goal-point 7
-    :hint-keys (list (or (psyc-tutor--key-for-command 'psyc-modal-word-next) "w")
-                     (or (psyc-tutor--key-for-command 'psyc-modal-delete) "d"))
-    :description "Delete the word under the cursor")
-
-   (psyc-tutor-challenge--create
-    :category 'editing :difficulty 2
-    :start-text "aaa bbb ccc" :start-point 5
-    :goal-text "aaa ccc" :goal-point 5
-    :hint-keys (list (or (psyc-tutor--key-for-command 'psyc-modal-word-next) "w")
-                     (or (psyc-tutor--key-for-command 'psyc-modal-delete) "d"))
-    :description "Delete the word under the cursor")
-
-   (psyc-tutor-challenge--create
-    :category 'editing :difficulty 2
-    :start-text "hello world" :start-point 1
-    :goal-text "hello world" :goal-point 1
-    :hint-keys (list (or (psyc-tutor--key-for-command 'psyc-modal-select-line) "x")
-                     (or (psyc-tutor--key-for-command 'psyc-modal-yank) "y"))
-    :description "Select the current line and yank (copy) it")
-
-   (psyc-tutor-challenge--create
-    :category 'editing :difficulty 2
-    :start-text "line one\nline two\nline three" :start-point 10
-    :goal-text "line one\nline three" :goal-point 10
-    :hint-keys (list (or (psyc-tutor--key-for-command 'psyc-modal-select-line) "x")
-                     (or (psyc-tutor--key-for-command 'psyc-modal-delete) "d"))
-    :description "Delete the current line")
-
-   (psyc-tutor-challenge--create
-    :category 'editing :difficulty 2
-    :start-text "Hello World" :start-point 1
-    :goal-text "hello world" :goal-point 1
-    :hint-keys (list (or (psyc-tutor--key-for-command 'psyc-modal-select-all) "%")
-                     "~")
-    :description "Toggle the case of the entire buffer")
-
-   (psyc-tutor-challenge--create
-    :category 'editing :difficulty 2
-    :start-text "one\ntwo" :start-point 1
-    :goal-text "one two" :goal-point 4
-    :hint-keys (list "J")
-    :description "Join the two lines")
-
-   ;; --- Level 2: Insert mode ---
-   (psyc-tutor-challenge--create
-    :category 'editing :difficulty 2
-    :start-text "hllo" :start-point 2
-    :goal-text "hello" :goal-point 2
-    :hint-keys (list (or (psyc-tutor--key-for-command 'psyc-modal-insert-before) "i")
-                     "e" "<escape>")
-    :description "Insert the missing 'e'"
-    :goal-state 'normal)
-
-   (psyc-tutor-challenge--create
-    :category 'editing :difficulty 2
-    :start-text "hello" :start-point 5
-    :goal-text "hello world" :goal-point 10
-    :hint-keys (list (or (psyc-tutor--key-for-command 'psyc-modal-insert-eol) "A")
-                     " world" "<escape>")
-    :description "Append ' world' to the end of the line"
-    :goal-state 'normal)
-
-   (psyc-tutor-challenge--create
-    :category 'editing :difficulty 2
-    :start-text "first\nthird" :start-point 1
-    :goal-text "first\nsecond\nthird" :goal-point 11
-    :hint-keys (list (or (psyc-tutor--key-for-command 'psyc-modal-open-below) "o")
-                     "second" "<escape>")
-    :description "Open a line below and type 'second'"
-    :goal-state 'normal)
-
-   ;; --- Level 3: Text objects ---
-   (psyc-tutor-challenge--create
-    :category 'text-object :difficulty 3
-    :start-text "(hello world)" :start-point 5
-    :goal-text "()" :goal-point 1
-    :hint-keys (list "m" "i" "(" (or (psyc-tutor--key-for-command 'psyc-modal-delete) "d"))
-    :description "Delete inside the parentheses")
-
-   (psyc-tutor-challenge--create
-    :category 'text-object :difficulty 3
-    :start-text "say \"goodbye\"" :start-point 7
-    :goal-text "say \"hello\"" :goal-point 5
-    :hint-keys (list "m" "i" "\"" (or (psyc-tutor--key-for-command 'psyc-modal-change) "c")
-                     "hello" "<escape>")
-    :description "Change the text inside the quotes to 'hello'"
-    :goal-state 'normal)
-
-   (psyc-tutor-challenge--create
-    :category 'text-object :difficulty 3
-    :start-text "[1 2 3]" :start-point 3
-    :goal-text "1 2 3" :goal-point 1
-    :hint-keys (list "m" "a" "[" (or (psyc-tutor--key-for-command 'psyc-modal-delete) "d"))
-    :description "Delete around the brackets (including them)")
-
-   (psyc-tutor-challenge--create
-    :category 'text-object :difficulty 3
-    :start-text "one two three" :start-point 5
-    :goal-text "one THREE three" :goal-point 5
-    :hint-keys (list "m" "i" "w" (or (psyc-tutor--key-for-command 'psyc-modal-change) "c")
-                     "THREE" "<escape>")
-    :description "Change the word under the cursor to 'THREE'"
-    :goal-state 'normal)
-
-   ;; --- Level 3: Surround ---
-   (psyc-tutor-challenge--create
-    :category 'surround :difficulty 3
-    :start-text "hello" :start-point 1
-    :goal-text "(hello)" :goal-point 1
-    :hint-keys (list (or (psyc-tutor--key-for-command 'psyc-modal-select-all) "%")
-                     "m" "s" "(")
-    :description "Surround the entire buffer with parentheses")
-
-   (psyc-tutor-challenge--create
-    :category 'surround :difficulty 3
-    :start-text "(hello)" :start-point 3
-    :goal-text "hello" :goal-point 1
-    :hint-keys (list "m" "d" "(")
-    :description "Delete the surrounding parentheses")
-
-   (psyc-tutor-challenge--create
-    :category 'surround :difficulty 3
-    :start-text "(hello)" :start-point 3
-    :goal-text "[hello]" :goal-point 3
-    :hint-keys (list "m" "r" "(" "[")
-    :description "Replace the surrounding parens with brackets")
-
-   ;; --- Level 3-4: Structural editing ---
-   (psyc-tutor-challenge--create
-    :category 'structural :difficulty 3
-    :start-text "(a b) c" :start-point 3
-    :goal-text "(a b c)" :goal-point 3
-    :hint-keys (list "m" ")")
-    :description "Slurp the next element into the list")
-
-   (psyc-tutor-challenge--create
-    :category 'structural :difficulty 3
-    :start-text "(a b c)" :start-point 3
-    :goal-text "(a b) c" :goal-point 3
-    :hint-keys (list "m" "}")
-    :description "Barf the last element out of the list")
-
-   (psyc-tutor-challenge--create
-    :category 'structural :difficulty 3
-    :start-text "(a (b c) d)" :start-point 5
-    :goal-text "(a b c d)" :goal-point 4
-    :hint-keys (list "m" "S")
-    :description "Splice — remove the inner parentheses")
-
-   (psyc-tutor-challenge--create
-    :category 'structural :difficulty 4
-    :start-text "(a (b c) d)" :start-point 8
-    :goal-text "(a c d)" :goal-point 4
-    :hint-keys (list "m" "R")
-    :description "Raise — replace the inner list with the sexp at point")
-
-   ;; --- Level 4: Multi-step combos ---
-   (psyc-tutor-challenge--create
-    :category 'multi-step :difficulty 4
-    :start-text "foo bar baz" :start-point 1
-    :goal-text "baz bar foo" :goal-point 9
-    :hint-keys (list "w" "d" "g" "l" "p" "g" "h" "P")
-    :description "Swap the first and last words")
-
-   (psyc-tutor-challenge--create
-    :category 'multi-step :difficulty 4
-    :start-text "one\ntwo\nthree" :start-point 5
-    :goal-text "one\nthree" :goal-point 5
-    :hint-keys (list "x" "d")
-    :description "Delete the current line")
-
-   (psyc-tutor-challenge--create
-    :category 'multi-step :difficulty 4
-    :start-text "hello world" :start-point 1
-    :goal-text "Hello World" :goal-point 1
-    :hint-keys (list "~" "w" "~")
-    :description "Capitalize the first letter of each word")
-
-   (psyc-tutor-challenge--create
-    :category 'multi-step :difficulty 4
-    :start-text "(defn foo [x]\n  (+ x 1))" :start-point 7
-    :goal-text "(defn bar [x]\n  (+ x 1))" :goal-point 7
-    :hint-keys (list "m" "i" "w" "c" "bar" "<escape>")
-    :description "Rename the function from 'foo' to 'bar'"
-    :goal-state 'normal)
-
-   (psyc-tutor-challenge--create
-    :category 'multi-step :difficulty 4
-    :start-text "let x = value;" :start-point 9
-    :goal-text "let x = (value);" :goal-point 9
-    :hint-keys (list "m" "i" "w" "m" "s" "(")
-    :description "Wrap the word in parentheses")
-
-   ;; --- Level 5: Complex chains ---
-   (psyc-tutor-challenge--create
-    :category 'multi-step :difficulty 5
-    :start-text "(if true\n  (do-a)\n  (do-b))" :start-point 16
-    :goal-text "(when true\n  (do-a))" :goal-point 1
-    :hint-keys (list "x" "x" "d" "g" "g" "m" "i" "w" "c" "when" "<escape>")
-    :description "Change 'if' to 'when' and remove the else branch"
-    :goal-state 'normal)
-
-   (psyc-tutor-challenge--create
-    :category 'multi-step :difficulty 5
-    :start-text "a b c d e" :start-point 1
-    :goal-text "(a) (b) (c) (d) (e)" :goal-point 1
-    :hint-keys (list "m" "w" "m" "s" "(" "w" "." "w" "." "w" "." "w" ".")
-    :description "Wrap each word in parentheses using repeat (.)")
-   ))
-
-;;;; --- Challenge pool ---
-
-(defun psyc-tutor--all-challenges ()
-  "Build the full challenge pool: auto-generated + hand-crafted."
-  (let ((auto (psyc-tutor--generate-movement-challenges))
-        (builtin (psyc-tutor--builtin-challenges)))
-    ;; Remove auto-generated duplicates that are too similar
-    (let ((filtered-auto
-           (cl-remove-if
-            (lambda (ch)
-              (or (= (psyc-tutor-challenge-start-point ch)
-                     (psyc-tutor-challenge-goal-point ch))
-                  ;; Skip if movement is trivially small
-                  (< (abs (- (psyc-tutor-challenge-goal-point ch)
-                             (psyc-tutor-challenge-start-point ch)))
-                     2)))
-            auto)))
-      ;; Limit auto-generated to avoid overwhelming
-      (append (seq-take (psyc-tutor--shuffle filtered-auto) 20)
-              builtin))))
-
-(defun psyc-tutor--shuffle (list)
-  "Return a shuffled copy of LIST."
-  (let ((vec (vconcat list)))
-    (cl-loop for i from (1- (length vec)) downto 1
-             do (let* ((j (random (1+ i)))
-                       (tmp (aref vec i)))
-                  (aset vec i (aref vec j))
-                  (aset vec j tmp)))
-    (append vec nil)))
-
-;;;; --- Goal buffer rendering ---
-
-(defun psyc-tutor--goal-buffer ()
-  "Get or create the goal display buffer."
-  (get-buffer-create psyc-tutor--goal-buf-name))
-
-(defun psyc-tutor--render-goal (session challenge)
-  "Render the goal display for CHALLENGE in SESSION."
-  (with-current-buffer (psyc-tutor--goal-buffer)
-    (let ((inhibit-read-only t)
-          (diff-cfg (alist-get (psyc-tutor-session-difficulty session)
-                               psyc-tutor-difficulty-config))
-          (completed (psyc-tutor-session-completed session))
-          (total (length (psyc-tutor-session-challenges session))))
-      (erase-buffer)
-      ;; Header
-      (insert (propertize
-               (format " PSYC TUTOR  Level %d: %s   %d/%d\n\n"
-                       (psyc-tutor-session-difficulty session)
-                       (plist-get diff-cfg :label)
-                       (1+ completed) total)
-               'face 'psyc-tutor-header))
-      ;; Goal text
-      (insert (propertize " GOAL:\n" 'face 'psyc-tutor-description))
-      (let ((goal-start (point))
-            (goal-text (psyc-tutor-challenge-goal-text challenge))
-            (goal-point (psyc-tutor-challenge-goal-point challenge)))
-        ;; Insert goal with indentation
-        (dolist (line (split-string goal-text "\n"))
-          (insert " " line "\n"))
-        ;; Mark the goal cursor position
-        (let ((cursor-pos (+ goal-start goal-point)))
-          (when (<= cursor-pos (point-max))
-            (let ((ov (make-overlay cursor-pos (min (1+ cursor-pos) (point-max)))))
-              (overlay-put ov 'face 'psyc-tutor-goal-cursor)
-              (overlay-put ov 'psyc-tutor t)))))
-      ;; Description
-      (insert "\n")
-      (insert (propertize (format " %s\n" (psyc-tutor-challenge-description challenge))
-                          'face 'psyc-tutor-description))
-      ;; Hints
-      (insert " ")
-      (if (plist-get diff-cfg :show-hints)
-          (psyc-tutor--insert-hints (psyc-tutor-challenge-hint-keys challenge))
-        (insert (propertize "[hints hidden]" 'face 'psyc-tutor-timer)))
-      ;; Timer placeholder
-      (insert (propertize "      0.0s" 'face 'psyc-tutor-timer))
-      (insert "\n")
-      (setq buffer-read-only t))))
-
-(defun psyc-tutor--insert-hints (hint-keys)
-  "Insert formatted HINT-KEYS into the current buffer."
-  (insert (propertize "[" 'face 'psyc-tutor-timer))
-  (let ((first t))
-    (dolist (k hint-keys)
-      (unless first (insert " "))
-      (insert (propertize k 'face 'psyc-tutor-hint))
-      (setq first nil)))
-  (insert (propertize "]" 'face 'psyc-tutor-timer)))
-
-(defun psyc-tutor--update-timer (session)
-  "Update the timer display in the goal buffer."
-  (let ((elapsed (- (float-time) (psyc-tutor-session-start-time session))))
-    (with-current-buffer (psyc-tutor--goal-buffer)
-      (let ((inhibit-read-only t))
-        (save-excursion
-          (goto-char (point-max))
-          (when (re-search-backward "[0-9]+\\.[0-9]s" nil t)
-            (replace-match (format "%.1fs" elapsed))))))))
-
-(defun psyc-tutor--reveal-hints (session)
-  "Reveal hints in the goal buffer after timeout."
-  (when (and session (buffer-live-p (psyc-tutor--goal-buffer)))
-    (let ((challenge (aref (psyc-tutor-session-challenges session)
-                           (psyc-tutor-session-current-idx session))))
-      (with-current-buffer (psyc-tutor--goal-buffer)
-        (let ((inhibit-read-only t))
-          (save-excursion
-            (goto-char (point-min))
-            (when (search-forward "[hints hidden]" nil t)
-              (let ((beg (match-beginning 0))
-                    (end (match-end 0)))
-                (delete-region beg end)
-                (goto-char beg)
-                (psyc-tutor--insert-hints
-                 (psyc-tutor-challenge-hint-keys challenge))))))))))
-
-;;;; --- Diff overlay in goal buffer ---
-
-(defun psyc-tutor--update-goal-diff (current-text challenge)
-  "Update diff overlays in the goal buffer based on CURRENT-TEXT vs goal."
-  (with-current-buffer (psyc-tutor--goal-buffer)
-    ;; Remove old diff overlays
-    (dolist (ov (overlays-in (point-min) (point-max)))
-      (when (overlay-get ov 'psyc-tutor-diff)
-        (delete-overlay ov)))
-    ;; Find the goal text region
-    (save-excursion
-      (goto-char (point-min))
-      (when (search-forward "GOAL:\n" nil t)
-        (let* ((goal-text (psyc-tutor-challenge-goal-text challenge))
-               (goal-start (point))
-               ;; Compare character by character
-               (max-i (min (length current-text) (length goal-text))))
-          ;; Highlight differences
-          (dotimes (i max-i)
-            (unless (= (aref current-text i)
-                       (aref goal-text i))
-              ;; +1 for the leading space on each line
-              (let* ((line-num (cl-count ?\n (substring goal-text 0 i)))
-                     (adj-pos (+ goal-start i 1 line-num)))
-                (when (<= adj-pos (point-max))
-                  (let ((ov (make-overlay adj-pos (1+ adj-pos))))
-                    (overlay-put ov 'psyc-tutor-diff t)
-                    (overlay-put ov 'face 'psyc-tutor-diff)))))))))))
-
-;;;; --- Window layout ---
-
-(defun psyc-tutor--setup-windows ()
-  "Set up a side-by-side layout: goal (left) + edit (right)."
-  (delete-other-windows)
-  ;; Left: goal buffer
-  (switch-to-buffer (psyc-tutor--goal-buffer))
-  (set-window-dedicated-p (selected-window) t)
-  ;; Right: edit buffer
-  (let ((edit-win (split-window-right)))
-    (select-window edit-win)
-    (switch-to-buffer (get-buffer-create psyc-tutor--edit-buf-name))))
-
-;;;; --- Mode definition ---
-
-(defvar psyc-tutor-control-map
-  (let ((m (make-sparse-keymap)))
-    (define-key m "n" #'psyc-tutor-skip)
-    (define-key m "r" #'psyc-tutor-retry)
-    (define-key m "q" #'psyc-tutor-quit)
-    (define-key m "+" #'psyc-tutor-increase-difficulty)
-    (define-key m "-" #'psyc-tutor-decrease-difficulty)
-    (define-key m "?" #'psyc-tutor-show-stats)
-    m)
-  "Control keymap for tutor meta-commands.")
-
-(define-derived-mode psyc-tutor-mode fundamental-mode "Tutor"
-  "Interactive training mode for psyc-modal."
-  :group 'psyc-modal
-  (define-key psyc-tutor-mode-map "\C-c" psyc-tutor-control-map)
-  (psyc-modal-mode 1)
-  (add-hook 'post-command-hook #'psyc-tutor--post-command nil t))
-
-;;;; --- Session management ---
-
-(defun psyc-tutor--mastered-p (stats)
-  "Return non-nil if STATS indicate mastery."
-  (and stats
-       (>= (psyc-tutor-stats-streak stats) 3)))
-
-(defun psyc-tutor--select-next (session)
-  "Select the next challenge index for SESSION.
-Prioritizes unmastered challenges at or below current difficulty."
-  (let* ((challenges (psyc-tutor-session-challenges session))
-         (difficulty (psyc-tutor-session-difficulty session))
-         (stats (psyc-tutor-session-stats session))
-         (candidates nil))
-    ;; Collect eligible challenge indices
-    (cl-loop for i below (length challenges)
-             for ch = (aref challenges i)
-             when (<= (psyc-tutor-challenge-difficulty ch) difficulty)
-             do (unless (psyc-tutor--mastered-p (gethash i stats))
-                  (push i candidates)))
-    ;; If all mastered at this level, include mastered ones too
-    (unless candidates
-      (cl-loop for i below (length challenges)
-               for ch = (aref challenges i)
-               when (<= (psyc-tutor-challenge-difficulty ch) difficulty)
-               do (push i candidates)))
-    (when candidates
-      (nth (random (length candidates)) candidates))))
-
-(defun psyc-tutor--load-challenge (session)
-  "Load the current challenge into the edit buffer."
-  (let* ((idx (psyc-tutor-session-current-idx session))
-         (challenge (aref (psyc-tutor-session-challenges session) idx)))
-    ;; Cancel any pending hint timer
-    (when (psyc-tutor-session-hint-timer session)
-      (cancel-timer (psyc-tutor-session-hint-timer session))
-      (setf (psyc-tutor-session-hint-timer session) nil))
-    ;; Set up edit buffer
-    (with-current-buffer (get-buffer-create psyc-tutor--edit-buf-name)
-      (let ((inhibit-read-only t))
-        (erase-buffer)
-        ;; Run setup function if any
-        (when (psyc-tutor-challenge-setup-fn challenge)
-          (funcall (psyc-tutor-challenge-setup-fn challenge)))
-        ;; Insert start text
-        (insert (psyc-tutor-challenge-start-text challenge))
-        (goto-char (psyc-tutor-challenge-start-point challenge))
-        ;; Reset undo
-        (setq buffer-undo-list nil)
-        ;; Ensure normal state
-        (psyc-modal-enter-normal)))
-    ;; Render goal
-    (psyc-tutor--render-goal session challenge)
-    ;; Start timer
-    (setf (psyc-tutor-session-start-time session) (float-time))
-    ;; Schedule hint reveal
-    (let ((timeout (psyc-tutor--diff-config
-                    (psyc-tutor-session-difficulty session) :timeout)))
-      (when (and timeout (not (psyc-tutor--diff-config
-                               (psyc-tutor-session-difficulty session) :show-hints)))
-        (setf (psyc-tutor-session-hint-timer session)
-              (run-with-timer timeout nil #'psyc-tutor--reveal-hints session))))))
-
-;;;; --- Completion detection ---
-
-(defun psyc-tutor--post-command ()
-  "Check challenge completion after each command."
-  (when-let ((session psyc-tutor--session))
-    (let* ((idx (psyc-tutor-session-current-idx session))
-           (challenge (aref (psyc-tutor-session-challenges session) idx))
-           (current-text (buffer-substring-no-properties (point-min) (point-max)))
-           (current-point (point))
-           (goal-state (psyc-tutor-challenge-goal-state challenge)))
-      ;; Update diff display
-      (psyc-tutor--update-goal-diff current-text challenge)
-      ;; Update timer
-      (psyc-tutor--update-timer session)
-      ;; Check completion
-      (when (and (string= current-text (psyc-tutor-challenge-goal-text challenge))
-                 (= current-point (psyc-tutor-challenge-goal-point challenge))
-                 (eq psyc-modal--state goal-state))
-        (psyc-tutor--challenge-success session)))))
-
-(defun psyc-tutor--challenge-success (session)
-  "Handle successful challenge completion."
-  (let* ((idx (psyc-tutor-session-current-idx session))
-         (elapsed (- (float-time) (psyc-tutor-session-start-time session)))
-         (stats-table (psyc-tutor-session-stats session))
-         (stats (or (gethash idx stats-table)
-                    (psyc-tutor-stats--create))))
-    ;; Cancel hint timer
-    (when (psyc-tutor-session-hint-timer session)
-      (cancel-timer (psyc-tutor-session-hint-timer session))
-      (setf (psyc-tutor-session-hint-timer session) nil))
-    ;; Update stats
-    (cl-incf (psyc-tutor-stats-attempts stats))
-    (cl-incf (psyc-tutor-stats-successes stats))
-    (cl-incf (psyc-tutor-stats-streak stats))
-    (setf (psyc-tutor-stats-best-time stats)
-          (if (psyc-tutor-stats-best-time stats)
-              (min elapsed (psyc-tutor-stats-best-time stats))
-            elapsed))
-    (puthash idx stats stats-table)
-    (cl-incf (psyc-tutor-session-completed session))
-    ;; Flash success
-    (psyc-tutor--flash-success elapsed)
-    ;; Advance to next after brief delay
-    (run-with-timer 0.8 nil #'psyc-tutor--advance session)))
-
-(defun psyc-tutor--flash-success (elapsed)
-  "Show success feedback with ELAPSED time."
-  (with-current-buffer (psyc-tutor--goal-buffer)
-    (let ((inhibit-read-only t))
-      (save-excursion
-        (goto-char (point-max))
-        (insert (propertize (format "\n  %.1fs" elapsed)
-                            'face 'psyc-tutor-success))))))
-
-(defun psyc-tutor--advance (session)
-  "Move to the next challenge in SESSION."
-  (when (and session (buffer-live-p (get-buffer psyc-tutor--edit-buf-name)))
-    (with-current-buffer (get-buffer psyc-tutor--edit-buf-name)
-      (let ((next-idx (psyc-tutor--select-next session)))
-        (if next-idx
-            (progn
-              (setf (psyc-tutor-session-current-idx session) next-idx)
-              (psyc-tutor--load-challenge session))
-          (psyc-tutor--session-complete session))))))
-
-(defun psyc-tutor--session-complete (session)
-  "Handle session completion — all challenges mastered."
-  (with-current-buffer (psyc-tutor--goal-buffer)
-    (let ((inhibit-read-only t))
-      (erase-buffer)
-      (insert (propertize "\n All challenges mastered at this level!\n\n"
-                          'face 'psyc-tutor-success))
-      (insert (format " Completed: %d\n" (psyc-tutor-session-completed session)))
-      (insert "\n C-c + to increase difficulty, C-c q to quit\n"))))
-
-;;;; --- User commands ---
 
 (defun psyc-tutor-quick-reference ()
   "Show a quick reference for psyc-modal editing patterns."
@@ -1008,108 +232,584 @@ Prioritizes unmastered challenges at or below current difficulty."
         (goto-char (point-min))))
     (pop-to-buffer buf)))
 
-(defun psyc-tutor (&optional difficulty)
-  "Start the psyc-modal interactive tutor.
-With prefix arg DIFFICULTY (1-5), set the starting level."
-  (interactive "p")
-  (let* ((diff (max 1 (min 5 (or difficulty 1))))
-         (challenges (vconcat (psyc-tutor--shuffle (psyc-tutor--all-challenges))))
-         (session (psyc-tutor-session--create
-                   :challenges challenges
-                   :current-idx 0
-                   :difficulty diff
-                   :show-hints-p (<= diff 2)
-                   :stats (make-hash-table :test 'eql)
-                   :start-time (float-time)
-                   :window-config (current-window-configuration))))
-    ;; Set up windows
-    (psyc-tutor--setup-windows)
-    ;; Initialize edit buffer
-    (with-current-buffer (get-buffer psyc-tutor--edit-buf-name)
+;;;; --- Vimtutor-style document ---
+
+(defconst psyc-tutor--buffer-name "*psyc-tutor*")
+
+(defconst psyc-tutor--text "\
+===========================================================================
+=                W E L C O M E   T O   T H E   T U T O R                  =
+===========================================================================
+
+  psyc-modal is a Helix-inspired modal editor for Emacs.  In about 30
+  minutes you can pick up enough to edit comfortably.
+
+  HOW TO USE THIS TUTOR
+    - This buffer is fully editable.  Try every command on the lines
+      marked with ---->.  Some lines start out broken on purpose.
+    - The modeline shows your state: [N] normal, [S] select, [I] insert.
+    - <Escape> always returns you to NORMAL mode.  Reach for it freely.
+    - To restart with a fresh copy:    M-x psyc-tutor
+    - To see the live key reference:   M-x psyc-tutor-quick-reference
+                                       (or `? ?' from normal mode)
+
+  GROUND RULES
+    1. Most lessons follow this pattern: read the explanation, then make
+       the broken `---->' line match the `---->' line below it.
+    2. The keys shown are the defaults.  If you've rebound something,
+       trust the live reference.
+    3. If you get lost, press <Escape> and start the lesson over.
+
+  Press <Escape>, then `j' a few times to scroll down.  Begin Lesson 1.
+
+
+===========================================================================
+= Lesson 1.1: THE THREE MODES
+===========================================================================
+
+  Normal [N] is for moving and issuing commands.
+  Select [S] is normal mode with an active selection that grows with motion.
+  Insert [I] is for typing text.
+
+  Transitions you'll use constantly:
+
+    i  a    enter INSERT before / after the cursor
+    o  O    open a line below / above and enter INSERT
+    v       toggle SELECT mode (movements extend the selection)
+    ;       collapse a selection back to a single point
+    <Escape> always returns to NORMAL
+
+  Try this on the ----> line: press `i', type the missing word `quick',
+  then press <Escape>.
+
+  ---->   The brown fox jumps.
+  ---->   The quick brown fox jumps.
+
+
+===========================================================================
+= Lesson 1.2: BASIC MOTION (h j k l)
+===========================================================================
+
+  In NORMAL mode the cursor moves with:
+
+    h   left
+    j   down
+    k   up
+    l   right
+
+  Numeric prefix repeats: `5l' moves five characters right, `3j' moves
+  three lines down.  This works with most motion commands.
+
+  Move to the start of the line below using only h/j/k/l, then back here.
+
+  ---->   PRACTICE: jump around this line until h-j-k-l feel automatic.
+
+
+===========================================================================
+= Lesson 1.3: WORD MOTION
+===========================================================================
+
+  Words are blocks of letters/digits/underscore separated by punctuation.
+
+    w   jump to the START of the next word
+    b   jump BACK to the start of the previous word
+    e   jump to the END of the current word
+
+  WORDS (uppercase) are whitespace-delimited — punctuation does NOT split
+  them.  Use them when you want to fly past code:
+
+    W   next WORD start
+    B   previous WORD start
+    E   current WORD end
+
+  Practice on the next line by walking it with `w', then again with `W'.
+
+  ---->   foo.bar(qux, baz);   one_two-three   it's-a-trap
+
+
+===========================================================================
+= Lesson 1.4: LINE AND BUFFER MOTION
+===========================================================================
+
+  The `g' prefix opens the GOTO map.  The most-used members:
+
+    g h   beginning of line
+    g l   end of line
+    g s   first non-blank character on the line
+    g g   beginning of buffer
+    g e   end of buffer
+    G N   go to line N (e.g. `42 G' or `G' from `:G')
+
+  Window-relative jumps live in the same map:
+
+    g t   top of visible window
+    g c   center
+    g b   bottom
+
+  Practice: from anywhere on the line below, press `g s', then `g l',
+  then `g h'.
+
+  ---->       this   line   has   leading   whitespace.
+
+
+===========================================================================
+= Lesson 1.5: FIND AND TILL ON A LINE
+===========================================================================
+
+  These motions search the current line for a single character:
+
+    f X   move to the next X
+    F X   move to the previous X
+    t X   move up to (just before) the next X
+    T X   move up to (just after) the previous X
+
+  These are precise — the position of `X' on the line is exact.  Combined
+  with the editing actions in the next chapter, they're a power tool.
+
+  Practice: from the start of the next line, press `f .', then `t ;',
+  then `F (' (or whatever character makes sense).
+
+  ---->   path = obj.method(arg1, arg2); print(path);
+
+
+===========================================================================
+= Lesson 2.1: SELECTION-FIRST EDITING
+===========================================================================
+
+  The big idea: in psyc-modal you SELECT first, then ACT.  A motion
+  doesn't just move — it selects everything between the old and new
+  point.  Look at the modeline as you press a motion: it flashes [S].
+
+  Common selections:
+
+    w  b  e   word selections (motion implicitly selects)
+    x         select the WHOLE current line
+    X         extend selection to the line above
+    %         select the entire buffer
+    v         toggle persistent SELECT mode
+    ;         collapse selection to a single point
+
+  Actions consume the current selection:
+
+    d   delete (and yank into the register)
+    c   change — delete and enter INSERT mode
+    y   yank (copy) without removing
+    ~   toggle case
+    >   indent       <   dedent       =   reindent
+
+  Try `w' followed by `d' on the next line to delete the next word.
+  Then press `u' (undo) to bring it back.
+
+  ---->   delete    me    from    this    line.
+
+  Now press `x' to select the whole next line, then `d' to remove it.
+  Press `u' to undo.
+
+  ---->   this entire line is fair game
+
+
+===========================================================================
+= Lesson 2.2: PASTING
+===========================================================================
+
+  Yanked or deleted text goes onto the kill ring.  Paste with:
+
+    p   paste AFTER the cursor (or below the line, if line-oriented)
+    P   paste BEFORE the cursor (or above the line)
+    R   replace the selection with the most recent yank
+
+  Try this:
+    1. Move onto the next ----> line.
+    2. Press `x' (select line) then `y' (yank).
+    3. Press `p' to duplicate it below.
+    4. Press `u' to undo.
+
+  ---->   duplicate me, please
+
+
+===========================================================================
+= Lesson 2.3: ENTERING INSERT MODE
+===========================================================================
+
+  Six entries cover almost every case:
+
+    i   INSERT before the cursor (or selection start)
+    a   INSERT after the cursor (or selection end)
+    I   INSERT at the first non-blank of the line
+    A   INSERT at the END of the line
+    o   open a new line BELOW and INSERT
+    O   open a new line ABOVE and INSERT
+
+  In INSERT mode the buffer behaves like vanilla Emacs — keys insert
+  text.  Press <Escape> to return to NORMAL.
+
+  Practice: capitalize `BAR' in the line below.  Move on the `b', press
+  `c' to change the next selection, type `BAR', press <Escape>.
+
+  ---->   foo bar baz
+
+
+===========================================================================
+= Lesson 2.4: REPLACE, CASE, REPEAT
+===========================================================================
+
+  Smaller edits don't need a selection:
+
+    r X   replace the character under the cursor with X
+    ~     toggle case (works on selection too)
+    .     repeat the last editing command
+
+  Number prefix works: `4 r *' replaces four characters with `*'.
+
+  Practice: fix the typo by moving onto `e' in `helo' and pressing `r e'.
+
+  ---->   helo, world
+
+
+===========================================================================
+= Lesson 2.5: LINE OPERATIONS
+===========================================================================
+
+    x   select the current line (extends if repeated)
+    X   extend selection to the line above
+    J   join the current line with the next (single space between)
+    >   indent selection (or current line)
+    <   dedent
+
+  Try joining the next two lines with `J':
+
+  ---->   this line should be
+  ---->   joined into one
+
+
+===========================================================================
+= Lesson 3.1: TEXT OBJECTS
+===========================================================================
+
+  Text objects describe semantic chunks: a word, a paren group, a string.
+  Press `m i X' to select INSIDE object X (excluding delimiters), or
+  `m a X' to select AROUND it (including delimiters).
+
+  Common objects:
+
+    w     word                              W     WORD
+    (  ) [  ] {  } < >                      paired brackets
+    \"  '  `                                 quoted strings
+    f                                       function call (the args)
+
+  Combinations to try:
+
+    m i w  +  c   change inside word
+    m a (  +  d   delete a parenthesized group, brackets and all
+    m i \"  +  c   change inside a string
+
+  Try `m i w' then `c' on the word `kitten' below, type `dog', <Escape>.
+
+  ---->   the kitten chased the laser dot
+
+  Try `m i (' then `d' on the line below.  The parens stay, contents go.
+
+  ---->   call_me(arg1, arg2, arg3)
+
+
+===========================================================================
+= Lesson 3.2: SURROUND
+===========================================================================
+
+  Surround commands operate on the CURRENT SELECTION (for add/wrap) or on
+  the surrounding pair (for delete/replace):
+
+    m s X   surround the selection with X (and its match)
+    m d X   delete the surrounding X / its match
+    m r X Y replace surrounding X with Y
+    m w X   wrap selection AND its surrounding whitespace with X
+
+  Note: opening and closing brackets are interchangeable as the argument.
+
+  Try this:
+    1. Put the cursor on `name' below.
+    2. `m i w' to select inside the word.
+    3. `m s \"' to wrap it in quotes.
+
+  ---->   greet(name)
+
+  Then on the next line: from inside the parens, press `m d (' to remove
+  the parens entirely.
+
+  ---->   foo(bar)
+
+
+===========================================================================
+= Lesson 3.3: STRUCTURAL EDITING
+===========================================================================
+
+  These commands manipulate s-expressions and bracketed structures:
+
+    m )   slurp forward — pull the next sibling INTO the current list
+    m (   slurp backward — pull the previous sibling INTO the list
+    m }   barf forward — push the last element OUT of the list
+    m {   barf backward — push the first element OUT of the list
+    m S   splice — remove the surrounding pair, leaving its contents
+    m R   raise — replace the enclosing form with the sexp at point
+    m T   transpose two sibling sexps
+
+  These shine in Lisps but work in any bracketed code.  Try `m )' from
+  inside the empty parens below to slurp `bar':
+
+  ---->   (foo) bar baz
+
+  Then `m }' to barf back:
+
+  ---->   (foo bar baz)
+
+
+===========================================================================
+= Lesson 3.4: SEARCH
+===========================================================================
+
+    /     start incremental search forward (Emacs isearch)
+    n     next match
+    N     previous match
+    *     search for the current selection (or word under cursor)
+    s     within the current selection, select all regex matches
+    S     split selection on a regex (puts a cursor at each match)
+
+  Try `/' for `fox' below, then press <Enter>, then `n' a few times.
+
+  ---->   the fox jumped over the fox.  another fox watched.
+
+
+===========================================================================
+= Lesson 3.5: MULTIPLE CURSORS
+===========================================================================
+
+  Two ways to get multiple cursors:
+
+    C        add a cursor on the next match of the current selection
+    M-C      add a cursor on the previous match
+    M-S      split the selection on whitespace, one cursor per piece
+    M-'      split the selection at every newline (one cursor per line)
+    M-p      paste with one entry of the kill ring per cursor
+
+  Useful selection refinements while you have cursors:
+
+    K        keep only selections that match a regex (or ! for non-match)
+    M-x      shrink selection to a single line
+
+  Try this: select the line `apple banana cherry' below with `x',
+  press `M-S' to split into three cursors, then `~' to toggle case.
+
+  ---->   apple banana cherry
+
+
+===========================================================================
+= Lesson 4.1: UNDO, REDO, REPEAT
+===========================================================================
+
+    u   undo
+    U   redo (undo the undo)
+    .   repeat the last editing command (not motion)
+
+  Repeat is powerful: change a word with `m i w c new <Escape>', then
+  walk to the next word with `w' and press `.' to apply the same change
+  again.
+
+  Try it: `c' the word, type `pear', <Escape>, `w' to next, `.':
+
+  ---->   apple banana cherry
+
+
+===========================================================================
+= Lesson 4.2: NAVIGATION HELPERS
+===========================================================================
+
+  Goto map:
+    g d   jump to the DEFINITION of the symbol under cursor (xref)
+    g r   list REFERENCES (xref)
+    g n   next buffer            g p   previous buffer
+    C-o   pop to the previous mark (where you were before the jump)
+    C-i   forward through the jump history
+    C-s   push the current location onto the mark ring
+
+  View map (the `z' prefix scrolls without moving the cursor):
+    z z   center the current line
+    z t   move current line to top of window
+    z b   move current line to bottom
+    z j / z k        scroll one line down / up
+    z C-d / z C-u    half page down / up
+
+
+===========================================================================
+= Lesson 4.3: THE SPACE LEADER
+===========================================================================
+
+  `SPC' opens the leader map — the home of file/buffer/window/help
+  commands you used to reach via `C-x'.  Highlights:
+
+    SPC f   find file                     SPC b   switch buffer
+    SPC F   project find file             SPC s   save buffer
+    SPC d   kill current buffer           SPC q   quit window
+    SPC /   ripgrep across project        SPC l   consult-line
+    SPC i   imenu in this file            SPC S   imenu across project
+    SPC e   show buffer diagnostics       SPC E   project diagnostics
+    SPC y   copy to system clipboard      SPC p   paste from clipboard
+    SPC c   comment-dwim                  SPC C   comment-region
+    SPC a   eglot code actions            SPC r   eglot rename
+    SPC g g  magit status   SPC g b  blame   SPC g l  log
+
+  Two more you'll use a lot:
+
+    SPC SPC   M-x (execute-extended-command)
+    SPC h     help-map (replaces C-h: `SPC h k' describes a key, etc.)
+
+  Window management lives under `SPC w' (or `C-w' from normal):
+
+    SPC w s / v   split below / right
+    SPC w h j k l move between windows
+    SPC w H J K L swap windows
+    SPC w q       delete window
+    SPC w o       delete other windows
+
+
+===========================================================================
+= Lesson 4.4: GOD MODE — OCCASIONAL EMACS KEYS
+===========================================================================
+
+  When you need a raw Emacs key sequence without leaving NORMAL mode,
+  press `,' (comma) and type the keys WITHOUT holding Control:
+
+    , x s    -> C-x C-s  (save)
+    , x b    -> C-x C-b  (list buffers, in vanilla)
+    , g f    -> C-M-f    (forward sexp, with `g' as Meta prefix)
+    , G f    -> C-M-f also (G is C-M-)
+    , SPC k  -> a literal `C-SPC' followed by `k'
+
+  which-key shows the popup as you go.  Useful for the long tail of
+  Emacs commands you don't bind elsewhere.
+
+
+===========================================================================
+= Lesson 4.5: KEYBOARD MACROS
+===========================================================================
+
+  Macros record a sequence of keys and replay them.
+
+    Q       start recording (a second Q stops if no count given)
+    q       end recording / replay the last macro
+    M-q     apply the macro to each line in the selection
+
+  Workflow: `Q', do the edit you want, `Q' to stop.  Move to the next
+  spot, press `q' to replay.  For lots of lines: select them with `x' a
+  bunch (or `%' for the buffer), then `M-q'.
+
+
+===========================================================================
+= Lesson 4.6: BRACKETED MOTION
+===========================================================================
+
+  The `[' and `]' prefixes jump between things:
+
+    ] d   next diagnostic   [ d   previous diagnostic
+    ] f   end of defun      [ f   beginning of defun
+    ] p   next paragraph    [ p   previous paragraph
+    ] c   next comment      [ c   previous comment
+    ] g   next git hunk     [ g   previous git hunk
+    ] SPC add a blank line BELOW (without moving)
+    [ SPC add a blank line ABOVE
+
+
+===========================================================================
+= Lesson 4.7: HELP
+===========================================================================
+
+  From NORMAL mode, the `?' prefix opens the help map:
+
+    ? ?   live quick reference (this tutor's companion)
+    ? t   open this tutor
+    ? k   show all current modal keys
+    ? m   which-key popup for the major-mode keymap
+
+  And from anywhere, `<f5>' triggers a top-level which-key popup.
+
+  Standard Emacs help is reachable through `SPC h':
+
+    SPC h k    describe-key
+    SPC h f    describe-function
+    SPC h v    describe-variable
+    SPC h m    describe-mode
+
+
+===========================================================================
+= Lesson 4.8: ADVANCED EDITING (FOR LATER)
+===========================================================================
+
+  When you're comfortable with the basics, these earn their place:
+
+    M-d   delete WITHOUT yanking      M-c   change WITHOUT yanking
+    M-s   split selection at newlines (one cursor per line)
+    M-S   for-each-line (treat selection as a series of lines)
+    M-:   ensure selection points forward (anchor at start)
+    M-o   expand region (semantic grow)
+    M-i   contract region
+    K     keep selections matching a regex (`!K' to invert)
+    |     pipe selection through a shell command
+    ;     collapse selection to point
+    M-;   flip selection direction
+
+  Worth knowing:
+
+    SPC ;        pp-eval-expression (try Lisp without leaving the buffer)
+    SPC ' / SPC j   vertico-repeat / consult-mark
+
+
+===========================================================================
+=                       Y O U   A R E   D O N E                           =
+===========================================================================
+
+  You've covered the editing surface.  A few habits to build:
+
+    1. Stay in NORMAL.  Pop into INSERT, type, pop back out.
+    2. Compose: a motion that selects + a verb that consumes is the loop.
+    3. Use `.' to repeat — it pays for itself within the first afternoon.
+    4. When you forget a key, ask:  ? ?    (live reference)
+                                    ? k   (full key list)
+                                    SPC h k   (describe a specific key)
+
+  Run `M-x psyc-tutor' any time to come back here.  Happy editing.
+")
+
+(defvar psyc-tutor-mode-map
+  (let ((m (make-sparse-keymap)))
+    m)
+  "Keymap for `psyc-tutor-mode' (currently empty — modal owns the keys).")
+
+(define-derived-mode psyc-tutor-mode fundamental-mode "Tutor"
+  "Major mode for the psyc-modal tutor buffer.
+
+The buffer is an editable scratch area pre-filled with a vimtutor-style
+walkthrough.  psyc-modal is enabled in normal state — practice the
+techniques on the buffer itself."
+  :group 'psyc-modal
+  (setq-local truncate-lines nil)
+  (psyc-modal-mode 1)
+  (psyc-modal-enter-normal))
+
+;;;###autoload
+(defun psyc-tutor ()
+  "Open a fresh copy of the psyc-modal tutor.
+
+Calling this when the tutor buffer already exists kills it first, so the
+practice text is reset."
+  (interactive)
+  (when-let ((existing (get-buffer psyc-tutor--buffer-name)))
+    (kill-buffer existing))
+  (let ((buf (get-buffer-create psyc-tutor--buffer-name)))
+    (with-current-buffer buf
+      (insert psyc-tutor--text)
+      (goto-char (point-min))
       (psyc-tutor-mode)
-      (setq psyc-tutor--session session))
-    ;; Select first eligible challenge
-    (let ((first-idx (psyc-tutor--select-next session)))
-      (when first-idx
-        (setf (psyc-tutor-session-current-idx session) first-idx)
-        (psyc-tutor--load-challenge session)))))
-
-(defun psyc-tutor-skip ()
-  "Skip the current challenge."
-  (interactive)
-  (when-let ((session psyc-tutor--session))
-    ;; Record attempt without success (breaks streak)
-    (let* ((idx (psyc-tutor-session-current-idx session))
-           (stats-table (psyc-tutor-session-stats session))
-           (stats (or (gethash idx stats-table)
-                      (psyc-tutor-stats--create))))
-      (cl-incf (psyc-tutor-stats-attempts stats))
-      (setf (psyc-tutor-stats-streak stats) 0)
-      (puthash idx stats stats-table))
-    (psyc-tutor--advance session)))
-
-(defun psyc-tutor-retry ()
-  "Retry the current challenge."
-  (interactive)
-  (when-let ((session psyc-tutor--session))
-    (psyc-tutor--load-challenge session)))
-
-(defun psyc-tutor-quit ()
-  "Quit the tutor and restore window layout."
-  (interactive)
-  (when-let ((session psyc-tutor--session))
-    ;; Cancel timer
-    (when (psyc-tutor-session-hint-timer session)
-      (cancel-timer (psyc-tutor-session-hint-timer session)))
-    ;; Restore windows
-    (when (psyc-tutor-session-window-config session)
-      (set-window-configuration (psyc-tutor-session-window-config session))))
-  ;; Kill buffers
-  (when-let ((buf (get-buffer psyc-tutor--edit-buf-name)))
-    (kill-buffer buf))
-  (when-let ((buf (get-buffer psyc-tutor--goal-buf-name)))
-    (kill-buffer buf)))
-
-(defun psyc-tutor-increase-difficulty ()
-  "Increase the difficulty level."
-  (interactive)
-  (when-let ((session psyc-tutor--session))
-    (let ((new-diff (min 5 (1+ (psyc-tutor-session-difficulty session)))))
-      (setf (psyc-tutor-session-difficulty session) new-diff)
-      (message "Difficulty: %d — %s" new-diff
-               (psyc-tutor--diff-config new-diff :label))
-      (psyc-tutor--advance session))))
-
-(defun psyc-tutor-decrease-difficulty ()
-  "Decrease the difficulty level."
-  (interactive)
-  (when-let ((session psyc-tutor--session))
-    (let ((new-diff (max 1 (1- (psyc-tutor-session-difficulty session)))))
-      (setf (psyc-tutor-session-difficulty session) new-diff)
-      (message "Difficulty: %d — %s" new-diff
-               (psyc-tutor--diff-config new-diff :label))
-      (psyc-tutor--advance session))))
-
-(defun psyc-tutor-show-stats ()
-  "Show session statistics."
-  (interactive)
-  (when-let ((session psyc-tutor--session))
-    (let ((total-attempts 0)
-          (total-successes 0)
-          (mastered 0))
-      (maphash (lambda (_idx stats)
-                 (cl-incf total-attempts (psyc-tutor-stats-attempts stats))
-                 (cl-incf total-successes (psyc-tutor-stats-successes stats))
-                 (when (psyc-tutor--mastered-p stats)
-                   (cl-incf mastered)))
-               (psyc-tutor-session-stats session))
-      (message "Level %d | Completed: %d | Success rate: %d%% | Mastered: %d/%d"
-               (psyc-tutor-session-difficulty session)
-               (psyc-tutor-session-completed session)
-               (if (> total-attempts 0)
-                   (/ (* 100 total-successes) total-attempts) 0)
-               mastered
-               (length (psyc-tutor-session-challenges session))))))
+      (set-buffer-modified-p nil))
+    (pop-to-buffer buf)))
 
 (provide 'psyc-tutor)
 ;;; psyc-tutor.el ends here
