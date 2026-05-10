@@ -1,3 +1,4 @@
 /result
+*.elc
 .aider*
 config/lisp/completion/#psyc-completion.el#

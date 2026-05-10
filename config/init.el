@@ -16,7 +16,9 @@
     (require 'psyc-evil)
   (require 'psyc-modal)
   (add-hook 'emacs-startup-hook #'psyc-modal-global-mode)
-  (autoload 'psyc-tutor "psyc-tutor" "Interactive psyc-modal trainer." t))
+  (autoload 'psyc-tutor "psyc-tutor" "Interactive psyc-modal trainer." t)
+  (autoload 'psyc-tutor-quick-reference "psyc-tutor"
+    "Quick reference for psyc-modal editing patterns." t))
 (require 'psyc-parens)
 
 ;; Completion

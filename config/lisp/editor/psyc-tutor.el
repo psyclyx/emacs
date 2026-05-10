@@ -22,6 +22,7 @@
 ;;; Code:
 
 (require 'cl-lib)
+(require 'subr-x)
 (require 'psyc-modal)
 
 ;;;; --- Faces ---
@@ -108,6 +109,7 @@
 
 (defconst psyc-tutor--edit-buf-name "*psyc-tutor*")
 (defconst psyc-tutor--goal-buf-name "*psyc-tutor-goal*")
+(defconst psyc-tutor--reference-buf-name "*psyc-modal quick ref*")
 
 ;;;; --- Difficulty config ---
 
@@ -148,6 +150,48 @@ Sub-keymaps are recursed with PREFIX prepended."
   "Return the key string bound to CMD in KEYMAP (default: normal-map)."
   (when-let ((keys (where-is-internal cmd (or keymap psyc-modal-normal-map) t)))
     (key-description keys)))
+
+(defun psyc-tutor--reference-key (cmd)
+  "Return a display key for CMD."
+  (or (psyc-tutor--key-for-command cmd)
+      (symbol-name cmd)))
+
+(defun psyc-tutor--reference-prefix (cmd suffix)
+  "Return the CMD binding followed by SUFFIX."
+  (string-join (list (psyc-tutor--reference-key cmd) suffix) " "))
+
+(defun psyc-tutor--reference-alt (&rest keys)
+  "Join KEYS as alternatives for display."
+  (string-join keys " / "))
+
+(defun psyc-tutor--reference-seq (&rest keys)
+  "Join KEYS as a sequential command pattern."
+  (string-join keys " "))
+
+(defun psyc-tutor--insert-reference-section (title rows)
+  "Insert a reference section titled TITLE with ROWS."
+  (let ((width (apply #'max 0 (mapcar (lambda (row) (length (car row))) rows))))
+    (insert (propertize title 'face 'bold) "\n")
+    (dolist (row rows)
+      (insert "  "
+              (propertize (format (format "%%-%ds" width) (car row))
+                          'face 'help-key-binding)
+              "  "
+              (cdr row)
+              "\n"))
+    (insert "\n")))
+
+(defvar psyc-tutor-reference-mode-map
+  (let ((m (make-sparse-keymap)))
+    (set-keymap-parent m special-mode-map)
+    (define-key m "t" #'psyc-tutor)
+    (define-key m "g" #'psyc-tutor-quick-reference)
+    m)
+  "Keymap for `psyc-tutor-reference-mode'.")
+
+(define-derived-mode psyc-tutor-reference-mode special-mode "Tutor Ref"
+  "Quick reference for psyc-modal editing patterns."
+  (setq-local truncate-lines t))
 
 ;;;; --- Command classification ---
 
@@ -797,6 +841,172 @@ Prioritizes unmastered challenges at or below current difficulty."
       (insert "\n C-c + to increase difficulty, C-c q to quit\n"))))
 
 ;;;; --- User commands ---
+
+(defun psyc-tutor-quick-reference ()
+  "Show a quick reference for psyc-modal editing patterns."
+  (interactive)
+  (let ((buf (get-buffer-create psyc-tutor--reference-buf-name)))
+    (with-current-buffer buf
+      (let ((inhibit-read-only t))
+        (erase-buffer)
+        (psyc-tutor-reference-mode)
+        (insert (propertize "PSYC Modal Quick Reference\n" 'face 'header-line)
+                "\n")
+        (insert "Selection-first editing: movements create a selection, then actions like "
+                (propertize "d" 'face 'help-key-binding)
+                ", "
+                (propertize "c" 'face 'help-key-binding)
+                ", and "
+                (propertize "y" 'face 'help-key-binding)
+                " consume it.\n\n")
+        (psyc-tutor--insert-reference-section
+         "Move"
+         (list
+          (cons (psyc-tutor--reference-alt
+                 (psyc-tutor--reference-key 'psyc-modal-left)
+                 (psyc-tutor--reference-key 'psyc-modal-down)
+                 (psyc-tutor--reference-key 'psyc-modal-up)
+                 (psyc-tutor--reference-key 'psyc-modal-right))
+                "move by character")
+          (cons (psyc-tutor--reference-alt
+                 (psyc-tutor--reference-key 'psyc-modal-word-next)
+                 (psyc-tutor--reference-key 'psyc-modal-word-back)
+                 (psyc-tutor--reference-key 'psyc-modal-word-end))
+                "word start / back / end")
+          (cons (psyc-tutor--reference-alt
+                 (psyc-tutor--reference-key 'psyc-modal-WORD-next)
+                 (psyc-tutor--reference-key 'psyc-modal-WORD-back)
+                 (psyc-tutor--reference-key 'psyc-modal-WORD-end))
+                "WORD motions")
+          (cons (psyc-tutor--reference-alt
+                 (psyc-tutor--reference-prefix 'psyc-modal-find-forward "x")
+                 (psyc-tutor--reference-prefix 'psyc-modal-till-forward "x")
+                 (psyc-tutor--reference-prefix 'psyc-modal-find-backward "x")
+                 (psyc-tutor--reference-prefix 'psyc-modal-till-backward "x"))
+                "find / till a character on the line")
+          (cons (psyc-tutor--reference-alt
+                 (psyc-tutor--reference-key 'psyc-modal-goto-line-start)
+                 (psyc-tutor--reference-key 'psyc-modal-goto-line-end)
+                 (psyc-tutor--reference-key 'psyc-modal-goto-file-start)
+                 (psyc-tutor--reference-key 'psyc-modal-goto-file-end)
+                 (psyc-tutor--reference-key 'psyc-modal-goto-first-nonblank))
+                "line and buffer edges")
+          (cons (psyc-tutor--reference-alt
+                 (psyc-tutor--reference-key 'psyc-modal-backward-sexp)
+                 (psyc-tutor--reference-key 'psyc-modal-forward-sexp))
+                "previous / next sexp")))
+        (psyc-tutor--insert-reference-section
+         "Select + Edit"
+         (list
+          (cons (psyc-tutor--reference-alt
+                 (psyc-tutor--reference-key 'psyc-modal-enter-select)
+                 (psyc-tutor--reference-key 'psyc-modal-collapse)
+                 (psyc-tutor--reference-key 'psyc-modal-select-all))
+                "extend selection / collapse / select buffer")
+          (cons (psyc-tutor--reference-alt
+                 (psyc-tutor--reference-key 'psyc-modal-select-line)
+                 (psyc-tutor--reference-key 'psyc-modal-select-line-above)
+                 (psyc-tutor--reference-key 'psyc-modal-join-lines))
+                "select line / line above / join lines")
+          (cons (psyc-tutor--reference-alt
+                 (psyc-tutor--reference-key 'psyc-modal-delete)
+                 (psyc-tutor--reference-key 'psyc-modal-change)
+                 (psyc-tutor--reference-key 'psyc-modal-yank))
+                "delete / change / yank")
+          (cons (psyc-tutor--reference-alt
+                 (psyc-tutor--reference-key 'psyc-modal-paste-after)
+                 (psyc-tutor--reference-key 'psyc-modal-paste-before)
+                 (psyc-tutor--reference-key 'psyc-modal-replace-paste))
+                "paste after / before / replace with yank")
+          (cons (psyc-tutor--reference-alt
+                 (psyc-tutor--reference-key 'psyc-modal-replace-char)
+                 (psyc-tutor--reference-key 'psyc-modal-toggle-case)
+                 (psyc-tutor--reference-key 'repeat))
+                "replace char / toggle case / repeat last edit")))
+        (psyc-tutor--insert-reference-section
+         "Insert"
+         (list
+          (cons (psyc-tutor--reference-alt
+                 (psyc-tutor--reference-key 'psyc-modal-insert-before)
+                 (psyc-tutor--reference-key 'psyc-modal-insert-after))
+                "insert before / after point")
+          (cons (psyc-tutor--reference-alt
+                 (psyc-tutor--reference-key 'psyc-modal-insert-bol)
+                 (psyc-tutor--reference-key 'psyc-modal-insert-eol))
+                "insert at first non-blank / end of line")
+          (cons (psyc-tutor--reference-alt
+                 (psyc-tutor--reference-key 'psyc-modal-open-below)
+                 (psyc-tutor--reference-key 'psyc-modal-open-above))
+                "open a line below / above")
+          (cons "<escape>" "return to normal state")))
+        (psyc-tutor--insert-reference-section
+         "Text Objects + Structure"
+         (list
+          (cons (psyc-tutor--reference-alt
+                 (psyc-tutor--reference-prefix 'psyc-modal-select-inside "w")
+                 (psyc-tutor--reference-prefix 'psyc-modal-select-around "w"))
+                "inside / around word")
+          (cons (psyc-tutor--reference-alt
+                 (psyc-tutor--reference-prefix 'psyc-modal-select-inside "(")
+                 (psyc-tutor--reference-prefix 'psyc-modal-select-around "(")
+                 (psyc-tutor--reference-prefix 'psyc-modal-select-inside "[")
+                 (psyc-tutor--reference-prefix 'psyc-modal-select-around "["))
+                "inside / around parens and brackets")
+          (cons (psyc-tutor--reference-alt
+                 (psyc-tutor--reference-prefix 'psyc-modal-select-inside "\"")
+                 (psyc-tutor--reference-prefix 'psyc-modal-select-around "\"")
+                 (psyc-tutor--reference-prefix 'psyc-modal-select-inside "f")
+                 (psyc-tutor--reference-prefix 'psyc-modal-select-around "f"))
+                "inside / around quotes and functions")
+          (cons (psyc-tutor--reference-alt
+                 (psyc-tutor--reference-prefix 'psyc-modal-surround-add "(")
+                 (psyc-tutor--reference-prefix 'psyc-modal-surround-delete "(")
+                 (psyc-tutor--reference-prefix 'psyc-modal-surround-replace "( [")
+                 (psyc-tutor--reference-prefix 'psyc-modal-wrap "("))
+                "surround / delete surround / replace surround / wrap")
+          (cons (psyc-tutor--reference-alt
+                 (psyc-tutor--reference-key 'psyc-modal-slurp-forward)
+                 (psyc-tutor--reference-key 'psyc-modal-barf-forward)
+                 (psyc-tutor--reference-key 'psyc-modal-splice)
+                 (psyc-tutor--reference-key 'psyc-modal-raise))
+                "slurp / barf / splice / raise")))
+        (psyc-tutor--insert-reference-section
+         "Practice"
+         (list
+          (cons (psyc-tutor--reference-alt
+                 (psyc-tutor--reference-seq
+                  (psyc-tutor--reference-key 'psyc-modal-word-next)
+                  (psyc-tutor--reference-key 'psyc-modal-delete))
+                 (psyc-tutor--reference-seq
+                  (psyc-tutor--reference-key 'psyc-modal-select-line)
+                  (psyc-tutor--reference-key 'psyc-modal-delete))
+                 (psyc-tutor--reference-seq
+                  (psyc-tutor--reference-key 'psyc-modal-select-line)
+                  (psyc-tutor--reference-key 'psyc-modal-yank)))
+                "delete word / delete line / yank line")
+          (cons (psyc-tutor--reference-seq
+                 (psyc-tutor--reference-prefix 'psyc-modal-select-inside "w")
+                 (psyc-tutor--reference-key 'psyc-modal-change))
+                "change inside word")
+          (cons (psyc-tutor--reference-seq
+                 (psyc-tutor--reference-prefix 'psyc-modal-select-inside "(")
+                 (psyc-tutor--reference-key 'psyc-modal-delete))
+                "delete inside parens")
+          (cons (psyc-tutor--reference-seq
+                 (psyc-tutor--reference-key 'psyc-modal-select-all)
+                 (psyc-tutor--reference-prefix 'psyc-modal-surround-add "("))
+                "surround the whole buffer")
+          (cons (psyc-tutor--reference-alt "??" "? t" "? k" "? m")
+                "this reference / start tutor / modal keys / major-mode keys")))
+        (insert "In this buffer: "
+                (propertize "q" 'face 'help-key-binding)
+                " quits, "
+                (propertize "t" 'face 'help-key-binding)
+                " starts the tutor, "
+                (propertize "g" 'face 'help-key-binding)
+                " refreshes the reference.\n")
+        (goto-char (point-min))))
+    (pop-to-buffer buf)))
 
 (defun psyc-tutor (&optional difficulty)
   "Start the psyc-modal interactive tutor.

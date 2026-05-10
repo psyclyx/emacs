@@ -22,6 +22,10 @@
 
 (require 'cl-lib)
 
+(autoload 'psyc-tutor "psyc-tutor" "Interactive psyc-modal trainer." t)
+(autoload 'psyc-tutor-quick-reference "psyc-tutor"
+  "Quick reference for psyc-modal editing patterns." t)
+
 ;;;; --- Customization ---
 
 (defgroup psyc-modal nil
@@ -47,6 +51,7 @@
 (defvar psyc-modal-goto-map   (make-sparse-keymap "Goto"))
 (defvar psyc-modal-match-map  (make-sparse-keymap "Match"))
 (defvar psyc-modal-space-map  (make-sparse-keymap "Space"))
+(defvar psyc-modal-help-map   (make-sparse-keymap "Help"))
 (defvar psyc-modal-window-map (make-sparse-keymap "Window"))
 (defvar psyc-modal-view-map   (make-sparse-keymap "View"))
 
@@ -606,7 +611,8 @@ DESC is the keymap name.  BINDINGS are KEY CMD pairs."
        (defun ,fn-name ()
          (setq psyc-modal-local-map (make-sparse-keymap ,desc))
          ,@(cl-loop for (key cmd) on bindings by #'cddr
-                    collect `(define-key psyc-modal-local-map ,key ,cmd)))
+                    collect `(define-key psyc-modal-local-map ,key ,cmd))
+         (psyc-modal--which-key-register-local-map))
        (add-hook ',mode-hook #',fn-name))))
 
 ;;;; --- Goto mode ---
@@ -924,6 +930,14 @@ this is the last frame)."
   (define-key m "gl"  #'magit-log-buffer-file)
   (define-key m "gf"  #'magit-find-file))
 
+;;;; --- Help mode ---
+
+(let ((m psyc-modal-help-map))
+  (define-key m "?" #'psyc-tutor-quick-reference)
+  (define-key m "t" #'psyc-tutor)
+  (define-key m "k" #'psyc-modal-show-keys)
+  (define-key m "m" #'which-key-show-major-mode))
+
 ;;;; --- God mode ---
 
 (defun psyc-modal--god-modify (event mod)
@@ -1051,7 +1065,6 @@ Shows which-key popup at prefix boundaries."
 
   ;; Search
   (define-key m "/" #'isearch-forward)
-  (define-key m "?" #'isearch-backward)
   (define-key m "n" #'psyc-modal-search-next)
   (define-key m "N" #'psyc-modal-search-prev)
   (define-key m "*" #'psyc-modal-search-selection)
@@ -1074,6 +1087,7 @@ Shows which-key popup at prefix boundaries."
   (define-key m "g" psyc-modal-goto-map)
   (define-key m "m" psyc-modal-match-map)
   (define-key m " " psyc-modal-space-map)
+  (define-key m "?" psyc-modal-help-map)
   (define-key m "\C-w" psyc-modal-window-map)
   (define-key m "z" psyc-modal-view-map)
   (define-key m "Z" #'psyc-modal-view-sticky)
@@ -1138,7 +1152,6 @@ Shows which-key popup at prefix boundaries."
   ;; Which-key (available from every state)
   (define-key m [f5]   #'which-key-show-top-level)
   (define-key m [C-f5] #'which-key-show-major-mode)
-  (define-key m "?" #'psyc-modal-show-keys)
 
   ;; Digit arguments
   (dotimes (i 10)
@@ -1417,18 +1430,166 @@ Deletes matching pair when between them, skips over close parens in lisps."
 
 ;;;; --- Which-key descriptions ---
 
+(defconst psyc-modal--which-key-strip-prefixes
+  '("mc/" "diff-hl-" "which-key-" "xref-" "flymake-" "eglot-"
+    "consult-" "project-" "magit-" "vertico-" "org-" "cider-"
+    "janet-" "nix-" "windmove-" "clipboard-" "kmacro-")
+  "Package prefixes removed when generating which-key labels.")
+
+(defconst psyc-modal--which-key-command-labels
+  '((psyc-modal-escape . "cancel / escape")
+    (psyc-modal-enter-select . "toggle select")
+    (psyc-modal-replace-paste . "replace with yank")
+    (psyc-modal-search-selection . "search selection")
+    (psyc-modal-select-regex . "select regex")
+    (psyc-modal-select-regex-all . "select regex all")
+    (psyc-modal-view-sticky . "view sticky")
+    (psyc-modal-god-execute . "god mode")
+    (psyc-modal-shrink-to-line . "shrink to line")
+    (psyc-modal-ensure-forward . "forward selection")
+    (psyc-modal-split-on-newlines . "split on lines")
+    (psyc-modal-paste-split . "paste split")
+    (psyc-modal-keep-matching . "keep matching lines")
+    (psyc-modal-pipe-shell . "pipe through shell")
+    (psyc-modal-insert-delete-char . "delete char")
+    (psyc-modal-insert-backward-delete . "backspace")
+    (psyc-modal-show-keys . "show keys")
+    (psyc-tutor . "start tutor")
+    (psyc-tutor-quick-reference . "editing quick ref")
+    (expreg-expand . "expand selection")
+    (expreg-contract . "shrink selection")
+    (mc/mark-next-like-this . "mark next like this")
+    (mc/mark-previous-like-this . "mark prev like this")
+    (which-key-show-top-level . "top-level keys")
+    (which-key-show-major-mode . "major-mode keys")
+    (pop-global-mark . "jump back")
+    (xref-go-forward . "jump forward")
+    (push-mark-command . "push mark")
+    (flymake-goto-next-error . "next diagnostic")
+    (flymake-goto-prev-error . "prev diagnostic")
+    (diff-hl-next-hunk . "next hunk")
+    (diff-hl-previous-hunk . "prev hunk")
+    (beginning-of-defun . "prev defun")
+    (end-of-defun . "next defun")
+    (consult-mark . "mark")
+    (consult-imenu-multi . "imenu all")
+    (flymake-show-project-diagnostics . "project diagnostics")
+    (pp-eval-expression . "eval expression")
+    (vertico-repeat . "repeat minibuffer")
+    (comment-region . "comment region")
+    (magit-status . "status")
+    (magit-blame-addition . "blame")
+    (magit-log-buffer-file . "file log")
+    (magit-find-file . "find file at rev")
+    (backward-kill-word . "delete word backward")
+    (backward-kill-line . "delete to bol")
+    (save-buffers-kill-emacs . "quit Emacs"))
+  "Concise which-key labels keyed by command symbol.")
+
+(defun psyc-modal--which-key-doc-label (command)
+  "Return a concise which-key label for psyc COMMAND."
+  (when-let ((doc (documentation command t)))
+    (let ((label (car (split-string doc "\n" t))))
+      (setq label (car (split-string label "\\.  +" t)))
+      (setq label (replace-regexp-in-string "\\s-*([^)]+)\\.?\\'" "" label))
+      (setq label (string-trim (replace-regexp-in-string "\\.$" "" label)))
+      (unless (string-empty-p label)
+        (concat (downcase (substring label 0 1)) (substring label 1))))))
+
+(defun psyc-modal--which-key-humanize-command (command)
+  "Return a readable which-key label for COMMAND."
+  (when (symbolp command)
+    (let ((label (symbol-name command)))
+      (setq label (replace-regexp-in-string "\\`[^/]+/" "" label))
+      (dolist (prefix psyc-modal--which-key-strip-prefixes)
+        (when (string-prefix-p prefix label)
+          (setq label (substring label (length prefix)))))
+      (setq label (replace-regexp-in-string "-or-" "/" label))
+      (setq label (replace-regexp-in-string "-at-point\\'" "" label))
+      (replace-regexp-in-string "-" " " label))))
+
+(defun psyc-modal--which-key-command-label (command)
+  "Return the preferred which-key label for COMMAND."
+  (or (alist-get command psyc-modal--which-key-command-labels)
+      (and (symbolp command)
+           (string-prefix-p "psyc-modal-" (symbol-name command))
+           (psyc-modal--which-key-doc-label command))
+      (psyc-modal--which-key-humanize-command command)))
+
+(defun psyc-modal--which-key-collect-replacements (keymap &optional prefix recursive)
+  "Collect which-key replacements for KEYMAP.
+PREFIX is the current key sequence prefix.  If RECURSIVE is non-nil,
+descend into nested keymaps and emit replacements for full sequences."
+  (let (replacements)
+    (map-keymap
+     (lambda (event binding)
+       (when-let ((key (ignore-errors (key-description (vector event)))))
+         (let ((full-key (if prefix (concat prefix " " key) key)))
+           (cond
+            ((commandp binding)
+             (when-let ((label (psyc-modal--which-key-command-label binding)))
+               (setq replacements
+                     (nconc replacements (list full-key (cons label binding))))))
+            ((and recursive (keymapp binding))
+             (setq replacements
+                   (nconc replacements
+                          (psyc-modal--which-key-collect-replacements
+                           binding full-key recursive))))))))
+     keymap)
+    replacements))
+
+(defun psyc-modal--which-key-register-bindings (keymap &optional recursive)
+  "Register concise which-key labels for KEYMAP.
+If RECURSIVE is non-nil, also label nested key sequences."
+  (when (and (keymapp keymap)
+             (fboundp 'which-key-add-keymap-based-replacements))
+    (when-let ((replacements
+                (psyc-modal--which-key-collect-replacements keymap nil recursive)))
+      (apply #'which-key-add-keymap-based-replacements keymap replacements))))
+
+(defun psyc-modal--which-key-register-local-map ()
+  "Register which-key labels for the current buffer's local leader map."
+  (when (keymapp psyc-modal-local-map)
+    (psyc-modal--which-key-register-bindings psyc-modal-local-map t)))
+
 (defun psyc-modal--setup-which-key ()
   "Register which-key descriptions for psyc-modal keymaps."
   (when (fboundp 'which-key-add-keymap-based-replacements)
+    (dolist (map (list psyc-modal-normal-map
+                       psyc-modal-insert-map
+                       psyc-modal-goto-map
+                       psyc-modal-match-map
+                       psyc-modal-space-map
+                       psyc-modal-help-map
+                       psyc-modal-window-map
+                       psyc-modal-view-map
+                       psyc-modal-view-sticky-map))
+      (psyc-modal--which-key-register-bindings map))
+    (dolist (buffer (buffer-list))
+      (with-current-buffer buffer
+        (psyc-modal--which-key-register-local-map)))
     ;; Sub-map prefixes in normal map
     (which-key-add-keymap-based-replacements psyc-modal-normal-map
       "g" "goto"
       "m" "match/surround/struct"
       " " "leader"
+      "?" "help…"
       "C-w" "window"
       "z" "view"
       "]" "next…"
-      "[" "prev…")
+      "[" "prev…"
+      "] d" "next diagnostic"
+      "[ d" "prev diagnostic"
+      "] f" "next defun"
+      "[ f" "prev defun"
+      "] p" "next paragraph"
+      "[ p" "prev paragraph"
+      "] SPC" "open line below"
+      "[ SPC" "open line above"
+      "] c" "next comment"
+      "[ c" "prev comment"
+      "] g" "next hunk"
+      "[ g" "prev hunk")
     ;; Goto map
     (which-key-add-keymap-based-replacements psyc-modal-goto-map
       "g" "file start"
@@ -1476,15 +1637,31 @@ Deletes matching pair when between them, skips over close parens in lisps."
       "y" "clipboard copy"
       "p" "clipboard paste"
       "R" "rename file"
+      "'" "repeat minibuffer"
+      ";" "eval expression"
       "i" "imenu"
+      "j" "mark"
       "l" "line search"
       "a" "code action"
       "r" "rename symbol"
       "e" "diagnostics"
       "E" "project diagnostics"
+      "S" "imenu all"
+      "D" "project diagnostics"
+      "C" "comment region"
       "h" "help…"
       "m" "local leader"
-      "g" "git…")
+      "g" "git…"
+      "g g" "status"
+      "g b" "blame"
+      "g l" "file log"
+      "g f" "find file at rev")
+    ;; Help map
+    (which-key-add-keymap-based-replacements psyc-modal-help-map
+      "?" "editing quick ref"
+      "t" "start tutor"
+      "k" "modal keys"
+      "m" "major-mode keys")
     ;; Window map
     (which-key-add-keymap-based-replacements psyc-modal-window-map
       "s" "split horiz"
@@ -1501,7 +1678,26 @@ Deletes matching pair when between them, skips over close parens in lisps."
       "o" "only"
       "=" "balance"
       "w" "other"
-      "f" "file other")))
+      "f" "file other")
+    ;; View map
+    (which-key-add-keymap-based-replacements psyc-modal-view-map
+      "z" "recenter"
+      "c" "recenter"
+      "t" "top"
+      "b" "bottom"
+      "j" "scroll down line"
+      "k" "scroll up line"
+      "C-f" "page down"
+      "C-b" "page up"
+      "C-d" "half page down"
+      "C-u" "half page up")
+    (which-key-add-keymap-based-replacements psyc-modal-view-sticky-map
+      "z" "recenter"
+      "c" "recenter"
+      "t" "top"
+      "b" "bottom"
+      "j" "scroll down line"
+      "k" "scroll up line")))
 
 (add-hook 'after-init-hook #'psyc-modal--setup-which-key)
 
