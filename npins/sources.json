@@ -9,16 +9,17 @@
       },
       "branch": "master",
       "submodules": false,
-      "revision": "6763245bda7274bf6b9eb62a65838d3241553385",
-      "url": "https://github.com/nix-community/emacs-overlay/archive/6763245bda7274bf6b9eb62a65838d3241553385.tar.gz",
-      "hash": "sha256-0aa3yWOhU8uLfMFTHY9Gy8Vu9EIXvdJUk/KsEuAxB7c="
+      "revision": "e6a5046f8912da3298289fd4a5c6b7a1746e721d",
+      "url": "https://github.com/nix-community/emacs-overlay/archive/e6a5046f8912da3298289fd4a5c6b7a1746e721d.tar.gz",
+      "hash": "sha256-DdQU2iGkRms7ZA0s3hycFMTYRiQWjNeN52JTWjasTHI="
     },
     "nixpkgs": {
       "type": "Channel",
       "name": "nixpkgs-unstable",
-      "url": "https://releases.nixos.org/nixpkgs/nixpkgs-26.05pre968305.fdc7b8f7b30f/nixexprs.tar.xz",
-      "hash": "sha256-WLxi1vfcykjq9Yb2umqBJs6lVM6MpV2tXfcrAjroxUk="
+      "artifact": "nixexprs.tar.xz",
+      "url": "https://releases.nixos.org/nixpkgs/nixpkgs-26.11pre1020200.b3c092d3c36d/nixexprs.tar.xz",
+      "hash": "sha256-PacaMKpRQEyOpBOGPt+LkVCbDXr+zDr/yIcAQsJRhqM="
     }
   },
-  "version": 7
+  "version": 8
 }
