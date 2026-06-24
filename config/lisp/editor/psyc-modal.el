@@ -139,12 +139,23 @@
 
 ;;;; --- Basic movements ---
 
+(defvar-local psyc-modal--vertical-goal-column nil
+  "Goal column tracked across consecutive `j'/`k' motions.")
+
+(defun psyc-modal--vertical-move (n)
+  "Move N lines, preserving the visual goal column like `next-line'."
+  (unless (memq last-command '(psyc-modal-down psyc-modal-up))
+    (setq psyc-modal--vertical-goal-column (current-column)))
+  (let ((col psyc-modal--vertical-goal-column))
+    (forward-line n)
+    (move-to-column col)))
+
 (psyc-modal--defmove psyc-modal-left  "Move left (h)."
   (backward-char (prefix-numeric-value current-prefix-arg)))
 (psyc-modal--defmove psyc-modal-down  "Move down (j)."
-  (forward-line (prefix-numeric-value current-prefix-arg)))
+  (psyc-modal--vertical-move (prefix-numeric-value current-prefix-arg)))
 (psyc-modal--defmove psyc-modal-up    "Move up (k)."
-  (forward-line (- (prefix-numeric-value current-prefix-arg))))
+  (psyc-modal--vertical-move (- (prefix-numeric-value current-prefix-arg))))
 (psyc-modal--defmove psyc-modal-right "Move right (l)."
   (forward-char (prefix-numeric-value current-prefix-arg)))
 
@@ -936,7 +947,112 @@ this is the last frame)."
   (define-key m "?" #'psyc-tutor-quick-reference)
   (define-key m "t" #'psyc-tutor)
   (define-key m "k" #'psyc-modal-show-keys)
-  (define-key m "m" #'which-key-show-major-mode))
+  (define-key m "m" #'which-key-show-major-mode)
+  (define-key m "p" #'psyc-modal-preview-motions))
+
+;;;; --- Motion preview overlay ---
+
+(defvar psyc-modal-motion-preview-alist
+  '(("h" . psyc-modal-left)
+    ("j" . psyc-modal-down)
+    ("k" . psyc-modal-up)
+    ("l" . psyc-modal-right)
+    ("w" . psyc-modal-word-next)
+    ("b" . psyc-modal-word-back)
+    ("e" . psyc-modal-word-end)
+    ("W" . psyc-modal-WORD-next)
+    ("B" . psyc-modal-WORD-back)
+    ("E" . psyc-modal-WORD-end)
+    ("gh" . psyc-modal-goto-line-start)
+    ("gl" . psyc-modal-goto-line-end)
+    ("gs" . psyc-modal-goto-first-nonblank)
+    ("gt" . psyc-modal-goto-window-top)
+    ("gc" . psyc-modal-goto-window-center)
+    ("gb" . psyc-modal-goto-window-bottom)
+    ("(" . psyc-modal-backward-sexp)
+    (")" . psyc-modal-forward-sexp)
+    ("]p" . forward-paragraph)
+    ("[p" . backward-paragraph)
+    ("]f" . end-of-defun)
+    ("[f" . beginning-of-defun)
+    ("]c" . psyc-modal-next-comment)
+    ("[c" . psyc-modal-prev-comment)
+    ("]d" . flymake-goto-next-error)
+    ("[d" . flymake-goto-prev-error)
+    ("]g" . diff-hl-next-hunk)
+    ("[g" . diff-hl-previous-hunk))
+  "Motions previewed by `psyc-modal-preview-motions'.
+Each element is (LABEL . COMMAND).  LABEL is the key sequence shown
+inline at the motion's destination.")
+
+(defface psyc-modal-motion-preview-face
+  '((t :inherit highlight :weight bold :box (:line-width -1)))
+  "Face for motion-preview overlay labels."
+  :group 'psyc-modal)
+
+(defvar psyc-modal--motion-overlays nil
+  "Active motion-preview overlays, cleared on dismiss.")
+
+(defun psyc-modal--motion-destination (cmd)
+  "Simulate CMD from point; return destination position, or nil.
+Returns nil if CMD errors, fails to move, or isn't defined.  Mark,
+point, and the vertical goal column are all restored, and side-effect
+messages (such as \"Mark set\") are suppressed."
+  (when (commandp cmd)
+    (let ((saved-goal psyc-modal--vertical-goal-column)
+          (origin (point))
+          dest)
+      (unwind-protect
+          (save-mark-and-excursion
+            (ignore-errors
+              (let ((current-prefix-arg nil)
+                    (last-command nil)
+                    (this-command cmd)
+                    (inhibit-message t)
+                    (message-log-max nil))
+                (call-interactively cmd)
+                (setq dest (point)))))
+        (setq psyc-modal--vertical-goal-column saved-goal))
+      (and dest (/= dest origin) dest))))
+
+(defun psyc-modal--clear-motion-overlays ()
+  "Delete all active motion-preview overlays."
+  (mapc #'delete-overlay psyc-modal--motion-overlays)
+  (setq psyc-modal--motion-overlays nil))
+
+(defun psyc-modal-preview-motions ()
+  "Show inline labels at the destination of every motion in
+`psyc-modal-motion-preview-alist'.  The next key press dismisses the
+overlays; if it matches a normal-mode binding, it is executed."
+  (interactive)
+  (psyc-modal--clear-motion-overlays)
+  (let ((win-start (window-start))
+        (win-end (window-end nil t))
+        (by-point (make-hash-table)))
+    (dolist (item psyc-modal-motion-preview-alist)
+      (let* ((label (car item))
+             (cmd (cdr item))
+             (dest (psyc-modal--motion-destination cmd)))
+        (when (and dest (>= dest win-start) (<= dest win-end))
+          (push label (gethash dest by-point)))))
+    (maphash
+     (lambda (pt labels)
+       (let* ((text (string-join (nreverse labels) " "))
+              (ov (make-overlay pt pt)))
+         (overlay-put ov 'before-string
+                      (propertize (concat " " text " ")
+                                  'face 'psyc-modal-motion-preview-face))
+         (overlay-put ov 'priority 999)
+         (push ov psyc-modal--motion-overlays)))
+     by-point))
+  (if (null psyc-modal--motion-overlays)
+      (message "No motion destinations visible")
+    (unwind-protect
+        (let ((evt (read-event
+                    (format "Preview (%d destinations) — any key to dismiss"
+                            (length psyc-modal--motion-overlays)))))
+          (when evt (push evt unread-command-events)))
+      (psyc-modal--clear-motion-overlays))))
 
 ;;;; --- God mode ---
 
@@ -1454,6 +1570,7 @@ Deletes matching pair when between them, skips over close parens in lisps."
     (psyc-modal-insert-delete-char . "delete char")
     (psyc-modal-insert-backward-delete . "backspace")
     (psyc-modal-show-keys . "show keys")
+    (psyc-modal-preview-motions . "preview motions")
     (psyc-tutor . "start tutor")
     (psyc-tutor-quick-reference . "editing quick ref")
     (expreg-expand . "expand selection")
@@ -1661,7 +1778,8 @@ If RECURSIVE is non-nil, also label nested key sequences."
       "?" "editing quick ref"
       "t" "start tutor"
       "k" "modal keys"
-      "m" "major-mode keys")
+      "m" "major-mode keys"
+      "p" "preview motions")
     ;; Window map
     (which-key-add-keymap-based-replacements psyc-modal-window-map
       "s" "split horiz"

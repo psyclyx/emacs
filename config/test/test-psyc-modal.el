@@ -103,6 +103,81 @@ Point is at position 1 unless `|' marker is present in INITIAL."
     (should (= (mark) 1))
     (should (= (point) 2))))
 
+(ert-deftest modal-test-down-preserves-column ()
+  "j from a non-zero column should preserve the goal column."
+  (with-modal-buffer "hello world\nfoo bar baz"
+    (goto-char 7) ; col 6 (on 'w' of "world")
+    (let ((last-command nil))
+      (psyc-modal-down))
+    (should (= (current-column) 6))))
+
+(ert-deftest modal-test-down-selection-includes-destination ()
+  "j extends selection to the actual landing point, not the line start."
+  (with-modal-buffer "hello world\nfoo bar baz"
+    (goto-char 7)
+    (let ((last-command nil))
+      (psyc-modal-down))
+    (should (region-active-p))
+    (should (equal (modal-selection) "world\nfoo ba"))))
+
+(ert-deftest modal-test-down-twice-preserves-column ()
+  "Consecutive j presses keep the same goal column across lines."
+  (with-modal-buffer "hello world\nfoo bar\nspam ham eggs"
+    (goto-char 7) ; col 6
+    (let ((last-command nil))
+      (psyc-modal-down))
+    (let ((last-command 'psyc-modal-down))
+      (psyc-modal-down))
+    (should (= (current-column) 6))
+    (should (= (line-number-at-pos) 3))))
+
+(ert-deftest modal-test-down-short-line-clamps ()
+  "j onto a shorter line clamps to end-of-line without losing goal column."
+  (with-modal-buffer "hello world\nfoo\nspam ham"
+    (goto-char 9) ; col 8 of "hello world"
+    (let ((last-command nil))
+      (psyc-modal-down)) ; line 2 is "foo" — only col 3 available
+    (should (= (current-column) 3))
+    ;; A second j to a longer line should restore the original goal col.
+    (let ((last-command 'psyc-modal-down))
+      (psyc-modal-down))
+    (should (= (current-column) 8))))
+
+(ert-deftest modal-test-up-preserves-column ()
+  "k from a non-zero column should preserve the goal column."
+  (with-modal-buffer "hello world\nfoo bar baz"
+    (goto-char 19) ; col 6 of line 2
+    (let ((last-command nil))
+      (psyc-modal-up))
+    (should (= (current-column) 6))
+    (should (= (line-number-at-pos) 1))))
+
+(ert-deftest modal-test-down-then-up-roundtrips ()
+  "j then k returns to the original column (with consecutive last-command)."
+  (with-modal-buffer "hello world\nfoo bar baz\nspam ham"
+    (goto-char 7) ; col 6 line 1
+    (let ((last-command nil))
+      (psyc-modal-down))
+    (let ((last-command 'psyc-modal-down))
+      (psyc-modal-up))
+    (should (= (line-number-at-pos) 1))
+    (should (= (current-column) 6))))
+
+(ert-deftest modal-test-down-in-select-extends-with-column ()
+  "j in select state extends the existing selection to the column-preserved point."
+  (with-modal-buffer "hello world\nfoo bar baz\nspam ham eggs"
+    (goto-char 7) ; col 6 line 1
+    (psyc-modal-enter-select)
+    (let ((last-command nil))
+      (psyc-modal-down))
+    (let ((last-command 'psyc-modal-down))
+      (psyc-modal-down))
+    (should (= (mark) 7))
+    (should (= (current-column) 6))
+    ;; point lands on col 6 ('a' of "ham"); selection is [mark, point) so
+    ;; "spam h" — six characters up to but excluding the landing position.
+    (should (equal (modal-selection) "world\nfoo bar baz\nspam h"))))
+
 (ert-deftest modal-test-select-mode-extends ()
   "Select mode should extend, not replace selection."
   (with-modal-buffer "hello"
@@ -764,5 +839,51 @@ Point is at position 1 unless `|' marker is present in INITIAL."
     (set-mark (point-max))
     (psyc-modal-split-selection)
     (should (equal psyc-modal--split-ring '("a" "" "b")))))
+
+;;;; --- Motion preview ---
+
+(ert-deftest modal-test-motion-destination-basic ()
+  "psyc-modal--motion-destination should return the destination of a motion."
+  (with-modal-buffer "hello world"
+    (goto-char 1)
+    (let ((dest (psyc-modal--motion-destination 'psyc-modal-word-next)))
+      (should (= dest 7)))))
+
+(ert-deftest modal-test-motion-destination-preserves-point ()
+  "Computing a motion destination must not move point."
+  (with-modal-buffer "hello world"
+    (goto-char 1)
+    (psyc-modal--motion-destination 'psyc-modal-word-next)
+    (should (= (point) 1))))
+
+(ert-deftest modal-test-motion-destination-preserves-mark ()
+  "Computing a motion destination must not leave a stray active region."
+  (with-modal-buffer "hello world"
+    (goto-char 1)
+    (deactivate-mark)
+    (psyc-modal--motion-destination 'psyc-modal-word-next)
+    (should-not (region-active-p))))
+
+(ert-deftest modal-test-motion-destination-restores-goal-column ()
+  "Simulating j must not leave the vertical goal column dirty."
+  (with-modal-buffer "hello\nworld"
+    (goto-char 1)
+    (setq psyc-modal--vertical-goal-column nil)
+    (psyc-modal--motion-destination 'psyc-modal-down)
+    (should (null psyc-modal--vertical-goal-column))))
+
+(ert-deftest modal-test-motion-destination-nil-on-no-move ()
+  "Destinations equal to origin should yield nil."
+  (with-modal-buffer "hello"
+    (goto-char 1)
+    ;; Backward at bob — point shouldn't change
+    (should-not (psyc-modal--motion-destination 'psyc-modal-left))))
+
+(ert-deftest modal-test-motion-destination-nil-on-error ()
+  "Commands that error should yield nil, not propagate."
+  (with-modal-buffer "no parens here"
+    (goto-char 1)
+    ;; backward-sexp at top of buffer with no sexps will scan-error.
+    (should-not (psyc-modal--motion-destination 'psyc-modal-backward-sexp))))
 
 ;;; test-psyc-modal.el ends here
