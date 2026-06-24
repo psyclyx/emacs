@@ -3,6 +3,7 @@
 ;;; Code:
 
 (require 'psyc-lib)
+(eval-when-compile (require 'psyc-modal))
 
 (use-package sly
   :mode ("\\.lisp\\'" . lisp-mode)

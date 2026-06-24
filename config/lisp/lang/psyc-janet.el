@@ -4,6 +4,7 @@
 
 (require 'psyc-lib)
 (require 'comint)
+(eval-when-compile (require 'psyc-modal))
 
 (defvar janet-repl-buffer-name "*janet-repl*")
 

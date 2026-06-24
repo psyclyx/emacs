@@ -2,6 +2,7 @@
 ;;; Code:
 
 (require 'psyc-lib)
+(eval-when-compile (require 'psyc-modal))
 
 ;;;; Electric pair (auto-pairing for non-lisp modes)
 

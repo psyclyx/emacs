@@ -3,6 +3,7 @@
 ;;; Code:
 
 (require 'psyc-lib)
+(eval-when-compile (require 'psyc-modal))
 
 (defvar psyc-org-dir "~/org/")
 
