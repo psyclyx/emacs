@@ -1,14 +1,22 @@
-{ sources ? import ./npins }:
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
-  emacsOverlay = import sources.emacs-overlay;
-  emacsPkgs = pkgs.extend emacsOverlay;
-  emacs = emacsPkgs.emacs-unstable-pgtk;
   cfg = config.psyclyx-emacs;
 in
 {
   options.psyclyx-emacs = {
     enable = lib.mkEnableOption "Emacs config";
+    package = lib.mkPackageOption pkgs "emacs-unstable-pgtk" {
+      extraDescription = ''
+        Defaults to `pkgs.emacs-unstable-pgtk`, which requires the host to add
+        emacs-overlay to `nixpkgs.overlays`. This module intentionally adds no
+        overlay and pins no nixpkgs.
+      '';
+    };
     anthropicKeyFile = lib.mkOption {
       type = lib.types.nullOr lib.types.path;
       default = null;
@@ -23,7 +31,7 @@ in
   config = lib.mkIf cfg.enable {
     programs.emacs = {
       enable = true;
-      package = emacs;
+      package = cfg.package;
       extraPackages = import ./emacsPackages.nix;
     };
     services.emacs = {
@@ -36,12 +44,13 @@ in
       recursive = true;
     };
     home.packages = [
-      pkgs.nerd-fonts.symbols-only  # NFM.ttf for nerd-icons
+      pkgs.nerd-fonts.symbols-only # NFM.ttf for nerd-icons
     ];
     home.sessionVariables =
       lib.optionalAttrs (cfg.anthropicKeyFile != null) {
         EMACS_ANTHROPIC_KEY_FILE = toString cfg.anthropicKeyFile;
-      } // lib.optionalAttrs (cfg.openrouterKeyFile != null) {
+      }
+      // lib.optionalAttrs (cfg.openrouterKeyFile != null) {
         EMACS_OPENROUTER_KEY_FILE = toString cfg.openrouterKeyFile;
       };
   };
