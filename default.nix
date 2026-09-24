@@ -1,8 +1,6 @@
 let
   npins = import ./npins;
 
-  emacsOverlay = import npins.emacs-overlay;
-
   mkPackages = pkgs: {
     psyclyx-emacs =
       let
@@ -31,13 +29,20 @@ let
   overlay = final: _prev: mkPackages final;
 in
 {
-  nixpkgs ? npins.nixpkgs,
+  sources ? npins,
+  nixpkgs ? sources.nixpkgs,
+  # External deps — one arg each, defaulting to this project's own pins.
+  emacs-overlay ? sources.emacs-overlay,
   # emacs-unstable-pgtk comes from emacs-overlay; applied here so a standalone
   # build resolves it. When a superproject injects its own pkgs, emacs-overlay
   # is re-applied in the body below so the wrapped package still resolves.
-  pkgs ? import nixpkgs { overlays = [ emacsOverlay ]; },
+  pkgs ? import nixpkgs { overlays = [ (import emacs-overlay) ]; },
+  ...
 }:
 let
+  # Body alias for the pin: `emacs-overlay` is the overlay's source;
+  # emacsOverlay is the overlay itself.
+  emacsOverlay = import emacs-overlay;
   finalPkgs = (pkgs.extend emacsOverlay).extend overlay;
 in
 {
