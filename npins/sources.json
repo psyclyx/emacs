@@ -9,9 +9,9 @@
       },
       "branch": "master",
       "submodules": false,
-      "revision": "33fffe7e6c2e87732a09fd90513749d687733099",
-      "url": "https://github.com/nix-community/emacs-overlay/archive/33fffe7e6c2e87732a09fd90513749d687733099.tar.gz",
-      "hash": "sha256-DVmqFLIXb9584eHZrRSKmRKxtGO6OofumWbwOwhq88g="
+      "revision": "c70ae6cc52020e2b5f647e2d35e2cc2621293af3",
+      "url": "https://github.com/nix-community/emacs-overlay/archive/c70ae6cc52020e2b5f647e2d35e2cc2621293af3.tar.gz",
+      "hash": "sha256-5rRgQncqgIgKpCGmajrXd4+Q9j5QlUY/kCp7SnAwuMk="
     },
     "nixpkgs": {
       "type": "Channel",
